@@ -1,0 +1,80 @@
+<?php
+require_once 'config.php';
+
+loginRequired();
+
+// Verificar assinatura
+$stmt = $pdo->prepare("SELECT subscription_status, subscription_expires_at FROM " . TABLE_PREFIX . "users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$user = $stmt->fetch();
+
+if (!$user || !checkSubscription($user)) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'message' => 'Assinatura inválida ou expirada. Regularize para poder fazer upload de arquivos.']);
+    exit;
+}
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
+    exit;
+}
+
+if (!isset($_FILES['file'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Nenhum arquivo enviado.']);
+    exit;
+}
+
+$file = $_FILES['file'];
+
+// Verificar erros de upload
+if ($file['error'] !== UPLOAD_ERR_OK) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Erro no upload: Código ' . $file['error']]);
+    exit;
+}
+
+// Extensões permitidas
+$allowed_extensions = ['jpg', 'jpeg', 'png', 'mp4'];
+$file_info = pathinfo($file['name']);
+$extension = strtolower($file_info['extension'] ?? '');
+
+if (!in_array($extension, $allowed_extensions)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Formato não permitido. Envie apenas JPG, JPEG, PNG ou MP4.']);
+    exit;
+}
+
+// Tipos MIME permitidos
+$allowed_mimes = ['image/jpeg', 'image/png', 'video/mp4'];
+$finfo = finfo_open(FILEINFO_MIME_TYPE);
+$mime_type = finfo_file($finfo, $file['tmp_name']);
+finfo_close($finfo);
+
+if (!in_array($mime_type, $allowed_mimes)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'Tipo MIME inválido. Formato detectado: ' . $mime_type]);
+    exit;
+}
+
+// Criar pasta de uploads se não existir
+$upload_dir = dirname(__DIR__) . '/uploads';
+if (!file_exists($upload_dir)) {
+    mkdir($upload_dir, 0755, true);
+}
+
+// Nome único do arquivo
+$new_filename = 'media_360_' . uniqid() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+$destination = $upload_dir . '/' . $new_filename;
+
+if (move_uploaded_file($file['tmp_name'], $destination)) {
+    echo json_encode([
+        'success' => true,
+        'message' => 'Upload concluído com sucesso!',
+        'url' => 'uploads/' . $new_filename
+    ]);
+} else {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => 'Falha ao salvar o arquivo no servidor.']);
+}

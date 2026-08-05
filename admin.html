@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Administrativo - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin.css?v=1.0.2">
+</head>
+<body class="admin-page">
+    <div class="app-container admin-layout">
+        
+        <!-- HEADER -->
+        <header class="admin-header glassmorphism">
+            <div class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                <span class="logo-text">360°<span class="highlight">Studio</span> <span class="badge-admin">Admin</span></span>
+            </div>
+            
+            <div class="nav-actions">
+                <a href="dashboard.html" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-house"></i> Voltar ao Painel
+                </a>
+                <button id="btn-logout" class="btn btn-danger btn-sm" title="Sair da Conta">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD GRID (METRICAS) -->
+        <section class="admin-metrics-grid">
+            <div class="metric-card glassmorphism">
+                <div class="metric-icon mrr-icon">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-val" id="stat-mrr">R$ 0,00</span>
+                    <span class="metric-lbl">MRR Estimado (R$ 49,90/mês)</span>
+                </div>
+            </div>
+
+            <div class="metric-card glassmorphism">
+                <div class="metric-icon premium-icon">
+                    <i class="fa-solid fa-crown"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-val" id="stat-premium">0</span>
+                    <span class="metric-lbl">Assinantes Premium</span>
+                </div>
+            </div>
+
+            <div class="metric-card glassmorphism">
+                <div class="metric-icon trial-icon">
+                    <i class="fa-solid fa-hourglass-half"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-val" id="stat-trial">0</span>
+                    <span class="metric-lbl">Usuários em Trial</span>
+                </div>
+            </div>
+
+            <div class="metric-card glassmorphism">
+                <div class="metric-icon db-icon">
+                    <i class="fa-solid fa-cubes"></i>
+                </div>
+                <div class="metric-info">
+                    <span class="metric-val" id="stat-system-assets">0 / 0</span>
+                    <span class="metric-lbl">Tours / Cenas Totais</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONTAINER DA TABELA E FILTROS -->
+        <main class="admin-main-content glassmorphism">
+            
+            <div class="table-header">
+                <h2>Gerenciamento de Clientes e Planos</h2>
+                
+                <div class="filters-row">
+                    <!-- Barra de pesquisa -->
+                    <div class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="search-users" placeholder="Pesquisar por nome, usuário ou e-mail...">
+                    </div>
+                    
+                    <!-- Filtro por Plano -->
+                    <div class="filter-select-wrapper">
+                        <select id="filter-status">
+                            <option value="">Todos os Planos</option>
+                            <option value="active">Premium Ativo</option>
+                            <option value="trial">Trial Ativo</option>
+                            <option value="expired">Expirados</option>
+                            <option value="admin">Administradores</option>
+                            <option value="deleted">Excluídos (Lixeira)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabela de Usuários -->
+            <div class="table-responsive">
+                <table class="admin-table" id="users-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-users"></th>
+                            <th>Usuário</th>
+                            <th>Contato</th>
+                            <th>Permissão</th>
+                            <th>Status Plano</th>
+                            <th>Validade Assinatura</th>
+                            <th>Projetos (Tours/Cenas)</th>
+                            <th>Data Cadastro</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="users-table-body">
+                        <!-- Carregado via Javascript -->
+                        <tr>
+                            <td colspan="8" class="table-loading">
+                                <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando usuários do sistema...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL EDITAR PERFIL E ASSINATURA -->
+    <div class="modal-overlay" id="edit-user-modal">
+        <div class="modal-card glassmorphism">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-gear"></i> Editar Perfil e Plano</h2>
+                <button class="close-btn" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="edit-user-id">
+                
+                <div class="form-group">
+                    <label for="edit-user-name">Nome Completo</label>
+                    <input type="text" id="edit-user-name" placeholder="Digite o nome completo...">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-user-username">Nome de Usuário (Login)</label>
+                    <input type="text" id="edit-user-username" placeholder="Digite o nome de usuário...">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-user-email">E-mail</label>
+                    <input type="email" id="edit-user-email" placeholder="Digite o e-mail...">
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-sub-status">Status da Assinatura</label>
+                    <select id="edit-sub-status">
+                        <option value="trial">Trial (Período de Testes)</option>
+                        <option value="active">Premium (Ativo)</option>
+                        <option value="expired">Expirado (Sem Acesso)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="edit-sub-expires">Expiração do Acesso</label>
+                    <input type="datetime-local" id="edit-sub-expires">
+                    <span class="field-hint">Deixe em branco para acesso permanente sem expiração.</span>
+                </div>
+
+                <div class="form-group" id="role-select-group">
+                    <label for="edit-is-admin-select">Nível de Acesso / Permissão</label>
+                    <select id="edit-is-admin-select">
+                        <option value="0">Cliente (Usuário Comum)</option>
+                        <option value="1">Administrador (Gestão de Clientes)</option>
+                        <option value="2">Super Administrador (Acesso Total)</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions" style="justify-content: space-between;">
+                    <button class="btn btn-danger" id="btn-delete-user-modal" style="width: auto;"><i class="fa-solid fa-trash"></i> Excluir Perfil</button>
+                    <div style="display: flex; gap: 8px;">
+                        <button class="btn btn-secondary" id="btn-cancel-edit">Cancelar</button>
+                        <button class="btn btn-accent" id="btn-save-user-settings">Salvar Alterações</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL RESETAR SENHA -->
+    <div class="modal-overlay" id="reset-password-modal">
+        <div class="modal-card glassmorphism">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-key"></i> Redefinir Senha</h2>
+                <button class="close-btn" id="btn-close-pwd-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="pwd-user-id">
+                
+                <div class="form-info-box">
+                    <p><strong>Usuário:</strong> <span id="pwd-user-name">Carregando...</span></p>
+                    <p><strong>E-mail:</strong> <span id="pwd-user-email">Carregando...</span></p>
+                </div>
+
+                <div class="form-group">
+                    <label for="new-password">Nova Senha</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="new-password" placeholder="Digite ou gere uma senha..." style="flex-grow: 1;">
+                        <button type="button" class="btn btn-secondary" id="btn-generate-password" style="width: auto; padding: 10px 14px; margin-top: 0;" title="Gerar Senha Automática">
+                            <i class="fa-solid fa-arrows-rotate"></i> Gerar
+                        </button>
+                    </div>
+                    <span class="field-hint">A senha deve ter no mínimo 6 caracteres.</span>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btn-cancel-pwd-reset">Cancelar</button>
+                    <button class="btn btn-accent" id="btn-submit-pwd-reset">Redefinir Senha</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- BARRA DE AÇÕES EM LOTE (BATCH ACTIONS) -->
+    <div class="batch-actions-bar glassmorphism" id="batch-actions-bar">
+        <span class="batch-selected-count"><span id="selected-count">0</span> selecionados</span>
+        <div class="batch-buttons">
+            <button class="btn btn-primary btn-sm" id="btn-batch-restore" style="display: none; background-color: var(--color-purple); border-color: var(--color-purple); color: white;"><i class="fa-solid fa-rotate-left"></i> Restaurar em Lote</button>
+            <button class="btn btn-accent btn-sm" id="btn-batch-edit"><i class="fa-solid fa-user-gear"></i> Editar em Lote</button>
+            <button class="btn btn-danger btn-sm" id="btn-batch-delete"><i class="fa-solid fa-trash"></i> Excluir em Lote</button>
+        </div>
+    </div>
+
+    <!-- MODAL EDITAR EM LOTE -->
+    <div class="modal-overlay" id="batch-edit-modal">
+        <div class="modal-card glassmorphism">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-gear"></i> Editar Clientes em Lote</h2>
+                <button class="close-btn" id="btn-close-batch-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="batch-form-desc">Altere o plano ou o nível de acesso para os <span id="batch-edit-count">0</span> usuários selecionados:</p>
+                
+                <div class="form-group">
+                    <label for="batch-sub-status">Alterar Status da Assinatura</label>
+                    <select id="batch-sub-status">
+                        <option value="">-- Não alterar --</option>
+                        <option value="trial">Trial (Período de Testes)</option>
+                        <option value="active">Premium (Ativo)</option>
+                        <option value="expired">Expirado (Sem Acesso)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="batch-expiry-option">Alterar Expiração do Acesso</label>
+                    <select id="batch-expiry-option">
+                        <option value="keep">-- Manter expiração original --</option>
+                        <option value="permanent">Remover expiração (Tornar permanente)</option>
+                        <option value="set">Definir nova data de expiração</option>
+                    </select>
+                    <input type="datetime-local" id="batch-sub-expires" style="display: none; margin-top: 10px;">
+                </div>
+
+                <div class="form-group" id="batch-role-select-group">
+                    <label for="batch-is-admin-select">Alterar Nível de Acesso / Permissão</label>
+                    <select id="batch-is-admin-select">
+                        <option value="">-- Não alterar --</option>
+                        <option value="0">Cliente (Usuário Comum)</option>
+                        <option value="1">Administrador (Gestão de Clientes)</option>
+                        <option value="2">Super Administrador (Acesso Total)</option>
+                    </select>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btn-cancel-batch-edit">Cancelar</button>
+                    <button class="btn btn-accent" id="btn-save-batch-settings">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Lógica JS -->
+    <script src="admin.js?v=1.0.2"></script>
+</body>
+</html>

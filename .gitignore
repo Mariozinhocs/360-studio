@@ -1,0 +1,19 @@
+# Configurações de Ambiente e Senhas
+.env
+.env.hml
+.env.prod
+ftp_config.json
+ftp_config_hml.json
+ftp_config_prod.json
+
+# Banco de Dados Local / Temporários
+users.json
+
+# IDEs e Editores
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css?v=1.0.3">
+    <link rel="stylesheet" href="dashboard.css?v=1.0.3">
+</head>
+<body class="dashboard-page">
+    <div class="app-container dashboard-layout">
+        
+        <!-- HEADER DO DASHBOARD -->
+        <header class="dashboard-header glassmorphism">
+            <div class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                <span class="logo-text">360°<span class="highlight">Studio</span></span>
+            </div>
+            
+            <div class="user-menu">
+                <span class="user-greeting"><i class="fa-regular fa-circle-user"></i> Olá, <span id="user-display-name">Carregando...</span></span>
+                <a href="admin.html" id="btn-admin-panel" class="btn btn-secondary btn-sm" style="display: none; border-color: var(--color-purple); color: #b16ef2; background: rgba(155, 81, 224, 0.08); text-decoration: none;">
+                    <i class="fa-solid fa-user-shield"></i> Painel Admin
+                </a>
+                <button id="btn-logout" class="btn btn-secondary btn-sm" title="Sair da Conta">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTAINER PRINCIPAL DO DASHBOARD -->
+        <main class="dashboard-content">
+            
+            <!-- SEÇÃO ESQUERDA: PERFIL E ASSINATURA -->
+            <section class="dashboard-sidebar">
+                <div class="card-subscription glassmorphism" id="subscription-card">
+                    <h3><i class="fa-solid fa-circle-dollar-to-slot"></i> Plano de Assinatura</h3>
+                    
+                    <div class="sub-status-box" id="sub-status-box">
+                        <span class="sub-badge" id="sub-badge">Carregando...</span>
+                        <p class="sub-detail" id="sub-detail">Consultando servidor...</p>
+                    </div>
+
+                    <div class="sub-actions" id="sub-actions-container">
+                        <!-- Botões dinâmicos de assinatura/renovação de acordo com o plano -->
+                    </div>
+
+                    <!-- MOCK PAYMENT BUTTON PARA DEMONSTRAÇÃO SAAS -->
+                    <div class="demo-mode-note">
+                        <i class="fa-solid fa-code"></i>
+                        <span>Modo Demonstrativo: Simule um pagamento (Stripe/Pix) para liberar acesso Premium imediatamente.</span>
+                    </div>
+                </div>
+
+                <div class="card-stats glassmorphism">
+                    <h3><i class="fa-solid fa-chart-simple"></i> Estatísticas</h3>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-val" id="stat-total-tours">0</span>
+                            <span class="stat-lbl">Tours Criados</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val" id="stat-total-scenes">0</span>
+                            <span class="stat-lbl">Cenas Totais</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SEÇÃO DIREITA: GRADE DE PROJETOS -->
+            <section class="dashboard-projects">
+                <div class="projects-header">
+                    <h2>Seus Projetos 360°</h2>
+                    <button class="btn btn-primary" id="btn-open-create-modal">
+                        <i class="fa-solid fa-plus-circle"></i> Criar Novo Tour
+                    </button>
+                </div>
+
+                <!-- Grid de Projetos -->
+                <div class="projects-grid" id="projects-grid">
+                    <!-- Cards de projetos carregados dinamicamente via JS -->
+                    <div class="loading-placeholder">
+                        <i class="fa-solid fa-circle-notch fa-spin"></i>
+                        <span>Carregando seus projetos...</span>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE CRIAÇÃO DE TOUR -->
+    <div class="modal-overlay" id="create-tour-modal">
+        <div class="modal-card glassmorphism">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-wand-magic-sparkles"></i> Iniciar Novo Tour 360°</h2>
+                <button class="close-btn" id="btn-close-create-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-tour-title">Nome do Tour / Projeto</label>
+                    <input type="text" id="new-tour-title" placeholder="Ex: Apartamento Decorado Jardins" required>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btn-cancel-create">Cancelar</button>
+                    <button class="btn btn-primary" id="btn-submit-create">Criar Projeto</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Script de lógica do Dashboard -->
+    <script src="dashboard.js?v=1.0.3"></script>
+</body>
+</html>

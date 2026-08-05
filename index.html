@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A-Team 360° Studio - Plataforma de Tours Virtuais</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- A-Frame VR Library -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <!-- A-Frame Look-At Component -->
+    <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- SIDEBAR DE CONTROLE -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                    <span class="logo-text">360°<span class="highlight">Studio</span></span>
+                </div>
+                <p class="subtitle">A-Team Tour Platform</p>
+            </div>
+
+            <!-- Seção de Gerenciamento do Tour -->
+            <div class="tour-meta-card">
+                <div class="meta-field">
+                    <label for="tour-title-input">Nome do Tour</label>
+                    <input type="text" id="tour-title-input" value="Meu Tour Virtual 360">
+                </div>
+            </div>
+
+            <!-- Upload Area -->
+            <div class="upload-section">
+                <h3>Carregar Mídia 360°</h3>
+                <div class="drag-drop-zone" id="drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                    <p class="upload-text">Arraste fotos/vídeos ou clique para selecionar</p>
+                    <span class="file-info">Suporta JPG e MP4 360° (Equiretangulares)</span>
+                    <input type="file" id="file-input" multiple accept="image/jpeg,image/png,video/mp4" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Lista de Cenas -->
+            <div class="scenes-section">
+                <div class="section-title-row">
+                    <h3>Cenas do Tour</h3>
+                    <span class="badge" id="scenes-count">0</span>
+                </div>
+                <div class="scenes-list" id="scenes-list">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <button id="btn-export" class="btn btn-secondary">
+                    <i class="fa-solid fa-download"></i> Exportar Tour (JSON)
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTAINER PRINCIPAL (VISUALIZADOR) -->
+        <main class="viewer-container">
+            <!-- Barra Superior do Visualizador -->
+            <header class="top-bar">
+                <div class="tour-info">
+                    <h1 id="tour-display-title">Meu Tour Virtual 360</h1>
+                    <p id="scene-display-title">Nenhuma cena selecionada</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <a href="dashboard.html" id="btn-dashboard" class="mode-btn" style="text-decoration: none; display: flex; align-items: center; gap: 5px;">
+                        <i class="fa-solid fa-house"></i> Painel
+                    </a>
+                    <div class="mode-selector">
+                        <button id="btn-mode-edit" class="mode-btn active">
+                            <i class="fa-solid fa-pen-ruler"></i> Editor
+                        </button>
+                        <button id="btn-mode-view" class="mode-btn">
+                            <i class="fa-solid fa-eye"></i> Visualizar
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- CANVAS DE RENDERIZAÇÃO 360° (A-FRAME) -->
+            <div class="canvas-wrapper" id="canvas-wrapper">
+                <!-- A-Scene do A-Frame -->
+                <a-scene embedded loading-screen="dotsColor: #00f2fe; backgroundColor: #0d0e12" raycaster="objects: .hotspot-element">
+                    <!-- Elementos de mídia carregados dinamicamente no asset manager -->
+                    <a-assets id="assets-manager">
+                        <!-- Imagens e vídeos de amostra serão inseridos aqui pelo JS -->
+                    </a-assets>
+
+                    <!-- Câmera com cursor para interagir com os hotspots -->
+                    <a-entity id="rig" position="0 0 0">
+                        <a-camera id="camera" look-controls="pointerLockEnabled: false; reverseMouseDrag: true" wasd-controls="enabled: false">
+                            <!-- Cursor visual que aparece no centro da tela no modo edição e visualização se necessário -->
+                            <a-cursor id="scene-cursor" 
+                                      position="0 0 -1" 
+                                      geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.015" 
+                                      material="color: #00f2fe; shader: flat; opacity: 0.8"
+                                      raycaster="objects: .hotspot-element"
+                                      visible="false">
+                            </a-cursor>
+                        </a-camera>
+                    </a-entity>
+
+                    <!-- Céu 360° para Imagem -->
+                    <a-sky id="sky-viewer" radius="100" rotation="0 -90 0" visible="false" material="shader: flat; npot: true"></a-sky>
+
+                    <!-- Céu 360° para Vídeo -->
+                    <a-videosphere id="video-viewer" radius="100" rotation="0 -90 0" visible="false" play-on-window-click></a-videosphere>
+
+                    <!-- Container para os Hotspots da cena ativa -->
+                    <a-entity id="hotspots-container"></a-entity>
+                </a-scene>
+                
+                <!-- Overlay de Instruções Modo Edição -->
+                <div id="editor-hint" class="editor-hint">
+                    <i class="fa-solid fa-info-circle"></i>
+                    <span>Modo Edição Ativo. Clique em <strong>"Adicionar Hotspot"</strong> e depois clique no local da imagem 360° para fixá-lo.</span>
+                </div>
+            </div>
+
+            <!-- CONTROLES FLUTUANTES DO VISUALIZADOR -->
+            <div class="viewer-overlay-controls">
+                <button id="btn-zoom-in" class="ctrl-btn" title="Aumentar Zoom"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+                <button id="btn-zoom-out" class="ctrl-btn" title="Diminuir Zoom"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+                <button id="btn-reset-cam" class="ctrl-btn" title="Resetar Câmera"><i class="fa-solid fa-arrows-to-dot"></i></button>
+                <button id="btn-add-hotspot" class="ctrl-btn btn-accent" title="Criar Hotspot Interativo">
+                    <i class="fa-solid fa-plus-circle animate-pulse"></i> <span>Adicionar Hotspot</span>
+                </button>
+                <button id="btn-fullscreen" class="ctrl-btn" title="Tela Cheia"><i class="fa-solid fa-expand"></i></button>
+            </div>
+
+            <!-- CONTROLES CUSTOMIZADOS DE VÍDEO 360° -->
+            <div class="video-controls-bar" id="video-controls" style="display: none;">
+                <button id="btn-video-play" class="video-btn"><i class="fa-solid fa-play"></i></button>
+                
+                <span class="time-display" id="video-time">00:00 / 00:00</span>
+                
+                <div class="progress-bar-container" id="video-progress-container">
+                    <div class="progress-bar" id="video-progress"></div>
+                </div>
+
+                <div class="volume-container">
+                    <button id="btn-video-mute" class="video-btn"><i class="fa-solid fa-volume-high"></i></button>
+                    <input type="range" id="video-volume" min="0" max="1" step="0.1" value="1" class="volume-slider">
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL / POPUP DE CONFIGURAÇÃO DE HOTSPOT -->
+    <div class="modal-overlay" id="hotspot-modal">
+        <div class="modal-card glassmorphism">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-location-dot"></i> Configurar Hotspot / Portal</h2>
+                <button class="close-btn" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="hotspot-label">Texto do Balão (Tooltip)</label>
+                    <input type="text" id="hotspot-label" placeholder="Ex: Ir para o Quarto Principal">
+                </div>
+                <div class="form-group">
+                    <label for="hotspot-target">Destino do Portal (Cena)</label>
+                    <select id="hotspot-target">
+                        <!-- Cenas disponíveis serão carregadas aqui -->
+                    </select>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btn-cancel-hotspot">Cancelar</button>
+                    <button class="btn btn-primary" id="btn-save-hotspot">Criar Portal</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notificações Toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
