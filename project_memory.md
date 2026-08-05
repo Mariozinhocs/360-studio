@@ -20,11 +20,16 @@
     *   Corrigida a tipagem estrita no `admin.js` (`parseInt()` nos IDs) que causava mau funcionamento de exclusão para contas comuns.
     *   Aplicado cache-buster `v=1.0.2` no `admin.html` para `admin.js` e `admin.css`.
     *   Aplicado cache-buster `v=1.0.3` no `dashboard.html` para `dashboard.js`, `style.css` e `dashboard.css` para resolver problemas de carregamento/exibição do botão "Painel Admin" decorrentes de cache antigo do navegador.
+3.  **Controle de Versão e Backup (Git/GitHub Ativado):**
+    *   Repositório Git inicializado localmente e sincronizado com o GitHub em [Mariozinhocs/360-studio](https://github.com/Mariozinhocs/360-studio.git).
+    *   Arquivo `.gitignore` configurado para proteger arquivos de credenciais (`.env*`, `ftp_config*.json`) e banco local (`users.json`).
 
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
 
+*   **Configurações e Infraestrutura:**
+    *   [.gitignore](file:///g:/Meu%20Drive/Dev's/360/360/.gitignore) ([NEW] Configuração de exclusão de arquivos sensíveis no Git [CONCLUÍDO])
 *   **APIs do Painel:**
     *   [admin_helper.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/admin_helper.php) (Validação de privilégios e purga automatizada de 30 dias [CONCLUÍDO])
     *   [list_users.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/list_users.php) (Suporte a filtro 'deleted' [CONCLUÍDO])
