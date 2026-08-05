@@ -12,6 +12,19 @@ const state = {
     videoUpdateInterval: null
 };
 
+// --- FUNÇÃO AUXILIAR DE DEBOUNCE ---
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 // --- CONFIGURAÇÃO E CONSTANTES ---
 const HOTSPOT_ICON_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='rgba(10, 12, 20, 0.7)' stroke='%2300f2fe' stroke-width='5' filter='drop-shadow(0px 0px 4px rgba(0, 242, 254, 0.8))'/><path d='M50 20 L72 52 L58 52 L58 75 L42 75 L42 52 L28 52 Z' fill='%2300f2fe'/></svg>";
 
@@ -85,10 +98,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     // 1. Verificar ID do tour na URL
     const urlParams = new URLSearchParams(window.location.search);
     const tourId = urlParams.get('id');
+    const startMode = urlParams.get('mode');
     
     if (tourId) {
         // Carrega do servidor
-        await loadTourFromServer(tourId);
+        await loadTourFromServer(tourId, startMode);
     } else {
         // Fallback local/desenvolvimento
         loadTourFromStorage();
@@ -112,7 +126,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // --- OPERAÇÕES DO BANCO DE DADOS (SERVIDOR E LOCAL) ---
-async function loadTourFromServer(tourId) {
+async function loadTourFromServer(tourId, startMode = null) {
     try {
         const res = await fetch(`api/get_tour.php?id=${tourId}`);
         const data = await res.json();
@@ -125,7 +139,7 @@ async function loadTourFromServer(tourId) {
             document.getElementById("tour-title-input").value = state.tour.title;
             document.getElementById("tour-display-title").textContent = state.tour.title;
             
-            // Configurar modo público se não for proprietário
+            // Configurar modo público se não for proprietário ou se solicitado explicitamente
             if (!state.isOwner) {
                 // Esconder elementos de edição
                 const sidebar = document.querySelector(".sidebar");
@@ -137,8 +151,12 @@ async function loadTourFromServer(tourId) {
                 // Forçar modo visualização
                 setMode(false);
             } else {
-                // Proprietário: default para modo edição
-                setMode(true);
+                // Proprietário: verifica se iniciou em modo visualização
+                if (startMode === 'view') {
+                    setMode(false);
+                } else {
+                    setMode(true);
+                }
             }
             
             // Definir cena inicial
@@ -292,8 +310,9 @@ function setActiveScene(sceneId) {
         initVideoControls(video);
     }
 
-    // Renderizar os hotspots desta cena
+    // Renderizar os hotspots desta cena no espaço 3D e na barra lateral
     renderHotspots(scene.hotspots);
+    renderHotspotsList();
 
     // Destacar item selecionado na barra lateral
     document.querySelectorAll(".scene-card").forEach(card => {
@@ -441,12 +460,12 @@ function initDOMEvents() {
         handleFiles(e.dataTransfer.files);
     });
 
-    // Nome do Tour
-    tourTitleInput.addEventListener("input", (e) => {
+    // Nome do Tour com debounce para evitar spam de requisições no servidor
+    tourTitleInput.addEventListener("input", debounce((e) => {
         state.tour.title = e.target.value;
         document.getElementById("tour-display-title").textContent = e.target.value;
         saveTourToStorage();
-    });
+    }, 500));
 
     // Alternar Modos Editor/Visualizador
     btnModeEdit.addEventListener("click", () => setMode(true));
@@ -474,6 +493,24 @@ function initDOMEvents() {
 
     // Exportação
     btnExport.addEventListener("click", exportTourJSON);
+
+    // Validador de tecla Enter dentro de caixas de texto de modais (simula o clique do botão Ok/Salvar)
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            const activeInput = document.activeElement;
+            if (activeInput && (activeInput.tagName === "INPUT" || activeInput.tagName === "SELECT")) {
+                const modal = activeInput.closest(".modal-overlay.active");
+                if (modal) {
+                    e.preventDefault();
+                    let btn = null;
+                    if (modal.id === "hotspot-modal") {
+                        btn = document.getElementById("btn-save-hotspot");
+                    }
+                    if (btn) btn.click();
+                }
+            }
+        }
+    });
 }
 
 // --- AUXILIAR: PROCESSAMENTO E OTIMIZAÇÃO DE MÍDIA 360 ---
@@ -545,28 +582,74 @@ function processAndOptimizeFile(file) {
     });
 }
 
-async function uploadFileToServer(fileOrBlob, filename) {
-    const formData = new FormData();
-    formData.append('file', fileOrBlob, filename);
-    
-    try {
-        const res = await fetch('api/upload.php', {
-            method: 'POST',
-            body: formData
-        });
-        const data = await res.json();
-        
-        if (res.ok && data.success) {
-            return data.url; // Retorna "uploads/media_360_xxxx.jpg"
-        } else {
-            showToast("Falha no upload para o servidor: " + (data.message || ""), "error");
-            return null;
+function uploadFileToServer(fileOrBlob, filename) {
+    return new Promise((resolve) => {
+        const formData = new FormData();
+        formData.append('file', fileOrBlob, filename);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'api/upload.php', true);
+
+        const progressContainer = document.getElementById('upload-progress-container');
+        const filenameEl = document.getElementById('upload-filename');
+        const percentageEl = document.getElementById('upload-percentage');
+        const progressBar = document.getElementById('upload-progress-bar');
+
+        // Exibir barra de progresso
+        if (progressContainer) {
+            progressContainer.style.display = 'block';
+            filenameEl.textContent = `Enviando "${filename}"...`;
+            percentageEl.textContent = '0%';
+            progressBar.style.width = '0%';
         }
-    } catch (err) {
-        console.error("Erro na API de upload:", err);
-        showToast("Erro ao conectar com a API de upload.", "error");
-        return null;
-    }
+
+        xhr.upload.onprogress = function (e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                if (percentageEl) percentageEl.textContent = `${percentComplete}%`;
+                if (progressBar) progressBar.style.width = `${percentComplete}%`;
+            }
+        };
+
+        xhr.onload = function () {
+            // Ocultar barra de progresso após um pequeno delay para suavidade
+            setTimeout(() => {
+                if (progressContainer) progressContainer.style.display = 'none';
+            }, 800);
+
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        resolve(data.url);
+                    } else {
+                        showToast("Falha no upload: " + (data.message || ""), "error");
+                        resolve(null);
+                    }
+                } catch (err) {
+                    console.error("Erro ao decodificar resposta JSON:", err);
+                    showToast("Resposta inválida do servidor.", "error");
+                    resolve(null);
+                }
+            } else {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    showToast("Falha no upload: " + (data.message || xhr.statusText), "error");
+                } catch (e) {
+                    showToast("Erro no servidor: " + xhr.statusText, "error");
+                }
+                resolve(null);
+            }
+        };
+
+        xhr.onerror = function () {
+            if (progressContainer) progressContainer.style.display = 'none';
+            showToast("Erro de rede ao enviar arquivo.", "error");
+            resolve(null);
+        };
+
+        xhr.send(formData);
+    });
 }
 
 // --- TRATAMENTO DOS ARQUIVOS DE UPLOAD ---
@@ -732,11 +815,13 @@ function deleteScene(sceneId) {
                     document.getElementById("video-viewer").setAttribute("visible", "false");
                     document.getElementById("hotspots-container").innerHTML = "";
                     state.activeSceneId = null;
+                    renderHotspotsList();
                 }
             } else if (state.activeSceneId) {
                 // Atualiza hotspots da cena ativa atual caso algum tenha sido deletado
                 const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
                 renderHotspots(currentScene.hotspots);
+                renderHotspotsList();
             }
             
             updateUI();
@@ -772,6 +857,9 @@ function setMode(isEdit) {
         editorHint.style.display = "none";
         document.body.classList.add("preview-mode");
     }
+
+    // Atualiza a barra lateral com a lista de hotspots
+    renderHotspotsList();
 }
 
 // --- FLUXO DE ADICIONAR HOTSPOT (PORTAL) ---
@@ -851,6 +939,7 @@ function saveHotspot() {
         
         saveTourToStorage();
         renderHotspots(currentScene.hotspots);
+        renderHotspotsList();
         closeHotspotModal();
         showToast("Hotspot criado com sucesso!", "success");
     }
@@ -1047,5 +1136,82 @@ function updateUI() {
     
     if (scenesCount === 0) {
         document.getElementById("scene-display-title").textContent = "Nenhuma cena carregada";
+    }
+}
+
+// --- GERENCIADOR DE HOTSPOTS NA BARRA LATERAL ---
+function renderHotspotsList() {
+    const hotspotsSection = document.getElementById("hotspots-sidebar-section");
+    const list = document.getElementById("hotspots-list");
+    const countBadge = document.getElementById("hotspots-count");
+
+    if (!hotspotsSection || !list || !countBadge) return;
+
+    // Apenas exibe no modo edição e se houver cena ativa
+    if (!state.isEditMode || !state.activeSceneId) {
+        hotspotsSection.style.display = "none";
+        return;
+    }
+
+    const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+    if (!currentScene) {
+        hotspotsSection.style.display = "none";
+        return;
+    }
+
+    const hotspots = currentScene.hotspots || [];
+    countBadge.textContent = hotspots.length;
+
+    if (hotspots.length === 0) {
+        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 11px; padding: 12px 0;">Nenhum portal criado nesta cena.</div>`;
+        hotspotsSection.style.display = "flex";
+        return;
+    }
+
+    list.innerHTML = "";
+    hotspots.forEach(hotspot => {
+        const card = document.createElement("div");
+        card.className = "hotspot-card";
+
+        const targetTitle = getSceneTitle(hotspot.targetSceneId);
+
+        card.innerHTML = `
+            <div class="hotspot-card-info">
+                <span class="hotspot-card-label" title="${hotspot.label}">${hotspot.label}</span>
+                <span class="hotspot-card-target" title="Destino: ${targetTitle}">
+                    <i class="fa-solid fa-arrow-right"></i> ${targetTitle}
+                </span>
+            </div>
+            <div class="hotspot-card-actions">
+                <button class="btn-delete-hotspot" title="Excluir Portal"><i class="fa-solid fa-trash"></i></button>
+            </div>
+        `;
+
+        card.querySelector(".btn-delete-hotspot").onclick = (e) => {
+            e.stopPropagation();
+            deleteHotspot(hotspot.id);
+        };
+
+        list.appendChild(card);
+    });
+
+    hotspotsSection.style.display = "flex";
+}
+
+function deleteHotspot(hotspotId) {
+    if (confirm("Deseja realmente excluir este portal?")) {
+        const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+        if (currentScene && currentScene.hotspots) {
+            currentScene.hotspots = currentScene.hotspots.filter(h => h.id !== hotspotId);
+
+            // Salvar no storage/banco
+            saveTourToStorage();
+
+            // Re-renderizar hotspots 3D e sidebar
+            renderHotspots(currentScene.hotspots);
+            renderHotspotsList();
+
+            showToast("Portal removido com sucesso.", "success");
+        }
     }
 }

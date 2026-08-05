@@ -58,6 +58,20 @@ if (!in_array($mime_type, $allowed_mimes)) {
     exit;
 }
 
+// Limitar tamanho dos arquivos (Fotos: 15MB, Vídeos: 60MB)
+$max_image_size = 15 * 1024 * 1024; // 15MB
+$max_video_size = 60 * 1024 * 1024; // 60MB
+
+$is_video = strpos($mime_type, 'video/') === 0;
+$max_allowed_size = $is_video ? $max_video_size : $max_image_size;
+
+if ($file['size'] > $max_allowed_size) {
+    http_response_code(400);
+    $limit_mb = $is_video ? '60MB' : '15MB';
+    echo json_encode(['success' => false, 'message' => 'O arquivo excede o limite máximo permitido de ' . $limit_mb . ' para ' . ($is_video ? 'vídeos' : 'imagens') . '.']);
+    exit;
+}
+
 // Criar pasta de uploads se não existir
 $upload_dir = dirname(__DIR__) . '/uploads';
 if (!file_exists($upload_dir)) {

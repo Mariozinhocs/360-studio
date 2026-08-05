@@ -702,8 +702,37 @@ function initUIEvents() {
         }, 300);
     });
 
+    document.getElementById("search-users").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            clearTimeout(searchTimeout);
+            loadUsers();
+        }
+    });
+
     document.getElementById("filter-status").addEventListener("change", () => {
         loadUsers();
+    });
+
+    // Validador de tecla Enter dentro de caixas de texto de modais (simula o clique do botão Ok/Salvar)
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            const activeInput = document.activeElement;
+            if (activeInput && (activeInput.tagName === "INPUT" || activeInput.tagName === "SELECT")) {
+                const modal = activeInput.closest(".modal-overlay.active");
+                if (modal) {
+                    e.preventDefault();
+                    let btn = null;
+                    if (modal.id === "edit-user-modal") {
+                        btn = document.getElementById("btn-save-user-settings");
+                    } else if (modal.id === "reset-password-modal") {
+                        btn = document.getElementById("btn-submit-pwd-reset");
+                    } else if (modal.id === "batch-edit-modal") {
+                        btn = document.getElementById("btn-save-batch-settings");
+                    }
+                    if (btn) btn.click();
+                }
+            }
+        }
     });
 }
 

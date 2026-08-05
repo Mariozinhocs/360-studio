@@ -24,42 +24,49 @@
     *   Repositório Git inicializado localmente e sincronizado com o GitHub em [Mariozinhocs/360-studio](https://github.com/Mariozinhocs/360-studio.git).
     *   Arquivo `.gitignore` configurado para proteger arquivos de credenciais (`.env*`, `ftp_config*.json`) e banco local (`users.json`).
 
+4.  **Sincronização do Editor, Progresso de Upload e Melhorias de UX (Implantado em HML):**
+    *   **XMLHttpRequest com Progresso:** A função `uploadFileToServer` no [app.js](file:///G:/Meu%20Drive/Dev's/360/360/app.js) foi refatorada para usar `XMLHttpRequest`, permitindo monitorar o progresso do upload (porcentagem e barra visual) em tempo real.
+    *   **Validação de Limites de Upload:** Implementadas validações no backend ([api/upload.php](file:///G:/Meu%20Drive/Dev's/360/360/api/upload.php)) de tamanho máximo (15MB para imagens, 60MB para vídeos).
+    *   **Gerenciador de Hotspots na Barra Lateral:** Nova seção no menu lateral que lista todos os portais da cena ativa no modo edição e permite a exclusão direta (com propagação imediata no espaço 3D A-Frame e no banco via `api/save_tour.php`).
+    *   **Melhoria de Navegação (Modo Visualização):** O clique na miniatura do tour no dashboard redireciona o usuário diretamente em modo de visualização (`mode=view`), enquanto o botão "Editar" abre o editor.
+    *   **Validador com tecla Enter:** Event delegation global implementado nos scripts para capturar a tecla Enter nos modais ativos (criação de tours, redefinição de senha, edição de perfil, hotspot modal) e simular o clique no botão de ação principal.
+    *   **Debounce de Input:** Debounce de 500ms inserido na alteração do título do tour para evitar sobrecarga no servidor.
+    *   **Cache-Busters:** Cache-buster do dashboard atualizado para `v=1.0.5` e do editor para `v=1.0.4` para contornar cache persistente do navegador.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
 
 *   **Configurações e Infraestrutura:**
-    *   [.gitignore](file:///g:/Meu%20Drive/Dev's/360/360/.gitignore) ([NEW] Configuração de exclusão de arquivos sensíveis no Git [CONCLUÍDO])
+    *   [.gitignore](file:///g:/Meu%20Drive/Dev's/360/360/.gitignore) (Configuração de exclusão de arquivos sensíveis no Git [CONCLUÍDO])
+    *   [project_memory.md](file:///g:/Meu%20Drive/Dev's/360/360/project_memory.md) (Memória do projeto atualizada com status e roadmap [CONCLUÍDO])
 *   **APIs do Painel:**
-    *   [admin_helper.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/admin_helper.php) (Validação de privilégios e purga automatizada de 30 dias [CONCLUÍDO])
+    *   [admin_helper.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/admin_helper.php) (Validação de privilégios e purga [CONCLUÍDO])
     *   [list_users.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/list_users.php) (Suporte a filtro 'deleted' [CONCLUÍDO])
     *   [delete_user.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/delete_user.php) (Lógica dupla Soft Delete/Hard Delete [CONCLUÍDO])
     *   [bulk_delete.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/bulk_delete.php) (Lote duplo Soft/Hard Delete e correção do bloco try/catch [CONCLUÍDO])
-    *   [restore_user.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/restore_user.php) ([NEW] Endpoint para reverter exclusão lógica [CONCLUÍDO])
+    *   [restore_user.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/restore_user.php) (Endpoint para reverter exclusão lógica [CONCLUÍDO])
+    *   [upload.php](file:///g:/Meu%20Drive/Dev's/360/360/api/upload.php) (Implementadas validações de limite de tamanho de mídia [CONCLUÍDO])
 *   **Banco de Dados:**
     *   [schema.sql](file:///g:/Meu%20Drive/Dev's/360/360/api/schema.sql) (Ajuste para TINYINT e coluna deleted_at [CONCLUÍDO])
     *   [db_installer.php](file:///g:/Meu%20Drive/Dev's/360/360/db_installer.php) (Conversão de tipo e inclusão de deleted_at [CONCLUÍDO])
 *   **Interface:**
     *   [admin.html](file:///g:/Meu%20Drive/Dev's/360/360/admin.html) (Filtro lixeira e botão restaurar em lote [CONCLUÍDO])
-    *   [admin.js](file:///g:/Meu%20Drive/Dev's/360/360/admin.js) (Eventos dinâmicos para restauração, exclusão física e lote da lixeira [CONCLUÍDO])
-    *   [dashboard.html](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.html) (Adicionados cache-busters para scripts/estilos [CONCLUÍDO])
+    *   [admin.js](file:///g:/Meu%20Drive/Dev's/360/360/admin.js) (Eventos dinâmicos para lixeira e Enter key validation [CONCLUÍDO])
+    *   [dashboard.html](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.html) (Bumps de cache-buster para v=1.0.5 [CONCLUÍDO])
+    *   [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) (Links de miniatura, addEventListener nos cliques e logs de exclusão [CONCLUÍDO])
+    *   [dashboard.css](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.css) (Pointer-events desabilitado nos ícones dos botões de ação e cache-buster v=1.0.5 [CONCLUÍDO])
+    *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Barra de progresso de upload, seção lateral de hotspots e cache-buster [CONCLUÍDO])
+    *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium da barra de progresso e cartões de hotspots [CONCLUÍDO])
+    *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (XMLHttpRequest com progresso, listagem/deleção de hotspots, debounce e Enter key validation [CONCLUÍDO])
 
 ---
 
 ## 🎯 Próximos Passos (Ações para Continuar de Casa)
 
-1.  **Ajustes de Interface e Funcionalidades do Usuário (Nova Etapa):**
-    *   **Integração de Sincronização do Editor (`app.js`):**
-        *   Sincronizar a criação/edição de hotspots e cenas diretamente com as APIs `api/save_tour.php` e `api/get_tour.php?id=ID_DO_TOUR` (atualmente com fluxo parcial/local).
-        *   Garantir o upload real e otimização das mídias 360° via `api/upload.php` em substituição ao blob local temporário.
-    *   **Otimização de Mídias e Limites:**
-        *   Inserir validações de limites de uploads de imagens/vídeos equiretangulares de altíssima resolução no backend para gerenciar os custos de hospedagem.
-    *   **Melhorias Visuais e UX do Editor:** Refinar a interface visual do criador de tours (exibição de progresso no upload de fotos, transições mais elegantes e navegação responsiva).
-
-2.  **Limpeza Opcional (CONCLUÍDO):**
-    *   Removidos scripts de depuração de suporte (`check_session.php`, `check_mario_db.php`, `print_mario.php`, `print_users.php`, `promote_mario.php`) da base de código local e Git.
-
-3.  **Deploy em Produção (`prod`):**
+1.  **Investigação e Correção (Nova Etapa):**
+    *   **Debug da Exclusão de Tours:** O botão de excluir no dashboard (`dashboard.html`) continua sem resposta em algumas circunstâncias, sendo necessário inspecionar com console aberto no ambiente para identificar se há eventos concorrentes ou se a requisição é interceptada.
+2.  **Deploy em Produção (`prod`):**
     *   Executar o script `.\deploy-prod.ps1` localmente para enviar as atualizações testadas para o ambiente de produção.
     *   Acessar `https://tour360.hubdigital360.com/db_installer.php` (URL de produção) para atualizar a estrutura de tabelas do banco produtivo com a coluna `deleted_at` e tipo `TINYINT`.
 
@@ -68,5 +75,5 @@
 ## 🚀 Roadmap / Ideias de Monetização (Planos Superiores)
 
 *   **Exportação para Google Street View e Embed Externo (Plano Premium/Enterprise):**
-    *   **Embed em Outros Sites:** Permitir a geração de um código `<iframe>` ou script de embed leve para que imobiliárias e empresas incorporem os passeios 360° diretamente em suas landing pages ou sites institucionais.
-    *   **Integração Google Street View:** Possibilitar a exportação do tour (fotos esféricas com metadados de geolocalização e orientação) para publicação direta no Google Street View via API do Google.
+    *   **Embed em Outros Sites:** Permitir a geração de um código `<iframe>` ou script de embed leve para incorporação dos passeios 360° diretamente.
+    *   **Integração Google Street View:** Exportação direta das fotos esféricas via API do Google.

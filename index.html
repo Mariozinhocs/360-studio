@@ -46,6 +46,16 @@
                     <span class="file-info">Suporta JPG e MP4 360° (Equiretangulares)</span>
                     <input type="file" id="file-input" multiple accept="image/jpeg,image/png,video/mp4" style="display: none;">
                 </div>
+                <!-- Barra de progresso de upload -->
+                <div id="upload-progress-container" class="upload-progress-container" style="display: none; margin-top: 12px;">
+                    <div class="upload-progress-info">
+                        <span id="upload-filename">Enviando arquivo...</span>
+                        <span id="upload-percentage">0%</span>
+                    </div>
+                    <div class="upload-progress-bar-bg">
+                        <div id="upload-progress-bar" class="upload-progress-bar" style="width: 0%;"></div>
+                    </div>
+                </div>
             </div>
 
             <!-- Lista de Cenas -->
@@ -55,6 +65,17 @@
                     <span class="badge" id="scenes-count">0</span>
                 </div>
                 <div class="scenes-list" id="scenes-list">
+                    <!-- Gerado dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Lista de Hotspots da Cena Ativa (Apenas no Modo Edição) -->
+            <div class="hotspots-section" id="hotspots-sidebar-section" style="display: none;">
+                <div class="section-title-row">
+                    <h3>Portais desta Cena</h3>
+                    <span class="badge" id="hotspots-count">0</span>
+                </div>
+                <div class="hotspots-list" id="hotspots-list">
                     <!-- Gerado dinamicamente -->
                 </div>
             </div>
@@ -188,6 +209,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js"></script>
+    <script src="app.js?v=1.0.4"></script>
 </body>
 </html>

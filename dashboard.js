@@ -196,17 +196,19 @@ function renderTours() {
         const publicUrl = `${window.location.origin}${window.location.pathname.replace("dashboard.html", "index.html")}?id=${tour.id}`;
 
         card.innerHTML = `
-            <div class="project-preview">
-                ${imgTag}
-                <div class="project-overlay">
-                    <button class="btn btn-secondary btn-circle btn-view-public" title="Ver Link Público" data-url="${publicUrl}">
-                        <i class="fa-solid fa-share-nodes"></i>
-                    </button>
+            <a href="index.html?id=${tour.id}&mode=view" class="project-preview-link" style="text-decoration: none; color: inherit; display: block;">
+                <div class="project-preview">
+                    ${imgTag}
+                    <div class="project-overlay">
+                        <button class="btn btn-secondary btn-circle btn-view-public" title="Ver Link Público" data-url="${publicUrl}">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </button>
+                    </div>
+                    <div class="project-scenes-badge">
+                        <i class="fa-solid fa-cubes"></i> <span>${tour.scenes_count} cenas</span>
+                    </div>
                 </div>
-                <div class="project-scenes-badge">
-                    <i class="fa-solid fa-cubes"></i> <span>${tour.scenes_count} cenas</span>
-                </div>
-            </div>
+            </a>
             <div class="project-details">
                 <h3 class="project-title" title="${tour.title}">${tour.title}</h3>
                 <span class="project-date">Atualizado em: ${formatDate(tour.updated_at)}</span>
@@ -223,14 +225,16 @@ function renderTours() {
         `;
 
         // Evento de deletar
-        card.querySelector(".btn-delete-project").onclick = (e) => {
+        card.querySelector(".btn-delete-project").addEventListener("click", (e) => {
             e.preventDefault();
+            console.log("Botão de deletar clicado para o projeto ID:", tour.id);
             deleteTour(tour.id);
-        };
+        });
 
         // Evento de compartilhar / copiar link público
-        card.querySelector(".btn-view-public").onclick = (e) => {
+        card.querySelector(".btn-view-public").addEventListener("click", (e) => {
             e.preventDefault();
+            e.stopPropagation(); // Evita navegar para o link da miniatura
             const url = e.currentTarget.dataset.url;
             navigator.clipboard.writeText(url).then(() => {
                 showToast("Link público copiado para a área de transferência!", "success");
@@ -238,7 +242,7 @@ function renderTours() {
                 // Fallback abrindo a aba
                 window.open(url, "_blank");
             });
-        };
+        });
 
         grid.appendChild(card);
     });
@@ -246,7 +250,9 @@ function renderTours() {
 
 // --- APAGAR TOUR ---
 async function deleteTour(id) {
+    console.log("Chamando deleteTour para o ID:", id);
     if (!confirm("Tem certeza absoluta de que deseja excluir este tour virtual? Isso apagará todas as cenas e hotspots criados permanentemente.")) {
+        console.log("Exclusão cancelada pelo usuário no confirm.");
         return;
     }
 
@@ -335,6 +341,24 @@ function initDOMEvents() {
     document.getElementById("btn-close-create-modal").onclick = closeCreateModal;
     document.getElementById("btn-cancel-create").onclick = closeCreateModal;
     document.getElementById("btn-submit-create").onclick = createTour;
+
+    // Validador de tecla Enter dentro de caixas de texto de modais (simula o clique do botão Ok/Salvar)
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+            const activeInput = document.activeElement;
+            if (activeInput && (activeInput.tagName === "INPUT" || activeInput.tagName === "SELECT")) {
+                const modal = activeInput.closest(".modal-overlay.active");
+                if (modal) {
+                    e.preventDefault();
+                    let btn = null;
+                    if (modal.id === "create-tour-modal") {
+                        btn = document.getElementById("btn-submit-create");
+                    }
+                    if (btn) btn.click();
+                }
+            }
+        }
+    });
 }
 
 function formatDate(dateStr) {

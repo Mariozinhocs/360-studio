@@ -591,6 +591,10 @@
     color: var(--color-pink);
 }
 
+.project-actions .btn-delete-project i {
+    pointer-events: none;
+}
+
 .project-actions .btn-delete-project:hover {
     background: var(--color-pink);
     color: #fff;
