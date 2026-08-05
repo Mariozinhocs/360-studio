@@ -56,8 +56,8 @@
         *   Inserir validações de limites de uploads de imagens/vídeos equiretangulares de altíssima resolução no backend para gerenciar os custos de hospedagem.
     *   **Melhorias Visuais e UX do Editor:** Refinar a interface visual do criador de tours (exibição de progresso no upload de fotos, transições mais elegantes e navegação responsiva).
 
-2.  **Limpeza Opcional:**
-    *   Remover scripts de depuração de suporte (`check_session.php`, `check_mario_db.php`, `print_mario.php`, etc.) se julgar necessário na hospedagem.
+2.  **Limpeza Opcional (CONCLUÍDO):**
+    *   Removidos scripts de depuração de suporte (`check_session.php`, `check_mario_db.php`, `print_mario.php`, `print_users.php`, `promote_mario.php`) da base de código local e Git.
 
 3.  **Deploy em Produção (`prod`):**
     *   Executar o script `.\deploy-prod.ps1` localmente para enviar as atualizações testadas para o ambiente de produção.
