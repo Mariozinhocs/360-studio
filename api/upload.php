@@ -72,6 +72,29 @@ if ($file['size'] > $max_allowed_size) {
     exit;
 }
 
+// Validar dimensões da imagem (Máximo 8K = 8192px largura ou altura)
+if (!$is_video) {
+    $dimensions = getimagesize($file['tmp_name']);
+    if ($dimensions !== false) {
+        $width = $dimensions[0];
+        $height = $dimensions[1];
+        $max_dimension = 8192;
+        
+        if ($width > $max_dimension || $height > $max_dimension) {
+            http_response_code(400);
+            echo json_encode([
+                'success' => false,
+                'message' => "As dimensões da imagem ({$width}x{$height}) excedem o limite máximo de {$max_dimension}x{$max_dimension} pixels."
+            ]);
+            exit;
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Não foi possível validar as dimensões da imagem.']);
+        exit;
+    }
+}
+
 // Criar pasta de uploads se não existir
 $upload_dir = dirname(__DIR__) . '/uploads';
 if (!file_exists($upload_dir)) {

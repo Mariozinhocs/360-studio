@@ -34,15 +34,48 @@ if (empty($tourId) || empty($title) || $scenes === null) {
 }
 
 try {
-    // Verificar se o tour existe e pertence ao usuário
-    $stmt = $pdo->prepare("SELECT id FROM " . TABLE_PREFIX . "tours WHERE id = ? AND user_id = ?");
+    // Verificar se o tour existe e pertence ao usuário, e obter as cenas atuais
+    $stmt = $pdo->prepare("SELECT scenes_json FROM " . TABLE_PREFIX . "tours WHERE id = ? AND user_id = ?");
     $stmt->execute([$tourId, $_SESSION['user_id']]);
-    $tourExists = $stmt->fetch();
+    $existingTour = $stmt->fetch();
 
-    if (!$tourExists) {
+    if (!$existingTour) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Tour não encontrado ou você não tem permissão para editá-lo.']);
         exit;
+    }
+
+    // Identificar e apagar fisicamente arquivos de mídias deletadas
+    $old_scenes = json_decode($existingTour['scenes_json'], true);
+    if (is_array($old_scenes)) {
+        $new_files = [];
+        if (is_array($scenes)) {
+            foreach ($scenes as $scene) {
+                if (isset($scene['sourceUrl']) && !empty($scene['sourceUrl'])) {
+                    $new_files[] = $scene['sourceUrl'];
+                }
+            }
+        }
+
+        foreach ($old_scenes as $old_scene) {
+            if (isset($old_scene['sourceUrl']) && !empty($old_scene['sourceUrl'])) {
+                $old_url = $old_scene['sourceUrl'];
+                
+                // Se a mídia antiga não está na nova lista, remove do disco
+                if (!in_array($old_url, $new_files)) {
+                    if (strpos($old_url, 'uploads/') === 0) {
+                        $file_path = dirname(__DIR__) . '/' . $old_url;
+                        $real_path = realpath($file_path);
+                        $uploads_dir = realpath(dirname(__DIR__) . '/uploads');
+                        
+                        // Garante que o arquivo está na pasta de uploads e previne path traversal
+                        if ($real_path && strpos($real_path, $uploads_dir) === 0 && file_exists($real_path)) {
+                            unlink($real_path);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     $scenes_json = json_encode($scenes);

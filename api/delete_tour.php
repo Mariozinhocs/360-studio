@@ -20,8 +20,8 @@ if (empty($tourId)) {
 }
 
 try {
-    // Verificar se o tour existe e pertence ao usuário
-    $stmt = $pdo->prepare("SELECT id FROM " . TABLE_PREFIX . "tours WHERE id = ? AND user_id = ?");
+    // Verificar se o tour existe e pertence ao usuário e obter as cenas
+    $stmt = $pdo->prepare("SELECT scenes_json FROM " . TABLE_PREFIX . "tours WHERE id = ? AND user_id = ?");
     $stmt->execute([$tourId, $_SESSION['user_id']]);
     $tour = $stmt->fetch();
 
@@ -29,6 +29,25 @@ try {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Tour não encontrado ou você não tem permissão para excluí-lo.']);
         exit;
+    }
+
+    // Deletar fisicamente todas as mídias associadas ao tour
+    $scenes = json_decode($tour['scenes_json'], true);
+    if (is_array($scenes)) {
+        foreach ($scenes as $scene) {
+            if (isset($scene['sourceUrl']) && !empty($scene['sourceUrl'])) {
+                $url = $scene['sourceUrl'];
+                if (strpos($url, 'uploads/') === 0) {
+                    $file_path = dirname(__DIR__) . '/' . $url;
+                    $real_path = realpath($file_path);
+                    $uploads_dir = realpath(dirname(__DIR__) . '/uploads');
+                    
+                    if ($real_path && strpos($real_path, $uploads_dir) === 0 && file_exists($real_path)) {
+                        unlink($real_path);
+                    }
+                }
+            }
+        }
     }
 
     // Deletar o tour
