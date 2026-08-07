@@ -32,7 +32,7 @@
     *   **Validador com tecla Enter:** Event delegation global implementado nos scripts para capturar a tecla Enter nos modais ativos (criação de tours, redefinição de senha, edição de perfil, hotspot modal) e simular o clique no botão de ação principal.
     *   **Debounce de Input:** Debounce de 500ms inserido na alteração do título do tour para evitar sobrecarga no servidor.
     *   **Cache-Busters:** Cache-buster do dashboard atualizado para `v=1.0.5` e do editor para `v=1.0.4` para contornar cache persistente do navegador.
-    *   **Controle de Redirecionamento de Auth:** Removido o redirecionamento automático baseado em sessão ativa (`check_auth.php`) ao carregar o formulário em [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html), permitindo que o usuário veja as caixas de login e escolha/autocomplete qual conta deseja utilizar.
+    *   **Controle de Redirecionamento de Auth:** Removido o redirecionamento automático baseado em sessão ativa (`check_auth.php`) ao carregar o formulário em [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html). Além disso, os campos de login/senha foram definidos como `readonly` por padrão no carregamento, sendo habilitados dinamicamente via `onfocus` quando o usuário clica ou foca neles. Isso impede que o navegador preencha os campos automaticamente sem autorização no load da página, garantindo que o usuário veja apenas o placeholder original até que decida clicar no campo e escolher a conta salva que deseja utilizar.
 
 ---
 
@@ -60,7 +60,7 @@
     *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Barra de progresso de upload, seção lateral de hotspots e cache-buster [CONCLUÍDO])
     *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium da barra de progresso e cartões de hotspots [CONCLUÍDO])
     *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (XMLHttpRequest com progresso, listagem/deleção de hotspots, debounce e Enter key validation [CONCLUÍDO])
-    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect de sessão ativa para permitir seleção de contas salvas [CONCLUÍDO])
+    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect de sessão ativa e adicionado controle de autofill de credenciais via readonly/onfocus [CONCLUÍDO])
 
 ---
 
