@@ -34,13 +34,17 @@
             <p class="auth-subtitle">Acesse seus projetos de Tour Virtual 360°</p>
 
             <form id="login-form">
+                <!-- Inputs falsos invisíveis para capturar o preenchimento automático do navegador -->
+                <input type="text" name="fake_username_autofill" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;" tabindex="-1" autocomplete="off" />
+                <input type="password" name="fake_password_autofill" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;" tabindex="-1" autocomplete="off" />
+
                 <div class="form-group">
                     <label for="login-username"><i class="fa-regular fa-circle-user"></i> Usuário ou E-mail</label>
-                    <input type="text" id="login-username" required placeholder="Nome de usuário ou e-mail" readonly onfocus="this.removeAttribute('readonly');">
+                    <input type="text" id="login-username" required placeholder="Nome de usuário ou e-mail">
                 </div>
                 <div class="form-group">
                     <label for="login-password"><i class="fa-solid fa-lock"></i> Senha</label>
-                    <input type="password" id="login-password" required placeholder="••••••••" readonly onfocus="this.removeAttribute('readonly');">
+                    <input type="password" id="login-password" required placeholder="••••••••">
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">
                     <span>Entrar na Plataforma</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
