@@ -4,6 +4,9 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
+// Definir fuso horário padrão do PHP como UTC
+date_default_timezone_set('UTC');
+
 // Header padrão JSON
 header('Content-Type: application/json; charset=utf-8');
 
@@ -54,6 +57,8 @@ try {
         PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
         PDO::ATTR_EMULATE_PREPARES => false,
     ]);
+    // Forçar fuso horário da conexão MySQL para UTC para garantir consistência
+    $pdo->exec("SET time_zone = '+00:00'");
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['success' => false, 'message' => 'Erro ao conectar ao banco de dados: ' . $e->getMessage()]);

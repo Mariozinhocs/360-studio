@@ -200,9 +200,9 @@ function renderTours() {
                 <div class="project-preview">
                     ${imgTag}
                     <div class="project-overlay">
-                        <button class="btn btn-secondary btn-circle btn-view-public" title="Ver Link Público" data-url="${publicUrl}">
+                        <span class="btn btn-secondary btn-circle btn-view-public" title="Ver Link Público" data-url="${publicUrl}">
                             <i class="fa-solid fa-share-nodes"></i>
-                        </button>
+                        </span>
                     </div>
                     <div class="project-scenes-badge">
                         <i class="fa-solid fa-cubes"></i> <span>${tour.scenes_count} cenas</span>
@@ -227,6 +227,7 @@ function renderTours() {
         // Evento de deletar
         card.querySelector(".btn-delete-project").addEventListener("click", (e) => {
             e.preventDefault();
+            e.stopPropagation(); // Evita qualquer propagação ou clique concorrente no card
             console.log("Botão de deletar clicado para o projeto ID:", tour.id);
             deleteTour(tour.id);
         });
@@ -362,7 +363,19 @@ function initDOMEvents() {
 }
 
 function formatDate(dateStr) {
-    const d = new Date(dateStr);
+    if (!dateStr) return "";
+    
+    // Normaliza datas no formato MySQL "YYYY-MM-DD HH:MM:SS" para ISO 8601 UTC ("YYYY-MM-DDTHH:MM:SSZ")
+    let normalizedStr = dateStr;
+    if (dateStr.includes(" ") && !dateStr.includes("Z") && !dateStr.includes("T") && !dateStr.includes("+") && !dateStr.includes("-")) {
+        normalizedStr = dateStr.replace(" ", "T") + "Z";
+    }
+    
+    const d = new Date(normalizedStr);
+    if (isNaN(d.getTime())) {
+        return dateStr;
+    }
+    
     return d.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",

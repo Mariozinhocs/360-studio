@@ -65,7 +65,7 @@
 ## 🎯 Próximos Passos (Ações para Continuar de Casa)
 
 1.  **Investigação e Correção (Nova Etapa):**
-    *   **Debug da Exclusão de Tours:** O botão de excluir no dashboard (`dashboard.html`) continua sem resposta em algumas circunstâncias, sendo necessário inspecionar com console aberto no ambiente para identificar se há eventos concorrentes ou se a requisição é interceptada.
+    *   **Debug da Exclusão de Tours [CONCLUÍDO]:** Identificado que o botão de compartilhar (.btn-view-public) estava estruturado como `<button>` dentro do link `<a>` do card (violação da especificação HTML5 de tags interativas aninhadas). Isso forçava os navegadores a auto-corrigirem o DOM fechando e reabrindo links indesejados, fazendo o clique em excluir (`.btn-delete-project`) herdar o redirecionamento da página e cancelar o fetch do delete. Corrigido substituindo a tag `<button>` interna por `<span>` e adicionando `e.stopPropagation()` no botão de exclusão para evitar propagação indesejada.
 2.  **Deploy em Produção (`prod`):**
     *   Executar o script `.\deploy-prod.ps1` localmente para enviar as atualizações testadas para o ambiente de produção.
     *   Acessar `https://tour360.hubdigital360.com/db_installer.php` (URL de produção) para atualizar a estrutura de tabelas do banco produtivo com a coluna `deleted_at` e tipo `TINYINT`.

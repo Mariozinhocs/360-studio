@@ -881,7 +881,20 @@ function formatCurrency(val) {
 
 function formatDate(dateStr) {
     if (!dateStr) return "";
-    const d = new Date(dateStr.replace(" ", "T"));
+    
+    // Normaliza datas no formato MySQL "YYYY-MM-DD HH:MM:SS" para ISO 8601 UTC ("YYYY-MM-DDTHH:MM:SSZ")
+    let normalizedStr = dateStr;
+    if (dateStr.includes(" ") && !dateStr.includes("Z") && !dateStr.includes("T") && !dateStr.includes("+") && !dateStr.includes("-")) {
+        normalizedStr = dateStr.replace(" ", "T") + "Z";
+    } else if (dateStr.includes("T") && !dateStr.includes("Z") && !dateStr.includes("+") && !dateStr.includes("-")) {
+        normalizedStr = dateStr + "Z";
+    }
+    
+    const d = new Date(normalizedStr);
+    if (isNaN(d.getTime())) {
+        return dateStr;
+    }
+    
     return d.toLocaleDateString("pt-BR", {
         day: "2-digit",
         month: "2-digit",
