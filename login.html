@@ -91,6 +91,18 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script>
+        // Limpar preenchimento automático indesejado do navegador no carregamento inicial
+        const clearAutofillFields = () => {
+            const u = document.getElementById('login-username');
+            const p = document.getElementById('login-password');
+            if (u && u.value && document.activeElement !== u) u.value = '';
+            if (p && p.value && document.activeElement !== p) p.value = '';
+        };
+        // Executa em múltiplos intervalos para cobrir o atraso de preenchimento de extensões/navegadores
+        [50, 150, 300, 600, 1000].forEach(delay => {
+            setTimeout(clearAutofillFields, delay);
+        });
+
         // Sincronizar Toasts
         function showToast(message, type = "info") {
             const container = document.getElementById("toast-container");
