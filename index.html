@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- Redirecionamento de segurança para login caso não haja ID de tour -->
     <script>
         const urlParams = new URLSearchParams(window.location.search);
         if (!urlParams.has('id')) {
-            window.location.href = 'login.html';
+            window.location.href = 'login.html?v=1.0.6';
         }
     </script>
     <title>A-Team 360° Studio - Plataforma de Tours Virtuais</title>
@@ -22,7 +21,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=1.1.0">
 </head>
 <body>
     <div class="app-container">
@@ -86,6 +85,36 @@
                     <!-- Gerado dinamicamente -->
                 </div>
             </div>
+
+            <!-- Planta Baixa (Mapa Interativo) -->
+            <div class="floorplan-section" id="floorplan-sidebar-section">
+                <div class="section-title-row">
+                    <h3>Planta Baixa</h3>
+                    <span class="badge" id="floorplan-status-badge" style="background: rgba(255,255,255,0.1); color: var(--text-secondary); font-size: 10px;">Sem Mapa</span>
+                </div>
+                
+                <!-- Estado sem mapa -->
+                <div id="floorplan-upload-zone" class="floorplan-upload-zone" style="margin-top: 10px;">
+                    <i class="fa-solid fa-map-location-dot" style="font-size: 24px; color: var(--color-purple); margin-bottom: 8px;"></i>
+                    <p style="font-size: 12px; margin: 0; opacity: 0.8;">Carregar Planta Baixa (JPG/PNG)</p>
+                    <input type="file" id="floorplan-file-input" accept="image/jpeg,image/png" style="display: none;">
+                </div>
+
+                <!-- Estado com mapa -->
+                <div id="floorplan-preview-container" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    <div class="floorplan-preview-box">
+                        <img id="floorplan-preview-img" src="" alt="Planta Baixa" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: block; max-height: 120px; object-fit: contain; background: rgba(0,0,0,0.2);">
+                    </div>
+                    <div class="floorplan-actions-row" style="display: flex; gap: 8px;">
+                        <button id="btn-open-floorplan-editor" class="btn btn-secondary btn-sm btn-flex" style="flex: 1; border-color: #00f2fe; color: #00f2fe; background: rgba(0, 242, 254, 0.08); font-size: 11px; padding: 6px;">
+                            <i class="fa-solid fa-arrows-to-dot"></i> Ajustar Radares
+                        </button>
+                        <button id="btn-delete-floorplan" class="btn btn-secondary btn-sm" title="Excluir Planta Baixa" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 6px 10px;">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
             
             <div class="sidebar-footer">
                 <button id="btn-export" class="btn btn-secondary">
@@ -128,7 +157,7 @@
 
                     <!-- Câmera com cursor para interagir com os hotspots -->
                     <a-entity id="rig" position="0 0 0">
-                        <a-camera id="camera" look-controls="pointerLockEnabled: false; reverseMouseDrag: true" wasd-controls="enabled: false">
+                        <a-camera id="camera" look-controls="pointerLockEnabled: false; reverseMouseDrag: true" wasd-controls="enabled: false" rotation-listener>
                             <!-- Cursor visual que aparece no centro da tela no modo edição e visualização se necessário -->
                             <a-cursor id="scene-cursor" 
                                       position="0 0 -1" 
@@ -183,6 +212,29 @@
                     <input type="range" id="video-volume" min="0" max="1" step="0.1" value="1" class="volume-slider">
                 </div>
             </div>
+
+            <!-- Widget de Planta Baixa para Visitante -->
+            <div class="floorplan-widget" id="floorplan-widget" style="display: none;">
+                <!-- Botão de Minimizar / Expandir -->
+                <button class="floorplan-widget-toggle" id="btn-toggle-widget" title="Ver Planta Baixa">
+                    <i class="fa-solid fa-map"></i>
+                </button>
+                
+                <!-- Conteúdo Expandido (Glassmorphism) -->
+                <div class="floorplan-widget-card glassmorphism" id="floorplan-widget-card">
+                    <div class="floorplan-widget-header">
+                        <h4><i class="fa-solid fa-map-location-dot"></i> Planta Baixa</h4>
+                        <button class="floorplan-widget-close" id="btn-close-widget">&times;</button>
+                    </div>
+                    <div class="floorplan-widget-body">
+                        <div class="floorplan-widget-map-wrapper" id="floorplan-widget-map-wrapper">
+                            <img id="floorplan-widget-img" src="" alt="Planta Baixa">
+                            <!-- Radares/Pinos serão renderizados dinamicamente aqui -->
+                            <div id="floorplan-widget-radars-container"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
@@ -212,10 +264,63 @@
         </div>
     </div>
 
+    <!-- MODAL DO EDITOR DE PLANTA BAIXA -->
+    <div class="modal-overlay" id="floorplan-editor-modal">
+        <div class="modal-card glassmorphism floorplan-editor-card" style="max-width: 900px; width: 95%;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-map-location-dot"></i> Ajustar Radares na Planta Baixa</h2>
+                <button class="close-btn" id="btn-close-floorplan-editor">&times;</button>
+            </div>
+            <div class="modal-body floorplan-editor-body" style="padding-top: 10px;">
+                <div class="floorplan-editor-layout" style="display: flex; gap: 20px; min-height: 400px;">
+                    <!-- Coluna da esquerda: lista de cenas -->
+                    <div class="floorplan-editor-scenes" style="width: 250px; display: flex; flex-direction: column; gap: 10px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px; flex-shrink: 0;">
+                        <h3 style="font-size: 14px; color: var(--color-blue); margin-top: 0; margin-bottom: 5px;">1. Selecione a Cena</h3>
+                        <div class="floorplan-editor-scenes-list" id="floorplan-editor-scenes-list" style="display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 380px; padding-right: 5px;">
+                            <!-- Gerado dinamicamente -->
+                        </div>
+                    </div>
+                    
+                    <!-- Coluna da direita: o mapa interativo -->
+                    <div class="floorplan-editor-workspace" style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
+                        <div class="workspace-header" style="margin-bottom: 5px;">
+                            <h3 style="font-size: 14px; color: var(--color-blue); margin-top: 0; margin-bottom: 5px;">2. Clique na Planta para Posicionar o Radar</h3>
+                            <span class="field-hint" style="font-size: 11px; opacity: 0.7;">A cena selecionada receberá o radar no ponto clicado.</span>
+                        </div>
+                        
+                        <div class="floorplan-map-container" id="floorplan-map-container" style="position: relative; flex: 1; min-height: 300px; max-height: 400px; background: rgba(0,0,0,0.3); border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); overflow: hidden; display: flex; align-items: center; justify-content: center; cursor: crosshair;">
+                            <img id="floorplan-editor-img" src="" alt="Planta Baixa Editor" style="max-width: 100%; max-height: 100%; object-fit: contain; pointer-events: none; display: block;">
+                            <!-- Pinos e radares colocados -->
+                            <div id="floorplan-editor-pins-container" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></div>
+                        </div>
+                        
+                        <!-- Controles de Yaw Offset (Direção Inicial) -->
+                        <div class="floorplan-yaw-controls" id="floorplan-yaw-controls" style="display: none; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); padding: 12px; border-radius: 8px; flex-direction: column; gap: 10px;">
+                            <div class="yaw-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                <label for="floorplan-yaw-slider" style="font-size: 12px; font-weight: 500; color: #fff;"><i class="fa-solid fa-compass"></i> Direção Inicial (Ângulo do Radar): <span id="floorplan-yaw-value" style="color: #00f2fe; font-weight: 600;">0°</span></label>
+                            </div>
+                            <div class="yaw-slider-row" style="display: flex; align-items: center; gap: 15px;">
+                                <input type="range" id="floorplan-yaw-slider" min="-180" max="180" value="0" class="yaw-slider" style="flex: 1; accent-color: #00f2fe;">
+                                <button class="btn btn-secondary btn-sm" id="btn-remove-radar" title="Remover este radar da planta" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 6px 12px; font-size: 11px;">
+                                    <i class="fa-solid fa-trash-can"></i> Remover Ponto
+                                </button>
+                            </div>
+                            <span class="field-hint" style="font-size: 11px; opacity: 0.6; line-height: 1.4;">Gire o slider para ajustar a direção da câmera A-Frame representada pelo cone de luz do radar na planta.</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" id="btn-save-floorplan-editor">Concluir e Salvar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Notificações Toast -->
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.0.4"></script>
+    <script src="app.js?v=1.1.0"></script>
 </body>
 </html>

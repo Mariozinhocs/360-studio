@@ -29,6 +29,9 @@
                 <a href="admin.html" id="btn-admin-panel" class="btn btn-secondary btn-sm" style="display: none; border-color: var(--color-purple); color: #b16ef2; background: rgba(155, 81, 224, 0.08); text-decoration: none;">
                     <i class="fa-solid fa-user-shield"></i> Painel Admin
                 </a>
+                <button id="btn-edit-profile" class="btn btn-secondary btn-sm" title="Editar Perfil" style="border-color: #00f2fe; color: #00f2fe; background: rgba(0, 242, 254, 0.08);">
+                    <i class="fa-solid fa-user-gear"></i> Perfil
+                </button>
                 <button id="btn-logout" class="btn btn-secondary btn-sm" title="Sair da Conta">
                     <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
                 </button>
@@ -115,10 +118,92 @@
         </div>
     </div>
 
+    <!-- MODAL DE EDIÇÃO DE PERFIL -->
+    <div class="modal-overlay" id="profile-modal">
+        <div class="modal-card glassmorphism">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-user-gear"></i> Configurações do Perfil</h2>
+                <button class="close-btn" id="btn-close-profile-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="profile-name">Nome Completo</label>
+                    <input type="text" id="profile-name" placeholder="Seu nome" required>
+                </div>
+                <div class="form-group">
+                    <label for="profile-email">E-mail</label>
+                    <input type="email" id="profile-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label for="profile-timezone">Fuso Horário</label>
+                    <select id="profile-timezone" required>
+                        <optgroup label="América / Brasil">
+                            <option value="America/Sao_Paulo">Brasília (UTC-3) - America/Sao_Paulo</option>
+                            <option value="America/Manaus">Manaus (UTC-4) - America/Manaus</option>
+                            <option value="America/Belem">Belém (UTC-3) - America/Belem</option>
+                            <option value="America/Fortaleza">Fortaleza (UTC-3) - America/Fortaleza</option>
+                            <option value="America/Recife">Recife (UTC-3) - America/Recife</option>
+                            <option value="America/Cuiaba">Cuiabá (UTC-4) - America/Cuiaba</option>
+                            <option value="America/Porto_Velho">Porto Velho (UTC-4) - America/Porto_Velho</option>
+                            <option value="America/Boa_Vista">Boa Vista (UTC-4) - America/Boa_Vista</option>
+                            <option value="America/Rio_Branco">Rio Branco (UTC-5) - America/Rio_Branco</option>
+                            <option value="America/Noronha">Fernando de Noronha (UTC-2) - America/Noronha</option>
+                        </optgroup>
+                        <optgroup label="Outros / Globais">
+                            <option value="UTC">Coordinated Universal Time (UTC) / GMT</option>
+                            <option value="America/New_York">Nova York (UTC-5/EDT) - America/New_York</option>
+                            <option value="Europe/London">Londres (UTC+0/BST) - Europe/London</option>
+                            <option value="Europe/Paris">Paris (UTC+1/CEST) - Europe/Paris</option>
+                        </optgroup>
+                    </select>
+                </div>
+                
+                <h3 style="margin-top: 20px; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 6px; color: #b16ef2;"><i class="fa-solid fa-crown"></i> Plano de Assinatura</h3>
+                
+                <!-- Campos editáveis exibidos apenas para Administradores -->
+                <div id="profile-admin-plan-fields" style="display: none;">
+                    <div class="form-group" style="margin-top: 10px;">
+                        <label for="profile-sub-status">Status do Plano</label>
+                        <select id="profile-sub-status">
+                            <option value="trial">Trial (Período de Testes)</option>
+                            <option value="active">Premium (Ativo)</option>
+                            <option value="expired">Expirado (Sem Acesso)</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="profile-sub-expires">Expiração do Plano</label>
+                        <input type="datetime-local" id="profile-sub-expires">
+                        <span class="field-hint">Necessário apenas se for Trial ou Expiração agendada.</span>
+                    </div>
+                </div>
+
+                <!-- Informação de plano para Usuários Comuns (apenas leitura + link placeholder) -->
+                <div id="profile-user-plan-info" style="display: none; margin-top: 10px;">
+                    <div class="form-group">
+                        <label>Plano Atual</label>
+                        <div style="display: flex; align-items: center; justify-content: space-between; background: rgba(255,255,255,0.05); padding: 10px 14px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); margin-top: 5px;">
+                            <div>
+                                <span id="profile-display-plan-badge" class="sub-badge" style="display: inline-block;">Premium</span>
+                                <span id="profile-display-plan-detail" style="font-size: 12px; opacity: 0.7; margin-left: 8px;">Acesso ilimitado</span>
+                            </div>
+                            <a href="#" id="profile-upgrade-link" class="highlight" style="font-size: 13px; text-decoration: none; font-weight: 600; color: #00f2fe;" onclick="alert('Funcionalidade de Assinatura/Upgrade em desenvolvimento (integração Stripe/Pix). Para testar o plano premium agora, utilize a simulação de pagamento na barra lateral do painel!'); return false;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Upgrade</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btn-cancel-profile">Cancelar</button>
+                    <button class="btn btn-primary" id="btn-save-profile">Salvar Alterações</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script de lógica do Dashboard -->
-    <script src="dashboard.js?v=1.0.5"></script>
+    <script src="dashboard.js?v=1.0.9"></script>
 </body>
 </html>

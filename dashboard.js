@@ -42,7 +42,7 @@ async function checkAuth() {
             return true;
         } else {
             // Se não logado, redireciona para login.html
-            window.location.href = 'login.html';
+            window.location.href = 'login.html?v=1.0.6';
             return false;
         }
     } catch (err) {
@@ -325,13 +325,138 @@ function closeCreateModal() {
     document.getElementById("create-tour-modal").classList.remove("active");
 }
 
+// --- MODAL DE PERFIL ---
+function openProfileModal() {
+    const user = dashboardState.user;
+    if (!user) return;
+    
+    document.getElementById("profile-name").value = user.name || "";
+    document.getElementById("profile-email").value = user.email || "";
+    document.getElementById("profile-timezone").value = user.timezone || "America/Sao_Paulo";
+    
+    // Controle de exibição condicional do Plano
+    const isAdmin = parseInt(user.is_admin) >= 1;
+    const adminFields = document.getElementById("profile-admin-plan-fields");
+    const userFields = document.getElementById("profile-user-plan-info");
+    
+    if (isAdmin) {
+        if (adminFields) adminFields.style.display = "block";
+        if (userFields) userFields.style.display = "none";
+        
+        document.getElementById("profile-sub-status").value = user.subscription_status || "trial";
+        if (user.subscription_expires_at) {
+            const formatted = user.subscription_expires_at.replace(" ", "T").substring(0, 16);
+            document.getElementById("profile-sub-expires").value = formatted;
+        } else {
+            document.getElementById("profile-sub-expires").value = "";
+        }
+    } else {
+        if (adminFields) adminFields.style.display = "none";
+        if (userFields) userFields.style.display = "block";
+        
+        const badge = document.getElementById("profile-display-plan-badge");
+        const detail = document.getElementById("profile-display-plan-detail");
+        
+        if (badge && detail) {
+            badge.className = "sub-badge"; // Reset
+            
+            if (user.subscription_status === 'active') {
+                badge.classList.add("badge-active");
+                badge.textContent = "Premium";
+                detail.textContent = "Acesso ilimitado liberado.";
+            } else if (user.subscription_status === 'trial') {
+                badge.classList.add("badge-trial");
+                badge.textContent = "Trial Grátis";
+                
+                if (user.subscription_expires_at) {
+                    const expiryDate = new Date(user.subscription_expires_at.replace(" ", "T") + "Z");
+                    const today = new Date();
+                    const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
+                    detail.textContent = diffDays > 0 ? `${diffDays} dia(s) restante(s) de teste.` : "Período de testes expirado.";
+                } else {
+                    detail.textContent = "Período de testes ativo.";
+                }
+            } else {
+                badge.classList.add("badge-expired");
+                badge.textContent = "Expirado";
+                detail.textContent = "Assinatura expirada. Faça upgrade.";
+            }
+        }
+    }
+    
+    document.getElementById("profile-modal").classList.add("active");
+}
+
+function closeProfileModal() {
+    document.getElementById("profile-modal").classList.remove("active");
+}
+
+async function saveProfile() {
+    const user = dashboardState.user;
+    if (!user) return;
+
+    const name = document.getElementById("profile-name").value.trim();
+    const email = document.getElementById("profile-email").value.trim();
+    const timezone = document.getElementById("profile-timezone").value;
+    
+    if (!name || !email) {
+        alert("Nome e e-mail são obrigatórios.");
+        return;
+    }
+    
+    const isAdmin = parseInt(user.is_admin) >= 1;
+    let subscription_status = user.subscription_status;
+    let subscription_expires_at = user.subscription_expires_at;
+    
+    if (isAdmin) {
+        subscription_status = document.getElementById("profile-sub-status").value;
+        subscription_expires_at = document.getElementById("profile-sub-expires").value;
+        if (subscription_expires_at) {
+            subscription_expires_at = subscription_expires_at.replace("T", " ");
+            if (subscription_expires_at.length === 16) {
+                subscription_expires_at += ":00";
+            }
+        }
+    }
+    
+    try {
+        const res = await fetch('api/update_profile.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                name,
+                email,
+                timezone,
+                subscription_status,
+                subscription_expires_at
+            })
+        });
+        const data = await res.json();
+        
+        if (res.ok && data.success) {
+            showToast("Perfil atualizado com sucesso!", "success");
+            closeProfileModal();
+            
+            dashboardState.user = data.user;
+            document.getElementById('user-display-name').textContent = data.user.name;
+            
+            renderSubscriptionInfo();
+            await loadTours();
+        } else {
+            showToast(data.message || "Erro ao atualizar perfil.", "error");
+        }
+    } catch (err) {
+        showToast("Erro de conexão ao salvar perfil.", "error");
+    }
+}
+
 // --- AUXILIARES E EVENTOS ---
 function initDOMEvents() {
     // Logout
     document.getElementById("btn-logout").onclick = async () => {
         try {
             await fetch('api/logout.php');
-            window.location.href = 'login.html';
+            window.location.href = 'login.html?v=1.0.6';
         } catch (err) {
             showToast("Erro de conexão ao deslogar.", "error");
         }
@@ -342,6 +467,12 @@ function initDOMEvents() {
     document.getElementById("btn-close-create-modal").onclick = closeCreateModal;
     document.getElementById("btn-cancel-create").onclick = closeCreateModal;
     document.getElementById("btn-submit-create").onclick = createTour;
+
+    // Perfil Modal
+    document.getElementById("btn-edit-profile").onclick = openProfileModal;
+    document.getElementById("btn-close-profile-modal").onclick = closeProfileModal;
+    document.getElementById("btn-cancel-profile").onclick = closeProfileModal;
+    document.getElementById("btn-save-profile").onclick = saveProfile;
 
     // Validador de tecla Enter dentro de caixas de texto de modais (simula o clique do botão Ok/Salvar)
     document.addEventListener("keydown", (e) => {
@@ -354,6 +485,8 @@ function initDOMEvents() {
                     let btn = null;
                     if (modal.id === "create-tour-modal") {
                         btn = document.getElementById("btn-submit-create");
+                    } else if (modal.id === "profile-modal") {
+                        btn = document.getElementById("btn-save-profile");
                     }
                     if (btn) btn.click();
                 }
@@ -367,7 +500,7 @@ function formatDate(dateStr) {
     
     // Normaliza datas no formato MySQL "YYYY-MM-DD HH:MM:SS" para ISO 8601 UTC ("YYYY-MM-DDTHH:MM:SSZ")
     let normalizedStr = dateStr;
-    if (dateStr.includes(" ") && !dateStr.includes("Z") && !dateStr.includes("T") && !dateStr.includes("+") && !dateStr.includes("-")) {
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(dateStr)) {
         normalizedStr = dateStr.replace(" ", "T") + "Z";
     }
     
@@ -376,13 +509,27 @@ function formatDate(dateStr) {
         return dateStr;
     }
     
-    return d.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-    });
+    // Obter o timezone do usuário
+    const userTimezone = (dashboardState.user && dashboardState.user.timezone) || 'America/Sao_Paulo';
+    
+    try {
+        return d.toLocaleDateString("pt-BR", {
+            timeZone: userTimezone,
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    } catch (e) {
+        return d.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
 }
 
 // --- NOTIFICAÇÃO TOAST ---

@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS {PREFIX}users (
     is_admin TINYINT DEFAULT 0,
     subscription_status VARCHAR(50) DEFAULT 'trial', -- 'trial', 'active', 'expired'
     subscription_expires_at DATETIME NULL,
+    timezone VARCHAR(100) DEFAULT 'America/Sao_Paulo',
     deleted_at DATETIME NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -22,6 +23,7 @@ CREATE TABLE IF NOT EXISTS {PREFIX}tours (
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     scenes_json LONGTEXT NOT NULL,
+    floor_plan_json LONGTEXT NULL DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES {PREFIX}users(id) ON DELETE CASCADE

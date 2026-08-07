@@ -12,7 +12,7 @@ if (empty($tourId)) {
 try {
     // Buscar o tour e juntar com os dados do usuário criador para validar status da assinatura
     $stmt = $pdo->prepare("
-        SELECT t.id, t.title, t.scenes_json, t.user_id, u.subscription_status, u.subscription_expires_at 
+        SELECT t.id, t.title, t.scenes_json, t.floor_plan_json, t.user_id, u.subscription_status, u.subscription_expires_at 
         FROM " . TABLE_PREFIX . "tours t 
         JOIN " . TABLE_PREFIX . "users u ON t.user_id = u.id 
         WHERE t.id = ?
@@ -52,12 +52,19 @@ try {
         $scenes = [];
     }
 
+    // Decodifica a planta baixa se houver
+    $floorPlan = null;
+    if (!empty($tour['floor_plan_json'])) {
+        $floorPlan = json_decode($tour['floor_plan_json'], true);
+    }
+
     echo json_encode([
         'success' => true,
         'tour' => [
             'tourId' => $tour['id'],
             'title' => $tour['title'],
-            'scenes' => $scenes
+            'scenes' => $scenes,
+            'floorPlan' => $floorPlan
         ],
         'is_owner' => $is_owner
     ]);

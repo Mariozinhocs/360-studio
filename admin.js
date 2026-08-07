@@ -884,7 +884,7 @@ function formatDate(dateStr) {
     
     // Normaliza datas no formato MySQL "YYYY-MM-DD HH:MM:SS" para ISO 8601 UTC ("YYYY-MM-DDTHH:MM:SSZ")
     let normalizedStr = dateStr;
-    if (dateStr.includes(" ") && !dateStr.includes("Z") && !dateStr.includes("T") && !dateStr.includes("+") && !dateStr.includes("-")) {
+    if (/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/.test(dateStr)) {
         normalizedStr = dateStr.replace(" ", "T") + "Z";
     } else if (dateStr.includes("T") && !dateStr.includes("Z") && !dateStr.includes("+") && !dateStr.includes("-")) {
         normalizedStr = dateStr + "Z";
@@ -895,13 +895,27 @@ function formatDate(dateStr) {
         return dateStr;
     }
     
-    return d.toLocaleDateString("pt-BR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit"
-    });
+    // Obter o timezone do administrador logado
+    const userTimezone = (adminState.user && adminState.user.timezone) || 'America/Sao_Paulo';
+    
+    try {
+        return d.toLocaleDateString("pt-BR", {
+            timeZone: userTimezone,
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    } catch (e) {
+        return d.toLocaleDateString("pt-BR", {
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+        });
+    }
 }
 
 function escapeHTML(str) {

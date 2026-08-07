@@ -3,13 +3,18 @@ const state = {
     tour: {
         tourId: "tour-local-default",
         title: "Meu Tour Virtual 360",
-        scenes: []
+        scenes: [],
+        floorPlan: null
     },
     activeSceneId: null,
     isEditMode: true,
     isAddingHotspot: false,
     pendingHotspotPos: null,
-    videoUpdateInterval: null
+    videoUpdateInterval: null,
+    
+    // Planta Baixa
+    floorplanSelectedSceneId: null,
+    activeYawAngle: 0
 };
 
 // --- FUNÇÃO AUXILIAR DE DEBOUNCE ---
@@ -91,9 +96,22 @@ AFRAME.registerComponent('click-listener', {
     }
 });
 
+// Componente para escutar rotação da câmera e atualizar o radar da planta baixa
+AFRAME.registerComponent('rotation-listener', {
+    tick: function () {
+        const rotation = this.el.getAttribute('rotation');
+        if (rotation) {
+            // rotation.y é o Yaw (rotação horizontal)
+            state.activeYawAngle = rotation.y;
+            updateActiveRadarAngle(rotation.y);
+        }
+    }
+});
+
 // --- INICIALIZAÇÃO DA APLICAÇÃO ---
 document.addEventListener("DOMContentLoaded", async () => {
     initDOMEvents();
+    initFloorplan();
     
     // 1. Verificar ID do tour na URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -121,6 +139,8 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
         
         renderScenesList();
+        renderFloorplanSidebar();
+        renderVisitorFloorplanWidget();
         updateUI();
     }
 });
@@ -167,6 +187,8 @@ async function loadTourFromServer(tourId, startMode = null) {
             }
             
             renderScenesList();
+            renderFloorplanSidebar();
+            renderVisitorFloorplanWidget();
             updateUI();
             showToast("Tour carregado com sucesso do servidor!", "success");
         } else {
@@ -197,7 +219,8 @@ async function saveTourToStorage() {
                 body: JSON.stringify({
                     tourId: state.tour.tourId,
                     title: state.tour.title,
-                    scenes: state.tour.scenes
+                    scenes: state.tour.scenes,
+                    floorPlan: state.tour.floorPlan
                 })
             });
             const data = await res.json();
@@ -325,6 +348,9 @@ function setActiveScene(sceneId) {
 
     // Resetar estado de adição de hotspot
     cancelAddingHotspot();
+
+    // Atualizar planta baixa do visitante
+    renderVisitorFloorplanWidget();
 }
 
 // --- RENDERIZAÇÃO DE HOTSPOTS NO ESPAÇO 3D ---
@@ -1212,6 +1238,412 @@ function deleteHotspot(hotspotId) {
             renderHotspotsList();
 
             showToast("Portal removido com sucesso.", "success");
+        }
+    }
+}
+
+// --- PLANTA BAIXA LÓGICA ---
+function initFloorplan() {
+    const uploadZone = document.getElementById("floorplan-upload-zone");
+    const fileInput = document.getElementById("floorplan-file-input");
+    const btnOpenEditor = document.getElementById("btn-open-floorplan-editor");
+    const btnDelete = document.getElementById("btn-delete-floorplan");
+    
+    // Editor modal close
+    document.getElementById("btn-close-floorplan-editor").onclick = () => {
+        document.getElementById("floorplan-editor-modal").classList.remove("active");
+    };
+    
+    // Editor modal save
+    document.getElementById("btn-save-floorplan-editor").onclick = () => {
+        document.getElementById("floorplan-editor-modal").classList.remove("active");
+        saveTourToStorage();
+        renderFloorplanSidebar();
+        renderVisitorFloorplanWidget();
+    };
+    
+    // Trigger upload
+    if (uploadZone && fileInput) {
+        uploadZone.onclick = () => fileInput.click();
+        fileInput.onchange = async (e) => {
+            if (e.target.files.length > 0) {
+                await uploadFloorplan(e.target.files[0]);
+            }
+        };
+    }
+    
+    // Open editor
+    if (btnOpenEditor) {
+        btnOpenEditor.onclick = () => {
+            openFloorplanEditor();
+        };
+    }
+    
+    // Delete floorplan
+    if (btnDelete) {
+        btnDelete.onclick = () => {
+            if (confirm("Tem certeza de que deseja remover a planta baixa deste tour? Todos os radares vinculados serão perdidos.")) {
+                state.tour.floorPlan = null;
+                saveTourToStorage();
+                renderFloorplanSidebar();
+                renderVisitorFloorplanWidget();
+                showToast("Planta baixa removida.", "info");
+            }
+        };
+    }
+    
+    // Workspace click to position pin
+    const workspaceMap = document.getElementById("floorplan-map-container");
+    if (workspaceMap) {
+        workspaceMap.onclick = (e) => {
+            handleWorkspaceMapClick(e);
+        };
+    }
+    
+    // Yaw offset slider
+    const yawSlider = document.getElementById("floorplan-yaw-slider");
+    if (yawSlider) {
+        yawSlider.oninput = (e) => {
+            handleYawSliderInput(parseFloat(e.target.value));
+        };
+    }
+    
+    // Remove radar button inside editor
+    const btnRemoveRadar = document.getElementById("btn-remove-radar");
+    if (btnRemoveRadar) {
+        btnRemoveRadar.onclick = () => {
+            removeSelectedRadar();
+        };
+    }
+    
+    // Visitor widget toggle/close
+    const btnToggleWidget = document.getElementById("btn-toggle-widget");
+    const btnCloseWidget = document.getElementById("btn-close-widget");
+    const widgetCard = document.getElementById("floorplan-widget-card");
+    
+    if (btnToggleWidget && widgetCard) {
+        btnToggleWidget.onclick = () => {
+            const isVisible = widgetCard.style.display !== "none";
+            widgetCard.style.display = isVisible ? "none" : "flex";
+            btnToggleWidget.style.display = isVisible ? "flex" : "none";
+        };
+    }
+    
+    if (btnCloseWidget && widgetCard && btnToggleWidget) {
+        btnCloseWidget.onclick = () => {
+            widgetCard.style.display = "none";
+            btnToggleWidget.style.display = "flex";
+        };
+    }
+}
+
+async function uploadFloorplan(file) {
+    showToast("Enviando planta baixa...", "info");
+    
+    let finalUrl = "";
+    
+    // Se for um tour do servidor e for o proprietário, realiza o upload físico
+    if (state.tour.tourId && state.tour.tourId !== "tour-local-default" && state.isOwner) {
+        const serverUrl = await uploadFileToServer(file, `floorplan_${Date.now()}_${file.name}`);
+        if (serverUrl) {
+            finalUrl = serverUrl;
+        } else {
+            showToast("Falha ao enviar a planta baixa.", "error");
+            return;
+        }
+    } else {
+        // Local fallback (Blob URL)
+        finalUrl = URL.createObjectURL(file);
+    }
+    
+    state.tour.floorPlan = {
+        image: finalUrl,
+        radars: []
+    };
+    
+    saveTourToStorage();
+    renderFloorplanSidebar();
+    renderVisitorFloorplanWidget();
+    showToast("Planta baixa carregada com sucesso!", "success");
+}
+
+function renderFloorplanSidebar() {
+    const uploadZone = document.getElementById("floorplan-upload-zone");
+    const previewContainer = document.getElementById("floorplan-preview-container");
+    const previewImg = document.getElementById("floorplan-preview-img");
+    const badgeStatus = document.getElementById("floorplan-status-badge");
+    
+    if (!uploadZone || !previewContainer || !previewImg || !badgeStatus) return;
+    
+    // Se não for dono do tour (modo visitante), não exibe a área de edição na sidebar
+    if (!state.isOwner) {
+        document.getElementById("floorplan-sidebar-section").style.display = "none";
+        return;
+    }
+    
+    const fp = state.tour.floorPlan;
+    if (fp && fp.image) {
+        uploadZone.style.display = "none";
+        previewContainer.style.display = "flex";
+        previewImg.src = fp.image;
+        badgeStatus.textContent = "Mapeado";
+        badgeStatus.style.background = "rgba(0,242,254,0.1)";
+        badgeStatus.style.color = "var(--color-accent)";
+    } else {
+        uploadZone.style.display = "flex";
+        previewContainer.style.display = "none";
+        badgeStatus.textContent = "Sem Mapa";
+        badgeStatus.style.background = "rgba(255,255,255,0.1)";
+        badgeStatus.style.color = "var(--text-secondary)";
+    }
+}
+
+function openFloorplanEditor() {
+    const fp = state.tour.floorPlan;
+    if (!fp || !fp.image) {
+        showToast("Nenhuma planta baixa cadastrada.", "error");
+        return;
+    }
+    
+    // Define a cena atualmente selecionada para iniciar no editor
+    state.floorplanSelectedSceneId = state.activeSceneId || (state.tour.scenes.length > 0 ? state.tour.scenes[0].id : null);
+    
+    // Preenche imagem do editor
+    document.getElementById("floorplan-editor-img").src = fp.image;
+    
+    // Abre modal
+    document.getElementById("floorplan-editor-modal").classList.add("active");
+    
+    // Renderiza
+    renderEditorScenesList();
+    renderEditorPins();
+    updateYawControlsVisibility();
+}
+
+function renderEditorScenesList() {
+    const list = document.getElementById("floorplan-editor-scenes-list");
+    if (!list) return;
+    
+    list.innerHTML = "";
+    
+    state.tour.scenes.forEach(scene => {
+        const item = document.createElement("div");
+        const hasRadar = state.tour.floorPlan && state.tour.floorPlan.radars && state.tour.floorPlan.radars.some(r => r.sceneId === scene.id);
+        
+        item.className = `floorplan-editor-scenes-list-item ${scene.id === state.floorplanSelectedSceneId ? 'active' : ''} ${hasRadar ? 'has-radar' : ''}`;
+        item.dataset.id = scene.id;
+        
+        item.innerHTML = `
+            <i class="fa-solid ${scene.type === 'video' ? 'fa-video' : 'fa-image'}" style="font-size: 12px; opacity: 0.8; color: ${scene.id === state.floorplanSelectedSceneId ? 'var(--color-accent)' : 'inherit'}"></i>
+            <span class="floorplan-scene-item-title">${scene.title}</span>
+            <i class="fa-solid fa-circle-check floorplan-scene-item-status-icon"></i>
+        `;
+        
+        item.onclick = () => {
+            selectEditorScene(scene.id);
+        };
+        
+        list.appendChild(item);
+    });
+}
+
+function selectEditorScene(sceneId) {
+    state.floorplanSelectedSceneId = sceneId;
+    renderEditorScenesList();
+    renderEditorPins();
+    updateYawControlsVisibility();
+}
+
+function updateYawControlsVisibility() {
+    const container = document.getElementById("floorplan-yaw-controls");
+    const slider = document.getElementById("floorplan-yaw-slider");
+    const valueEl = document.getElementById("floorplan-yaw-value");
+    
+    if (!container || !slider || !valueEl) return;
+    
+    const fp = state.tour.floorPlan;
+    if (fp && fp.radars && state.floorplanSelectedSceneId) {
+        const radar = fp.radars.find(r => r.sceneId === state.floorplanSelectedSceneId);
+        if (radar) {
+            container.style.display = "flex";
+            slider.value = radar.yawOffset || 0;
+            valueEl.textContent = `${radar.yawOffset || 0}°`;
+            return;
+        }
+    }
+    
+    container.style.display = "none";
+}
+
+function renderEditorPins() {
+    const container = document.getElementById("floorplan-editor-pins-container");
+    if (!container) return;
+    
+    container.innerHTML = "";
+    
+    const fp = state.tour.floorPlan;
+    if (!fp || !fp.radars) return;
+    
+    fp.radars.forEach(radar => {
+        const scene = state.tour.scenes.find(s => s.id === radar.sceneId);
+        if (!scene) return; 
+        
+        const pin = document.createElement("div");
+        pin.className = `editor-pin ${radar.sceneId === state.floorplanSelectedSceneId ? 'active' : ''}`;
+        pin.style.left = `${radar.x}%`;
+        pin.style.top = `${radar.y}%`;
+        pin.title = scene.title;
+        pin.dataset.sceneId = radar.sceneId;
+        
+        if (radar.sceneId === state.floorplanSelectedSceneId) {
+            const beam = document.createElement("div");
+            beam.className = "editor-radar-beam";
+            beam.style.transform = `rotate(${radar.yawOffset || 0}deg)`;
+            pin.appendChild(beam);
+        }
+        
+        pin.style.pointerEvents = "auto";
+        pin.onclick = (e) => {
+            e.stopPropagation();
+            selectEditorScene(radar.sceneId);
+        };
+        
+        container.appendChild(pin);
+    });
+}
+
+function handleWorkspaceMapClick(e) {
+    if (!state.floorplanSelectedSceneId) {
+        showToast("Por favor, selecione uma cena na lista lateral primeiro.", "info");
+        return;
+    }
+    
+    const container = document.getElementById("floorplan-map-container");
+    if (!container) return;
+    
+    const rect = container.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    const px = Math.max(0, Math.min(100, x));
+    const py = Math.max(0, Math.min(100, y));
+    
+    if (!state.tour.floorPlan.radars) {
+        state.tour.floorPlan.radars = [];
+    }
+    
+    let radar = state.tour.floorPlan.radars.find(r => r.sceneId === state.floorplanSelectedSceneId);
+    if (radar) {
+        radar.x = parseFloat(px.toFixed(2));
+        radar.y = parseFloat(py.toFixed(2));
+    } else {
+        radar = {
+            sceneId: state.floorplanSelectedSceneId,
+            x: parseFloat(px.toFixed(2)),
+            y: parseFloat(py.toFixed(2)),
+            yawOffset: 0
+        };
+        state.tour.floorPlan.radars.push(radar);
+    }
+    
+    renderEditorPins();
+    renderEditorScenesList();
+    updateYawControlsVisibility();
+}
+
+function handleYawSliderInput(value) {
+    if (!state.floorplanSelectedSceneId) return;
+    
+    const fp = state.tour.floorPlan;
+    if (fp && fp.radars) {
+        const radar = fp.radars.find(r => r.sceneId === state.floorplanSelectedSceneId);
+        if (radar) {
+            radar.yawOffset = value;
+            document.getElementById("floorplan-yaw-value").textContent = `${value}°`;
+            
+            const beam = document.querySelector(".editor-radar-beam");
+            if (beam) {
+                beam.style.transform = `rotate(${value}deg)`;
+            }
+        }
+    }
+}
+
+function removeSelectedRadar() {
+    if (!state.floorplanSelectedSceneId) return;
+    
+    const fp = state.tour.floorPlan;
+    if (fp && fp.radars) {
+        fp.radars = fp.radars.filter(r => r.sceneId !== state.floorplanSelectedSceneId);
+        renderEditorPins();
+        renderEditorScenesList();
+        updateYawControlsVisibility();
+    }
+}
+
+function renderVisitorFloorplanWidget() {
+    const widget = document.getElementById("floorplan-widget");
+    const widgetImg = document.getElementById("floorplan-widget-img");
+    const container = document.getElementById("floorplan-widget-radars-container");
+    
+    if (!widget || !widgetImg || !container) return;
+    
+    const fp = state.tour.floorPlan;
+    if (!fp || !fp.image || !fp.radars || fp.radars.length === 0) {
+        widget.style.display = "none";
+        return;
+    }
+    
+    widget.style.display = "flex";
+    widgetImg.src = fp.image;
+    
+    container.innerHTML = "";
+    
+    fp.radars.forEach(radar => {
+        const scene = state.tour.scenes.find(s => s.id === radar.sceneId);
+        if (!scene) return;
+        
+        const isActive = radar.sceneId === state.activeSceneId;
+        
+        const pin = document.createElement("div");
+        pin.className = `radar-pin ${isActive ? 'active' : ''}`;
+        pin.style.left = `${radar.x}%`;
+        pin.style.top = `${radar.y}%`;
+        pin.title = scene.title;
+        
+        if (isActive) {
+            const beam = document.createElement("div");
+            beam.className = "radar-beam";
+            beam.id = "radar-beam-active";
+            const offset = parseFloat(radar.yawOffset || 0);
+            const angle = -state.activeYawAngle + offset;
+            beam.style.transform = `rotate(${angle}deg)`;
+            pin.appendChild(beam);
+        }
+        
+        pin.onclick = (e) => {
+            e.stopPropagation();
+            if (!isActive) {
+                triggerSceneTransition(() => {
+                    setActiveScene(radar.sceneId);
+                });
+            }
+        };
+        
+        container.appendChild(pin);
+    });
+}
+
+function updateActiveRadarAngle(yaw) {
+    const beam = document.getElementById("radar-beam-active");
+    if (!beam) return;
+    
+    if (state.tour.floorPlan && state.tour.floorPlan.radars) {
+        const radar = state.tour.floorPlan.radars.find(r => r.sceneId === state.activeSceneId);
+        if (radar) {
+            const offset = parseFloat(radar.yawOffset || 0);
+            const angle = -yaw + offset;
+            beam.style.transform = `rotate(${angle}deg)`;
         }
     }
 }

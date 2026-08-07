@@ -1052,3 +1052,290 @@ a-scene {
         right: 16px;
     }
 }
+
+/* --- PLANTA BAIXA WIDGET & EDITOR --- */
+.floorplan-section {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    flex-direction: column;
+}
+
+.floorplan-upload-zone {
+    border: 2px dashed rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 20px 16px;
+    text-align: center;
+    cursor: pointer;
+    background: rgba(255, 255, 255, 0.01);
+    transition: var(--transition-smooth);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.floorplan-upload-zone:hover {
+    border-color: var(--color-purple);
+    background: rgba(155, 81, 224, 0.04);
+}
+
+/* Floor Plan Widget (Visitor) */
+.floorplan-widget {
+    position: absolute;
+    bottom: 96px;
+    left: 24px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+}
+
+.floorplan-widget-toggle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--bg-glass);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-glass);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    transition: var(--transition-smooth);
+}
+
+.floorplan-widget-toggle:hover {
+    color: var(--color-accent);
+    border-color: rgba(0, 242, 254, 0.3);
+    transform: scale(1.05);
+}
+
+.floorplan-widget-card {
+    background: var(--bg-glass);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--border-glass);
+    border-radius: 12px;
+    width: 260px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.floorplan-widget-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.floorplan-widget-header h4 {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.floorplan-widget-header h4 i {
+    color: var(--color-accent);
+}
+
+.floorplan-widget-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.floorplan-widget-close:hover {
+    color: var(--text-primary);
+}
+
+.floorplan-widget-body {
+    padding: 12px;
+}
+
+.floorplan-widget-map-wrapper {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.floorplan-widget-map-wrapper img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+/* Pins/Radares no mapa */
+.radar-pin {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background-color: var(--text-secondary);
+    border: 2px solid #fff;
+    border-radius: 50%;
+    cursor: pointer;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.5);
+    transition: var(--transition-smooth);
+    pointer-events: auto;
+}
+
+.radar-pin:hover {
+    background-color: var(--color-accent);
+    transform: translate(-50%, -50%) scale(1.3);
+    box-shadow: 0 0 10px var(--color-accent);
+}
+
+.radar-pin.active {
+    background-color: var(--color-accent);
+    border-color: #000;
+    width: 14px;
+    height: 14px;
+    z-index: 10;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.8);
+}
+
+/* Conic gradient radar beam wedge */
+.radar-beam {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+    left: 50%;
+    top: 50%;
+    margin-left: -35px;
+    margin-top: -35px;
+    background: conic-gradient(from -30deg, rgba(0, 242, 254, 0.35) 0deg, rgba(0, 242, 254, 0.35) 60deg, transparent 60deg);
+    border-radius: 50%;
+    transform-origin: center center;
+    pointer-events: none;
+    z-index: -1;
+    transform: rotate(0deg);
+    transition: transform 0.05s linear; /* extremely responsive and smooth */
+}
+
+/* Pin styles in the Editor Map */
+.editor-pin {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background-color: rgba(255,255,255,0.8);
+    border: 2px solid var(--bg-primary);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+    pointer-events: auto;
+    cursor: grab;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.editor-pin.active {
+    background-color: var(--color-accent);
+    border-color: #000;
+    width: 18px;
+    height: 18px;
+    box-shadow: 0 0 12px var(--color-accent);
+    z-index: 10;
+}
+
+.editor-pin::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    background: #000;
+    border-radius: 50%;
+}
+
+.editor-pin:hover {
+    background-color: #fff;
+    transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* Mini radar beam inside editor */
+.editor-radar-beam {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    left: 50%;
+    top: 50%;
+    margin-left: -30px;
+    margin-top: -30px;
+    background: conic-gradient(from -30deg, rgba(0, 242, 254, 0.25) 0deg, rgba(0, 242, 254, 0.25) 60deg, transparent 60deg);
+    border-radius: 50%;
+    transform-origin: center center;
+    pointer-events: none;
+    z-index: -1;
+    transform: rotate(0deg);
+}
+
+/* Scenes list in Floor Plan Editor Modal */
+.floorplan-editor-scenes-list-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border-glass);
+    border-radius: 8px;
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    min-width: 0;
+}
+
+.floorplan-editor-scenes-list-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.floorplan-editor-scenes-list-item.active {
+    background: rgba(0, 242, 254, 0.08);
+    border-color: var(--color-accent);
+}
+
+.floorplan-scene-item-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+}
+
+.floorplan-scene-item-status-icon {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.floorplan-editor-scenes-list-item.active .floorplan-scene-item-title {
+    color: var(--color-accent);
+}
+
+.floorplan-editor-scenes-list-item.has-radar .floorplan-scene-item-status-icon {
+    color: #00e676; /* Green for mapped */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

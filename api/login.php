@@ -51,7 +51,8 @@ try {
             'email' => $user['email'],
             'is_admin' => (int)$user['is_admin'],
             'subscription_status' => $user['subscription_status'],
-            'subscription_expires_at' => $user['subscription_expires_at']
+            'subscription_expires_at' => $user['subscription_expires_at'],
+            'timezone' => $user['timezone']
         ]
     ]);
 

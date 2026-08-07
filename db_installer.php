@@ -84,6 +84,25 @@ try {
         } else {
             echo "Coluna 'deleted_at' já existe.\n";
         }
+
+        // Verifica se a coluna timezone existe
+        $col_timezone = $pdo->query("SHOW COLUMNS FROM `{$users_table}` LIKE 'timezone'");
+        if ($col_timezone->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$users_table}` ADD COLUMN timezone VARCHAR(100) DEFAULT 'America/Sao_Paulo' AFTER subscription_expires_at");
+            echo "Coluna 'timezone' adicionada com sucesso!\n";
+        } else {
+            echo "Coluna 'timezone' já existe.\n";
+        }
+
+        // Verifica se a coluna floor_plan_json existe na tabela de tours
+        $tours_table = $prefix . 'tours';
+        $col_floorplan = $pdo->query("SHOW COLUMNS FROM `{$tours_table}` LIKE 'floor_plan_json'");
+        if ($col_floorplan->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$tours_table}` ADD COLUMN floor_plan_json LONGTEXT NULL DEFAULT NULL AFTER scenes_json");
+            echo "Coluna 'floor_plan_json' adicionada com sucesso na tabela de tours!\n";
+        } else {
+            echo "Coluna 'floor_plan_json' já existe na tabela de tours.\n";
+        }
     } else {
         echo "Tabela '{$users_table}' não encontrada. Criando novas tabelas...\n";
         $sql = file_get_contents($sql_file);

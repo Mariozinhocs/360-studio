@@ -12,7 +12,7 @@ if (!isset($_SESSION['user_id'])) {
 
 try {
     // Buscar status atualizado do usuário no banco (caso a assinatura tenha expirado)
-    $stmt = $pdo->prepare("SELECT id, name, email, is_admin, subscription_status, subscription_expires_at, deleted_at FROM " . TABLE_PREFIX . "users WHERE id = ?");
+    $stmt = $pdo->prepare("SELECT id, name, email, is_admin, subscription_status, subscription_expires_at, deleted_at, timezone FROM " . TABLE_PREFIX . "users WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
     $user = $stmt->fetch();
 
@@ -45,6 +45,7 @@ try {
             'is_admin' => (int)$user['is_admin'],
             'subscription_status' => $user['subscription_status'],
             'subscription_expires_at' => $user['subscription_expires_at'],
+            'timezone' => $user['timezone'],
             'is_subscription_valid' => $is_active
         ]
     ]);
