@@ -33,7 +33,7 @@
             <h2>Bem-vindo de volta</h2>
             <p class="auth-subtitle">Acesse seus projetos de Tour Virtual 360°</p>
 
-            <form id="login-form">
+            <div id="login-form">
                 <!-- Inputs falsos invisíveis para capturar o preenchimento automático do navegador -->
                 <input type="text" name="fake_username_autofill" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;" tabindex="-1" autocomplete="off" />
                 <input type="password" name="fake_password_autofill" style="position: absolute; top: -9999px; left: -9999px; width: 1px; height: 1px;" tabindex="-1" autocomplete="off" />
@@ -46,10 +46,10 @@
                     <label for="login-password"><i class="fa-solid fa-lock"></i> Senha</label>
                     <input type="password" id="login-password" required placeholder="••••••••">
                 </div>
-                <button type="submit" class="btn btn-primary btn-block">
+                <button type="button" id="btn-login-submit" class="btn btn-primary btn-block">
                     <span>Entrar na Plataforma</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 </button>
-            </form>
+            </div>
             <div class="auth-footer">
                 <span>Novo por aqui? <a href="#" id="link-show-register">Crie uma conta gratuita</a></span>
             </div>
@@ -60,7 +60,7 @@
             <h2>Criar sua conta</h2>
             <p class="auth-subtitle">Comece a criar seus passeios 3D interativos hoje</p>
 
-            <form id="register-form">
+            <div id="register-form">
                 <div class="form-group">
                     <label for="register-name"><i class="fa-regular fa-user"></i> Nome Completo</label>
                     <input type="text" id="register-name" required placeholder="Ex: Nome Nome">
@@ -77,10 +77,10 @@
                     <label for="register-password"><i class="fa-solid fa-lock"></i> Senha</label>
                     <input type="password" id="register-password" required minlength="6" placeholder="(mín. 6 caracteres)">
                 </div>
-                <button type="submit" class="btn btn-accent btn-block">
+                <button type="button" id="btn-register-submit" class="btn btn-accent btn-block">
                     <span>Criar Conta & Iniciar Teste</span> <i class="fa-solid fa-rocket animate-pulse"></i>
                 </button>
-            </form>
+            </div>
             <div class="auth-footer">
                 <span>Já possui conta? <a href="#" id="link-show-login">Faça login</a></span>
             </div>
@@ -139,11 +139,15 @@
         });
 
 
-        // Formulário de Login
-        document.getElementById('login-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Submeter Formulário de Login
+        const submitLogin = async () => {
             const usernameOrEmail = document.getElementById('login-username').value;
             const password = document.getElementById('login-password').value;
+
+            if (!usernameOrEmail || !password) {
+                showToast('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
 
             try {
                 const res = await fetch('api/login.php', {
@@ -162,15 +166,19 @@
             } catch (err) {
                 showToast('Erro ao comunicar com o servidor.', 'error');
             }
-        });
+        };
 
-        // Formulário de Cadastro
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
+        // Submeter Formulário de Cadastro
+        const submitRegister = async () => {
             const name = document.getElementById('register-name').value;
             const username = document.getElementById('register-username').value;
             const email = document.getElementById('register-email').value;
             const password = document.getElementById('register-password').value;
+
+            if (!name || !username || !email || !password) {
+                showToast('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
 
             try {
                 const res = await fetch('api/register.php', {
@@ -189,7 +197,31 @@
             } catch (err) {
                 showToast('Erro ao comunicar com o servidor.', 'error');
             }
-        });
+        };
+
+        // Eventos de clique nos botões
+        document.getElementById('btn-login-submit').addEventListener('click', submitLogin);
+        document.getElementById('btn-register-submit').addEventListener('click', submitRegister);
+
+        // Suporte ao clique na tecla Enter para submissão
+        const addEnterSubmit = (inputId, action) => {
+            const el = document.getElementById(inputId);
+            if (el) {
+                el.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        action();
+                    }
+                });
+            }
+        };
+
+        addEnterSubmit('login-username', submitLogin);
+        addEnterSubmit('login-password', submitLogin);
+        addEnterSubmit('register-name', submitRegister);
+        addEnterSubmit('register-username', submitRegister);
+        addEnterSubmit('register-email', submitRegister);
+        addEnterSubmit('register-password', submitRegister);
     </script>
 </body>
 </html>
