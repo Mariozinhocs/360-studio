@@ -91,17 +91,37 @@
     <div id="toast-container" class="toast-container"></div>
 
     <script>
-        // Limpar preenchimento automático indesejado do navegador no carregamento inicial
-        const clearAutofillFields = () => {
-            const u = document.getElementById('login-username');
-            const p = document.getElementById('login-password');
-            if (u && u.value && document.activeElement !== u) u.value = '';
-            if (p && p.value && document.activeElement !== p) p.value = '';
+        // Limpar e forçar preenchimento automático indesejado no carregamento inicial
+        let hasInteracted = false;
+        const markInteracted = () => {
+            hasInteracted = true;
         };
-        // Executa em múltiplos intervalos para cobrir o atraso de preenchimento de extensões/navegadores
-        [50, 150, 300, 600, 1000].forEach(delay => {
-            setTimeout(clearAutofillFields, delay);
-        });
+
+        const u = document.getElementById('login-username');
+        const p = document.getElementById('login-password');
+
+        if (u) {
+            ['keydown', 'mousedown', 'focus', 'click', 'change', 'input'].forEach(evt => {
+                u.addEventListener(evt, markInteracted);
+            });
+        }
+        if (p) {
+            ['keydown', 'mousedown', 'focus', 'click', 'change', 'input'].forEach(evt => {
+                p.addEventListener(evt, markInteracted);
+            });
+        }
+
+        const forceClearFields = () => {
+            if (hasInteracted) return;
+            if (u && u.value) u.value = '';
+            if (p && p.value) p.value = '';
+        };
+
+        // Roda a cada 50ms para garantir que os campos fiquem vazios antes da interação do usuário
+        const clearTimer = setInterval(forceClearFields, 50);
+
+        // Parar o timer após 8 segundos para poupar processamento
+        setTimeout(() => clearInterval(clearTimer), 8000);
 
         // Sincronizar Toasts
         function showToast(message, type = "info") {

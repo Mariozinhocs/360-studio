@@ -32,7 +32,7 @@
     *   **Validador com tecla Enter:** Event delegation global implementado nos scripts para capturar a tecla Enter nos modais ativos (criação de tours, redefinição de senha, edição de perfil, hotspot modal) e simular o clique no botão de ação principal.
     *   **Debounce de Input:** Debounce de 500ms inserido na alteração do título do tour para evitar sobrecarga no servidor.
     *   **Cache-Busters:** Cache-buster do dashboard atualizado para `v=1.0.5` e do editor para `v=1.0.4` para contornar cache persistente do navegador.
-    *   **Controle de Redirecionamento e Bloqueio de Autofill:** Removido o redirecionamento automático baseado em sessão ativa (`check_auth.php`) ao carregar o formulário em [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html). Além disso, as tags de formulário `<form>` foram convertidas em contêineres `<div>`, contornando de forma absoluta as heurísticas de preenchimento automático (autofill) no carregamento de qualquer navegador ou extensão. Os eventos de envio foram migrados de `submit` para clique direto no botão e monitoramento da tecla Enter, mantendo a experiência do usuário idêntica, mas garantindo que o placeholder original seja exibido sem expor credenciais.
+    *   **Controle de Redirecionamento e Bloqueio de Autofill:** Removido o redirecionamento automático baseado em sessão ativa (`check_auth.php`) ao carregar o formulário em [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html). Além disso, as tags de formulário `<form>` foram convertidas em contêineres `<div>` e foi implementada uma limpeza contínua e interativa (`setInterval` de 50ms por 8s) que força o esvaziamento dos campos de entrada (`login-username` e `login-password`) até que seja detectada qualquer interação do usuário (como clique, foco, toque ou digitação). Isso impede a exposição de credenciais por autofill passivo de navegadores ou extensões, mantendo sempre a exibição limpa dos placeholders.
 
 ---
 
@@ -60,7 +60,7 @@
     *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Barra de progresso de upload, seção lateral de hotspots e cache-buster [CONCLUÍDO])
     *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium da barra de progresso e cartões de hotspots [CONCLUÍDO])
     *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (XMLHttpRequest com progresso, listagem/deleção de hotspots, debounce e Enter key validation [CONCLUÍDO])
-    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect de sessão, e convertidos formulários em divs com manipulação de enter/clique para contornar autofill forçado [CONCLUÍDO])
+    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect de sessão, e convertidos formulários em divs com manipulação de enter/clique e limpeza contínua pré-interação para contornar autofill forçado [CONCLUÍDO])
 
 ---
 
