@@ -122,18 +122,6 @@
             loginCard.classList.add('active');
         });
 
-        // Verificar se usuário já está logado
-        window.addEventListener('DOMContentLoaded', async () => {
-            try {
-                const res = await fetch('api/check_auth.php');
-                const data = await res.json();
-                if (data.success) {
-                    window.location.href = 'dashboard.html';
-                }
-            } catch (err) {
-                console.error("Erro ao verificar autenticação inicial:", err);
-            }
-        });
 
         // Formulário de Login
         document.getElementById('login-form').addEventListener('submit', async (e) => {
