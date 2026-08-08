@@ -82,45 +82,47 @@ function renderSubscriptionInfo() {
     badge.className = "sub-badge"; // Reset classes
     actionsContainer.innerHTML = ""; // Limpa ações
 
-    if (user.subscription_status === 'active') {
-        badge.classList.add("badge-active");
-        badge.innerHTML = `<i class="fa-solid fa-crown animate-pulse"></i> Premium`;
-        detail.textContent = "Acesso ilimitado liberado em todos os recursos.";
-    } else if (user.subscription_status === 'trial') {
-        badge.classList.add("badge-trial");
-        
-        // Calcular dias restantes
+    const plansMap = {
+        'gratis': { name: 'Grátis', class: 'badge-trial', desc: 'Plano Grátis ativo. Recursos básicos.' },
+        'iniciante': { name: 'Iniciante', class: 'badge-active', desc: 'Plano Iniciante ativo. Sem anúncios!' },
+        'basico': { name: 'Básico', class: 'badge-active', desc: 'Plano Básico ativo. Rótulos e GSV!' },
+        'pessoal': { name: 'Pessoal', class: 'badge-active', desc: 'Plano Pessoal ativo. Som e Galeria!' },
+        'profissional': { name: 'Profissional', class: 'badge-active', desc: 'Plano Profissional ativo. Sem limites!' },
+        'expired': { name: 'Expirado', class: 'badge-expired', desc: 'Sua assinatura expirou.' }
+    };
+
+    const status = user.subscription_status || 'gratis';
+    const planInfo = plansMap[status] || plansMap['gratis'];
+
+    badge.classList.add(planInfo.class);
+    if (status === 'profissional') {
+        badge.innerHTML = `<i class="fa-solid fa-crown animate-pulse"></i> ${planInfo.name}`;
+    } else {
+        badge.textContent = planInfo.name;
+    }
+    
+    // Validar expiração
+    let isExpired = status === 'expired';
+    if (!isExpired && user.subscription_expires_at) {
         const expiryDate = new Date(user.subscription_expires_at);
         const today = new Date();
-        const diffTime = expiryDate - today;
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        
-        if (diffDays > 0) {
-            badge.textContent = `Trial Grátis`;
-            detail.textContent = `${diffDays} dia(s) restante(s) de teste.`;
-        } else {
-            // Caso seja trial mas já expirou
-            badge.classList.remove("badge-trial");
-            badge.classList.add("badge-expired");
+        if (today > expiryDate) {
+            isExpired = true;
+            badge.className = "sub-badge badge-expired";
             badge.textContent = "Expirado";
-            detail.textContent = "Período de teste encerrado.";
+            detail.textContent = "Assinatura expirada. Regularize para reativar.";
         }
+    }
 
-        // Botão para simular assinatura premium
+    if (!isExpired) {
+        detail.textContent = planInfo.desc;
+    }
+
+    // Se não for profissional, exibir botão para simular upgrade para o plano profissional
+    if (status !== 'profissional' || isExpired) {
         const btnSub = document.createElement("button");
         btnSub.className = "btn btn-accent btn-block btn-sm";
-        btnSub.innerHTML = `<i class="fa-solid fa-credit-card"></i> Assinar Premium (Simulado)`;
-        btnSub.onclick = simulateSubscription;
-        actionsContainer.appendChild(btnSub);
-    } else {
-        // Expired
-        badge.classList.add("badge-expired");
-        badge.textContent = "Expirado";
-        detail.textContent = "Assinatura expirada. Regularize para reativar.";
-
-        const btnSub = document.createElement("button");
-        btnSub.className = "btn btn-primary btn-block btn-sm";
-        btnSub.innerHTML = `<i class="fa-solid fa-credit-card animate-pulse"></i> Assinar Premium (Simulado)`;
+        btnSub.innerHTML = `<i class="fa-solid fa-credit-card animate-pulse"></i> Upgrade para Profissional (Simulado)`;
         btnSub.onclick = simulateSubscription;
         actionsContainer.appendChild(btnSub);
     }
@@ -343,7 +345,7 @@ function openProfileModal() {
         if (adminFields) adminFields.style.display = "block";
         if (userFields) userFields.style.display = "none";
         
-        document.getElementById("profile-sub-status").value = user.subscription_status || "trial";
+        document.getElementById("profile-sub-status").value = user.subscription_status || "gratis";
         if (user.subscription_expires_at) {
             const formatted = user.subscription_expires_at.replace(" ", "T").substring(0, 16);
             document.getElementById("profile-sub-expires").value = formatted;
@@ -360,26 +362,31 @@ function openProfileModal() {
         if (badge && detail) {
             badge.className = "sub-badge"; // Reset
             
-            if (user.subscription_status === 'active') {
-                badge.classList.add("badge-active");
-                badge.textContent = "Premium";
-                detail.textContent = "Acesso ilimitado liberado.";
-            } else if (user.subscription_status === 'trial') {
-                badge.classList.add("badge-trial");
-                badge.textContent = "Trial Grátis";
-                
-                if (user.subscription_expires_at) {
-                    const expiryDate = new Date(user.subscription_expires_at.replace(" ", "T") + "Z");
-                    const today = new Date();
-                    const diffDays = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
-                    detail.textContent = diffDays > 0 ? `${diffDays} dia(s) restante(s) de teste.` : "Período de testes expirado.";
-                } else {
-                    detail.textContent = "Período de testes ativo.";
+            const plansMap = {
+                'gratis': { name: 'Grátis', class: 'badge-trial', desc: 'Plano Grátis ativo.' },
+                'iniciante': { name: 'Iniciante', class: 'badge-active', desc: 'Plano Iniciante ativo.' },
+                'basico': { name: 'Básico', class: 'badge-active', desc: 'Plano Básico ativo.' },
+                'pessoal': { name: 'Pessoal', class: 'badge-active', desc: 'Plano Pessoal ativo.' },
+                'profissional': { name: 'Profissional', class: 'badge-active', desc: 'Plano Profissional ativo.' },
+                'expired': { name: 'Expirado', class: 'badge-expired', desc: 'Assinatura expirada.' }
+            };
+
+            const status = user.subscription_status || 'gratis';
+            const planInfo = plansMap[status] || plansMap['gratis'];
+
+            badge.classList.add(planInfo.class);
+            badge.textContent = planInfo.name;
+            detail.textContent = planInfo.desc;
+            
+            // Validar expiração
+            if (status !== 'expired' && user.subscription_expires_at) {
+                const expiryDate = new Date(user.subscription_expires_at.replace(" ", "T") + "Z");
+                const today = new Date();
+                if (today > expiryDate) {
+                    badge.className = "sub-badge badge-expired";
+                    badge.textContent = "Expirado";
+                    detail.textContent = "Sua assinatura expirou.";
                 }
-            } else {
-                badge.classList.add("badge-expired");
-                badge.textContent = "Expirado";
-                detail.textContent = "Assinatura expirada. Faça upgrade.";
             }
         }
     }

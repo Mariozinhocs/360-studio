@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 try {
     // Atualizar o status de assinatura do usuário logado para 'active' (Premium) sem expiração
-    $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "users SET subscription_status = 'active', subscription_expires_at = NULL WHERE id = ?");
+    $stmt = $pdo->prepare("UPDATE " . TABLE_PREFIX . "users SET subscription_status = 'profissional', subscription_expires_at = NULL WHERE id = ?");
     $stmt->execute([$_SESSION['user_id']]);
 
     echo json_encode([

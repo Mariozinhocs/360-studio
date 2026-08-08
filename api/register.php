@@ -68,8 +68,8 @@ try {
     $subscription_expires_at = $expiry->format('Y-m-d H:i:s');
 
     // Inserir usuário
-    $stmt = $pdo->prepare("INSERT INTO " . TABLE_PREFIX . "users (name, username, email, password_hash, subscription_status, subscription_expires_at) VALUES (?, ?, ?, ?, 'trial', ?)");
-    $stmt->execute([$name, $username, $email, $password_hash, $subscription_expires_at]);
+    $stmt = $pdo->prepare("INSERT INTO " . TABLE_PREFIX . "users (name, username, email, password_hash, subscription_status, subscription_expires_at) VALUES (?, ?, ?, ?, 'gratis', NULL)");
+    $stmt->execute([$name, $username, $email, $password_hash]);
     
     $user_id = $pdo->lastInsertId();
 
@@ -86,8 +86,8 @@ try {
             'name' => $name,
             'username' => $username,
             'email' => $email,
-            'subscription_status' => 'trial',
-            'subscription_expires_at' => $subscription_expires_at
+            'subscription_status' => 'gratis',
+            'subscription_expires_at' => null
         ]
     ]);
 

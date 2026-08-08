@@ -10,9 +10,9 @@ if (empty($tourId)) {
 }
 
 try {
-    // Buscar o tour e juntar com os dados do usuário criador para validar status da assinatura
+    // Buscar o tour e juntar com os dados do usuário criador para validar status da assinatura e obter recursos adicionais
     $stmt = $pdo->prepare("
-        SELECT t.id, t.title, t.scenes_json, t.floor_plan_json, t.user_id, u.subscription_status, u.subscription_expires_at 
+        SELECT t.id, t.title, t.scenes_json, t.floor_plan_json, t.logo_url, t.privacy_settings, t.user_id, u.subscription_status, u.subscription_expires_at 
         FROM " . TABLE_PREFIX . "tours t 
         JOIN " . TABLE_PREFIX . "users u ON t.user_id = u.id 
         WHERE t.id = ?
@@ -46,16 +46,54 @@ try {
         exit;
     }
 
-    // Decodifica as cenas salvas
-    $scenes = json_decode($tour['scenes_json'], true);
-    if (!is_array($scenes)) {
-        $scenes = [];
+    // Obter logo_url se o criador tiver o recurso ativo
+    $logoUrl = null;
+    if (!empty($tour['logo_url']) && (PLANS_MATRIX[$tour['subscription_status']]['max_logos'] ?? 0) > 0) {
+        $logoUrl = $tour['logo_url'];
     }
 
-    // Decodifica a planta baixa se houver
+    // Obter privacy_settings se o criador tiver o recurso ativo
+    $privacySettings = null;
+    if (!empty($tour['privacy_settings']) && hasFeature($owner, 'privacy_control')) {
+        $privacySettings = $tour['privacy_settings'];
+    }
+
+    // Validar se o tour está bloqueado por senha
+    $password_required = !empty($privacySettings);
+    $has_correct_password = false;
+    if ($password_required) {
+        $submitted_password = isset($_GET['password']) ? trim($_GET['password']) : '';
+        if ($submitted_password === $privacySettings || $is_owner) {
+            $has_correct_password = true;
+        }
+    }
+
+    $is_locked = $password_required && !$has_correct_password;
+
+    // Decodifica as cenas salvas (apenas se não estiver bloqueado por senha)
+    $scenes = [];
+    if (!$is_locked) {
+        $scenes = json_decode($tour['scenes_json'], true);
+        if (!is_array($scenes)) {
+            $scenes = [];
+        }
+    }
+
+    // Decodifica a planta baixa se houver (apenas se não estiver bloqueado por senha e o fuso permitir)
     $floorPlan = null;
-    if (!empty($tour['floor_plan_json'])) {
+    if (!$is_locked && !empty($tour['floor_plan_json']) && hasFeature($owner, 'floor_plans')) {
         $floorPlan = json_decode($tour['floor_plan_json'], true);
+    }
+
+    $show_ads = !hasFeature($owner, 'no_ads');
+
+    $features = [];
+    if ($is_owner) {
+        $plan = $tour['subscription_status'] ?? 'gratis';
+        if (!checkSubscription($owner)) {
+            $plan = 'gratis';
+        }
+        $features = PLANS_MATRIX[$plan] ?? [];
     }
 
     echo json_encode([
@@ -64,9 +102,13 @@ try {
             'tourId' => $tour['id'],
             'title' => $tour['title'],
             'scenes' => $scenes,
-            'floorPlan' => $floorPlan
+            'floorPlan' => $floorPlan,
+            'logoUrl' => $logoUrl
         ],
-        'is_owner' => $is_owner
+        'is_owner' => $is_owner,
+        'show_ads' => $show_ads,
+        'is_locked' => $is_locked,
+        'features' => $features
     ]);
 
 } catch (Exception $e) {

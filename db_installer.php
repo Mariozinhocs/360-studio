@@ -103,6 +103,24 @@ try {
         } else {
             echo "Coluna 'floor_plan_json' já existe na tabela de tours.\n";
         }
+
+        // Verifica se a coluna logo_url existe na tabela de tours
+        $col_logo = $pdo->query("SHOW COLUMNS FROM `{$tours_table}` LIKE 'logo_url'");
+        if ($col_logo->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$tours_table}` ADD COLUMN logo_url VARCHAR(255) NULL DEFAULT NULL AFTER floor_plan_json");
+            echo "Coluna 'logo_url' adicionada com sucesso na tabela de tours!\n";
+        } else {
+            echo "Coluna 'logo_url' já existe na tabela de tours.\n";
+        }
+
+        // Verifica se a coluna privacy_settings existe na tabela de tours
+        $col_privacy = $pdo->query("SHOW COLUMNS FROM `{$tours_table}` LIKE 'privacy_settings'");
+        if ($col_privacy->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$tours_table}` ADD COLUMN privacy_settings VARCHAR(255) NULL DEFAULT NULL AFTER logo_url");
+            echo "Coluna 'privacy_settings' adicionada com sucesso na tabela de tours!\n";
+        } else {
+            echo "Coluna 'privacy_settings' já existe na tabela de tours.\n";
+        }
     } else {
         echo "Tabela '{$users_table}' não encontrada. Criando novas tabelas...\n";
         $sql = file_get_contents($sql_file);

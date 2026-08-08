@@ -74,21 +74,176 @@ function loginRequired() {
     }
 }
 
-// Helper para verificar status da assinatura e se ela está ativa/trial válido
+// Helper para verificar status da assinatura e se ela está ativa/válida
 function checkSubscription($user) {
     if ($user['subscription_status'] === 'expired') {
         return false;
     }
     
-    if ($user['subscription_status'] === 'trial') {
-        if (!empty($user['subscription_expires_at'])) {
-            $expiry = new DateTime($user['subscription_expires_at']);
-            $now = new DateTime();
-            if ($now > $expiry) {
-                return false; // Trial expirou
-            }
+    // Se o plano tiver data de expiração definida, valida contra a data atual
+    if (!empty($user['subscription_expires_at'])) {
+        $expiry = new DateTime($user['subscription_expires_at']);
+        $now = new DateTime();
+        if ($now > $expiry) {
+            return false; // Assinatura expirou
         }
     }
     
-    return true; // Premium ativo ou Trial dentro da validade
+    return true; // Plano ativo dentro da validade (ou sem expiração definida)
+}
+
+// Definição da matriz de recursos e limites de planos comerciais
+define('PLANS_MATRIX', [
+    'gratis' => [
+        'name' => 'Grátis',
+        'max_tours' => 5,
+        'max_scenes' => 10,
+        'gsv_projects_per_month' => 0,
+        'max_logos' => 0,
+        'navigation_arrows' => true,
+        'no_ads' => false,
+        'privacy_control' => false,
+        'offline_access' => false,
+        'ambient_sound' => false,
+        'image_gallery' => false,
+        'floor_plans' => false,
+        'text_markers' => false
+    ],
+    'iniciante' => [
+        'name' => 'Iniciante',
+        'max_tours' => 10,
+        'max_scenes' => 20,
+        'gsv_projects_per_month' => 0,
+        'max_logos' => 0,
+        'navigation_arrows' => true,
+        'no_ads' => true,
+        'privacy_control' => false,
+        'offline_access' => false,
+        'ambient_sound' => false,
+        'image_gallery' => false,
+        'floor_plans' => false,
+        'text_markers' => false
+    ],
+    'basico' => [
+        'name' => 'Básico',
+        'max_tours' => 50,
+        'max_scenes' => 20,
+        'gsv_projects_per_month' => 1,
+        'max_logos' => 1,
+        'navigation_arrows' => true,
+        'no_ads' => true,
+        'privacy_control' => false,
+        'offline_access' => false,
+        'ambient_sound' => false,
+        'image_gallery' => false,
+        'floor_plans' => false,
+        'text_markers' => true
+    ],
+    'pessoal' => [
+        'name' => 'Pessoal',
+        'max_tours' => 100,
+        'max_scenes' => 50,
+        'gsv_projects_per_month' => 3,
+        'max_logos' => 2,
+        'navigation_arrows' => true,
+        'no_ads' => true,
+        'privacy_control' => false,
+        'offline_access' => true,
+        'ambient_sound' => true,
+        'image_gallery' => false,
+        'floor_plans' => false,
+        'text_markers' => true
+    ],
+    'profissional' => [
+        'name' => 'Profissional',
+        'max_tours' => -1, // ilimitado
+        'max_scenes' => -1, // ilimitado
+        'gsv_projects_per_month' => 25,
+        'max_logos' => -1, // ilimitado
+        'navigation_arrows' => true,
+        'no_ads' => true,
+        'privacy_control' => true,
+        'offline_access' => true,
+        'ambient_sound' => true,
+        'image_gallery' => true,
+        'floor_plans' => true,
+        'text_markers' => true
+    ]
+]);
+
+// Helper para validar se o usuário possui acesso a um recurso específico
+function hasFeature($user, $featureName) {
+    $plan = $user['subscription_status'] ?? 'gratis';
+    if (!defined('PLANS_MATRIX') || !isset(PLANS_MATRIX[$plan])) {
+        $plan = 'gratis';
+    }
+    
+    // Se o plano expirou, o usuário perde os privilégios pagos e rebaixa para "gratis"
+    if (!checkSubscription($user)) {
+        $plan = 'gratis';
+    }
+    
+    return PLANS_MATRIX[$plan][$featureName] ?? false;
+}
+
+// Helper para verificar se o usuário pode criar um novo tour
+function canCreateTour($userId) {
+    global $pdo;
+    
+    $stmt = $pdo->prepare("SELECT subscription_status, subscription_expires_at FROM " . TABLE_PREFIX . "users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
+    if (!$user) {
+        return false;
+    }
+    
+    $plan = $user['subscription_status'] ?? 'gratis';
+    if (!checkSubscription($user)) {
+        $plan = 'gratis';
+    }
+    
+    $maxTours = PLANS_MATRIX[$plan]['max_tours'] ?? 5;
+    if ($maxTours === -1) {
+        return true; // Ilimitado
+    }
+    
+    $stmtCount = $pdo->prepare("SELECT COUNT(*) as total FROM " . TABLE_PREFIX . "tours WHERE user_id = ?");
+    $stmtCount->execute([$userId]);
+    $count = $stmtCount->fetch();
+    
+    return ((int)$count['total'] < $maxTours);
+}
+
+// Helper para verificar se o usuário pode adicionar mais uma cena a um tour
+function canAddScene($tourId) {
+    global $pdo;
+    
+    $stmtTour = $pdo->prepare("SELECT user_id, scenes_json FROM " . TABLE_PREFIX . "tours WHERE id = ?");
+    $stmtTour->execute([$tourId]);
+    $tour = $stmtTour->fetch();
+    if (!$tour) {
+        return false;
+    }
+    
+    $stmtUser = $pdo->prepare("SELECT subscription_status, subscription_expires_at FROM " . TABLE_PREFIX . "users WHERE id = ?");
+    $stmtUser->execute([$tour['user_id']]);
+    $user = $stmtUser->fetch();
+    if (!$user) {
+        return false;
+    }
+    
+    $plan = $user['subscription_status'] ?? 'gratis';
+    if (!checkSubscription($user)) {
+        $plan = 'gratis';
+    }
+    
+    $maxScenes = PLANS_MATRIX[$plan]['max_scenes'] ?? 10;
+    if ($maxScenes === -1) {
+        return true; // Ilimitado
+    }
+    
+    $scenes = json_decode($tour['scenes_json'], true);
+    $currentCount = is_array($scenes) ? count($scenes) : 0;
+    
+    return ($currentCount < $maxScenes);
 }

@@ -4,7 +4,9 @@ const state = {
         tourId: "tour-local-default",
         title: "Meu Tour Virtual 360",
         scenes: [],
-        floorPlan: null
+        floorPlan: null,
+        logoUrl: null,
+        privacySettings: null
     },
     activeSceneId: null,
     isEditMode: true,
@@ -14,7 +16,14 @@ const state = {
     
     // Planta Baixa
     floorplanSelectedSceneId: null,
-    activeYawAngle: 0
+    activeYawAngle: 0,
+    
+    // Recursos Ativos do Plano
+    features: {},
+    
+    // Áudio / Som Ambiente
+    ambientAudio: null,
+    isAudioMuted: true
 };
 
 // --- FUNÇÃO AUXILIAR DE DEBOUNCE ---
@@ -119,6 +128,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const startMode = urlParams.get('mode');
     
     if (tourId) {
+        state.tour.tourId = tourId;
         // Carrega do servidor
         await loadTourFromServer(tourId, startMode);
     } else {
@@ -154,6 +164,31 @@ async function loadTourFromServer(tourId, startMode = null) {
         if (res.ok && data.success) {
             state.tour = data.tour;
             state.isOwner = data.is_owner;
+            state.showAds = !!data.show_ads;
+            state.features = data.features || {};
+            
+            if (data.is_locked) {
+                // Tour bloqueado por senha
+                document.getElementById("password-lock-screen").style.display = "flex";
+                
+                // Configurar títulos básicos
+                document.getElementById("tour-display-title").textContent = state.tour.title;
+                document.getElementById("scene-display-title").textContent = "Acesso Restrito";
+                
+                // Esconder elementos de edição por segurança
+                const sidebar = document.querySelector(".sidebar");
+                if (sidebar) sidebar.style.display = "none";
+                
+                const modeSelector = document.querySelector(".mode-selector");
+                if (modeSelector) modeSelector.style.display = "none";
+                
+                setMode(false);
+                updateUI();
+                return;
+            } else {
+                const lockScreen = document.getElementById("password-lock-screen");
+                if (lockScreen) lockScreen.style.display = "none";
+            }
             
             // Configurar títulos na tela
             document.getElementById("tour-title-input").value = state.tour.title;
@@ -178,6 +213,17 @@ async function loadTourFromServer(tourId, startMode = null) {
                     setMode(true);
                 }
             }
+
+            // Exibir/ocultar anúncios e marca d'água promocional do plano Grátis
+            const watermark = document.getElementById("promotional-watermark");
+            const adsContainer = document.getElementById("google-ads-container");
+            if (state.showAds) {
+                if (watermark) watermark.style.display = "block";
+                if (adsContainer) adsContainer.style.display = "block";
+            } else {
+                if (watermark) watermark.style.display = "none";
+                if (adsContainer) adsContainer.style.display = "none";
+            }
             
             // Definir cena inicial
             if (state.tour.scenes && state.tour.scenes.length > 0) {
@@ -189,6 +235,7 @@ async function loadTourFromServer(tourId, startMode = null) {
             renderScenesList();
             renderFloorplanSidebar();
             renderVisitorFloorplanWidget();
+            updateSettingsSidebarUI();
             updateUI();
             showToast("Tour carregado com sucesso do servidor!", "success");
         } else {
@@ -220,7 +267,9 @@ async function saveTourToStorage() {
                     tourId: state.tour.tourId,
                     title: state.tour.title,
                     scenes: state.tour.scenes,
-                    floorPlan: state.tour.floorPlan
+                    floorPlan: state.tour.floorPlan,
+                    logoUrl: state.tour.logoUrl,
+                    privacySettings: state.tour.privacySettings
                 })
             });
             const data = await res.json();
@@ -244,6 +293,8 @@ function loadTourFromStorage() {
             const parsed = JSON.parse(saved);
             if (parsed && Array.isArray(parsed.scenes)) {
                 state.tour = parsed;
+                if (!state.tour.logoUrl) state.tour.logoUrl = null;
+                if (!state.tour.privacySettings) state.tour.privacySettings = null;
                 state.isOwner = true; // Local é sempre dono
                 // Filtrar mídias locais expiradas (Object URLs expiram ao recarregar a página)
                 state.tour.scenes = state.tour.scenes.map(scene => {
@@ -351,6 +402,58 @@ function setActiveScene(sceneId) {
 
     // Atualizar planta baixa do visitante
     renderVisitorFloorplanWidget();
+
+    // --- Controle de Som Ambiente (Visão do Visitante/Editor) ---
+    const btnToggleAudio = document.getElementById("btn-toggle-audio");
+    if (btnToggleAudio) {
+        if (scene.ambientSound) {
+            btnToggleAudio.style.display = "block";
+            
+            // Pausar áudio anterior
+            if (state.ambientAudio) {
+                state.ambientAudio.pause();
+                state.ambientAudio = null;
+            }
+            
+            state.ambientAudio = new Audio(scene.ambientSound);
+            state.ambientAudio.loop = true;
+            state.ambientAudio.muted = state.isAudioMuted;
+            
+            if (!state.isAudioMuted) {
+                state.ambientAudio.play().then(() => {
+                    btnToggleAudio.querySelector("i").className = "fa-solid fa-volume-high";
+                }).catch(err => {
+                    console.log("Autoplay blocked by browser policy.", err);
+                    btnToggleAudio.querySelector("i").className = "fa-solid fa-volume-xmark";
+                    state.isAudioMuted = true;
+                    state.ambientAudio.muted = true;
+                });
+            } else {
+                btnToggleAudio.querySelector("i").className = "fa-solid fa-volume-xmark";
+            }
+        } else {
+            btnToggleAudio.style.display = "none";
+            if (state.ambientAudio) {
+                state.ambientAudio.pause();
+                state.ambientAudio = null;
+            }
+        }
+    }
+
+    // --- Controle de Galeria 2D (Visão do Visitante/Editor) ---
+    const btnViewGallery = document.getElementById("btn-view-gallery");
+    const galleryLightbox = document.getElementById("gallery-lightbox");
+    if (btnViewGallery) {
+        if (scene.galleryImages && scene.galleryImages.length > 0) {
+            btnViewGallery.style.display = "block";
+        } else {
+            btnViewGallery.style.display = "none";
+            if (galleryLightbox) galleryLightbox.style.display = "none";
+        }
+    }
+
+    // Atualizar UI de configurações da cena ativa
+    renderActiveSceneSettingsUI(scene);
 }
 
 // --- RENDERIZAÇÃO DE HOTSPOTS NO ESPAÇO 3D ---
@@ -534,9 +637,334 @@ function initDOMEvents() {
                     }
                     if (btn) btn.click();
                 }
-            }
         }
     });
+
+    // --- Configurações do Tour (Logo & Privacidade) ---
+    const logoUploadZone = document.getElementById("logo-upload-zone");
+    const logoFileInput = document.getElementById("logo-file-input");
+    const btnDeleteLogo = document.getElementById("btn-delete-logo");
+    const selectPrivacy = document.getElementById("select-privacy");
+    const inputPrivacyPassword = document.getElementById("input-privacy-password");
+    const passwordInputWrapper = document.getElementById("password-input-wrapper");
+
+    if (logoUploadZone && logoFileInput) {
+        logoUploadZone.addEventListener("click", () => logoFileInput.click());
+        logoFileInput.addEventListener("change", async (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (file.type !== "image/png") {
+                    showToast("Por favor, selecione apenas imagens no formato PNG (com fundo transparente preferencialmente).", "error");
+                    return;
+                }
+                
+                showToast("Fazendo upload da logo...", "info");
+                const uploadResult = await uploadFileToServer(file, file.name);
+                if (uploadResult && uploadResult.url) {
+                    state.tour.logoUrl = uploadResult.url;
+                    updateSettingsSidebarUI();
+                    saveTourToStorage();
+                    showToast("Logo carregada com sucesso!", "success");
+                } else {
+                    showToast("Erro ao fazer upload da logo.", "error");
+                }
+            }
+        });
+    }
+
+    if (btnDeleteLogo) {
+        btnDeleteLogo.addEventListener("click", () => {
+            state.tour.logoUrl = null;
+            updateSettingsSidebarUI();
+            saveTourToStorage();
+            showToast("Logo removida.", "info");
+        });
+    }
+
+    if (selectPrivacy) {
+        selectPrivacy.addEventListener("change", (e) => {
+            const val = e.target.value;
+            if (val === "password") {
+                if (passwordInputWrapper) passwordInputWrapper.style.display = "block";
+                if (inputPrivacyPassword) {
+                    inputPrivacyPassword.focus();
+                    state.tour.privacySettings = inputPrivacyPassword.value;
+                }
+            } else {
+                if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+                state.tour.privacySettings = null;
+                saveTourToStorage();
+            }
+        });
+    }
+
+    if (inputPrivacyPassword) {
+        inputPrivacyPassword.addEventListener("change", (e) => {
+            state.tour.privacySettings = e.target.value.trim() || null;
+            saveTourToStorage();
+            showToast("Privacidade atualizada!", "success");
+        });
+    }
+
+    // --- Ações da Tela de Bloqueio ---
+    const btnUnlockTour = document.getElementById("btn-unlock-tour");
+    const visitorPasswordInput = document.getElementById("visitor-password-input");
+    
+    const unlockFunction = async () => {
+        const pass = visitorPasswordInput.value.trim();
+        if (!pass) {
+            showToast("Por favor, digite a senha.", "warning");
+            return;
+        }
+        
+        showToast("Validando senha...", "info");
+        try {
+            const res = await fetch(`api/get_tour.php?id=${state.tour.tourId}&password=${encodeURIComponent(pass)}`);
+            const data = await res.json();
+            
+            if (res.ok && data.success) {
+                if (data.is_locked) {
+                    document.getElementById("unlock-error-msg").style.display = "block";
+                    showToast("Senha incorreta.", "error");
+                } else {
+                    // Senha correta: carregar dados do tour e destravar
+                    document.getElementById("unlock-error-msg").style.display = "none";
+                    document.getElementById("password-lock-screen").style.display = "none";
+                    
+                    state.tour = data.tour;
+                    state.isOwner = data.is_owner;
+                    state.showAds = !!data.show_ads;
+                    state.features = data.features || {};
+                    
+                    // Configurar títulos na tela
+                    document.getElementById("tour-title-input").value = state.tour.title;
+                    document.getElementById("tour-display-title").textContent = state.tour.title;
+                    
+                    // Exibir/ocultar anúncios e watermark
+                    const watermark = document.getElementById("promotional-watermark");
+                    const adsContainer = document.getElementById("google-ads-container");
+                    if (state.showAds) {
+                        if (watermark) watermark.style.display = "block";
+                        if (adsContainer) adsContainer.style.display = "block";
+                    } else {
+                        if (watermark) watermark.style.display = "none";
+                        if (adsContainer) adsContainer.style.display = "none";
+                    }
+                    
+                    // Definir cena inicial
+                    if (state.tour.scenes && state.tour.scenes.length > 0) {
+                        setActiveScene(state.tour.scenes[0].id);
+                    } else {
+                        document.getElementById("scene-display-title").textContent = "Nenhuma cena carregada";
+                    }
+                    
+                    renderScenesList();
+                    renderFloorplanSidebar();
+                    renderVisitorFloorplanWidget();
+                    updateSettingsSidebarUI();
+                    updateUI();
+                    showToast("Acesso concedido!", "success");
+                }
+            } else {
+                showToast(data.message || "Erro ao validar senha.", "error");
+            }
+        } catch (err) {
+            console.error(err);
+            showToast("Erro de rede ao validar senha.", "error");
+        }
+    };
+
+    if (btnUnlockTour) {
+        btnUnlockTour.addEventListener("click", unlockFunction);
+    }
+    if (visitorPasswordInput) {
+        visitorPasswordInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                unlockFunction();
+            }
+        });
+    }
+
+    // --- Controle de Áudio Flutuante ---
+    const btnToggleAudio = document.getElementById("btn-toggle-audio");
+    if (btnToggleAudio) {
+        btnToggleAudio.addEventListener("click", () => {
+            if (!state.ambientAudio) return;
+            
+            if (state.isAudioMuted) {
+                state.isAudioMuted = false;
+                state.ambientAudio.muted = false;
+                state.ambientAudio.play().then(() => {
+                    btnToggleAudio.querySelector("i").className = "fa-solid fa-volume-high";
+                    btnToggleAudio.title = "Mudar/Desativar Som";
+                }).catch(err => {
+                    console.error("Autoplay blocked:", err);
+                    showToast("Por favor, interaja com o site antes de tocar áudios.", "warning");
+                });
+            } else {
+                state.isAudioMuted = true;
+                state.ambientAudio.muted = true;
+                state.ambientAudio.pause();
+                btnToggleAudio.querySelector("i").className = "fa-solid fa-volume-xmark";
+                btnToggleAudio.title = "Ativar Som";
+            }
+        });
+    }
+
+    // --- Configurações da Cena Ativa ---
+    const inputSceneTitle = document.getElementById("input-scene-title");
+    const audioUploadZone = document.getElementById("audio-upload-zone");
+    const audioFileInput = document.getElementById("audio-file-input");
+    const btnDeleteAudio = document.getElementById("btn-delete-audio");
+    const galleryUploadZone = document.getElementById("gallery-upload-zone");
+    const galleryFileInput = document.getElementById("gallery-file-input");
+
+    if (inputSceneTitle) {
+        inputSceneTitle.addEventListener("input", debounce((e) => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (scene) {
+                scene.title = e.target.value;
+                document.getElementById("scene-display-title").textContent = `${scene.title} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
+                renderScenesList();
+                saveTourToStorage();
+            }
+        }, 500));
+    }
+
+    if (audioUploadZone && audioFileInput) {
+        audioUploadZone.addEventListener("click", () => audioFileInput.click());
+        audioFileInput.addEventListener("change", async (e) => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (!scene) return;
+
+            if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
+                if (file.type !== "audio/mpeg" && file.type !== "audio/mp3") {
+                    showToast("Por favor, selecione apenas arquivos de áudio em formato MP3.", "error");
+                    return;
+                }
+                
+                showToast("Enviando áudio MP3...", "info");
+                const uploadResult = await uploadFileToServer(file, file.name);
+                if (uploadResult && uploadResult.url) {
+                    scene.ambientSound = uploadResult.url;
+                    
+                    // Resetar e aplicar novo som se for a cena ativa atual
+                    if (state.ambientAudio) {
+                        state.ambientAudio.pause();
+                        state.ambientAudio = null;
+                    }
+                    state.ambientAudio = new Audio(scene.ambientSound);
+                    state.ambientAudio.loop = true;
+                    state.ambientAudio.muted = state.isAudioMuted;
+                    
+                    renderActiveSceneSettingsUI(scene);
+                    saveTourToStorage();
+                    showToast("Áudio ambiente salvo na cena!", "success");
+                } else {
+                    showToast("Erro ao fazer upload do áudio.", "error");
+                }
+            }
+        });
+    }
+
+    if (btnDeleteAudio) {
+        btnDeleteAudio.addEventListener("click", () => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (scene) {
+                scene.ambientSound = null;
+                if (state.ambientAudio) {
+                    state.ambientAudio.pause();
+                    state.ambientAudio = null;
+                }
+                renderActiveSceneSettingsUI(scene);
+                saveTourToStorage();
+                showToast("Áudio ambiente removido.", "info");
+            }
+        });
+    }
+
+    if (galleryUploadZone && galleryFileInput) {
+        galleryUploadZone.addEventListener("click", () => galleryFileInput.click());
+        galleryFileInput.addEventListener("change", async (e) => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (!scene) return;
+
+            if (e.target.files && e.target.files.length > 0) {
+                showToast("Fazendo upload das imagens da galeria...", "info");
+                if (!scene.galleryImages) scene.galleryImages = [];
+
+                for (let i = 0; i < e.target.files.length; i++) {
+                    const file = e.target.files[i];
+                    const uploadResult = await uploadFileToServer(file, file.name);
+                    if (uploadResult && uploadResult.url) {
+                        scene.galleryImages.push(uploadResult.url);
+                    }
+                }
+                renderActiveSceneSettingsUI(scene);
+                saveTourToStorage();
+                showToast("Imagens adicionadas à galeria da cena!", "success");
+            }
+        });
+    // --- Controle de Galeria Lightbox (Modo Visitante) ---
+    const btnViewGallery = document.getElementById("btn-view-gallery");
+    const galleryLightbox = document.getElementById("gallery-lightbox");
+    const galleryLightboxImg = document.getElementById("gallery-lightbox-img");
+    const galleryLightboxCaption = document.getElementById("gallery-lightbox-caption");
+    const btnPrevGalleryImg = document.getElementById("btn-prev-gallery-img");
+    const btnNextGalleryImg = document.getElementById("btn-next-gallery-img");
+
+    let currentGalleryIdx = 0;
+
+    const renderLightboxImage = () => {
+        if (!state.activeSceneId) return;
+        const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+        if (scene && scene.galleryImages && scene.galleryImages.length > 0) {
+            const url = scene.galleryImages[currentGalleryIdx];
+            if (galleryLightboxImg) galleryLightboxImg.src = url;
+            if (galleryLightboxCaption) {
+                galleryLightboxCaption.textContent = `Foto ${currentGalleryIdx + 1} de ${scene.galleryImages.length}`;
+            }
+        }
+    };
+
+    if (btnViewGallery) {
+        btnViewGallery.addEventListener("click", () => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (scene && scene.galleryImages && scene.galleryImages.length > 0) {
+                currentGalleryIdx = 0;
+                renderLightboxImage();
+                if (galleryLightbox) galleryLightbox.style.display = "flex";
+            }
+        });
+    }
+
+    if (btnPrevGalleryImg) {
+        btnPrevGalleryImg.addEventListener("click", () => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (scene && scene.galleryImages && scene.galleryImages.length > 0) {
+                currentGalleryIdx = (currentGalleryIdx - 1 + scene.galleryImages.length) % scene.galleryImages.length;
+                renderLightboxImage();
+            }
+        });
+    }
+
+    if (btnNextGalleryImg) {
+        btnNextGalleryImg.addEventListener("click", () => {
+            if (!state.activeSceneId) return;
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (scene && scene.galleryImages && scene.galleryImages.length > 0) {
+                currentGalleryIdx = (currentGalleryIdx + 1) % scene.galleryImages.length;
+                renderLightboxImage();
+            }
+        });
+    }
 }
 
 // --- AUXILIAR: PROCESSAMENTO E OTIMIZAÇÃO DE MÍDIA 360 ---
@@ -886,6 +1314,10 @@ function setMode(isEdit) {
 
     // Atualiza a barra lateral com a lista de hotspots
     renderHotspotsList();
+    
+    // Atualiza visibilidade das configurações da cena ativa
+    const activeScene = state.tour && state.tour.scenes ? state.tour.scenes.find(s => s.id === state.activeSceneId) : null;
+    renderActiveSceneSettingsUI(activeScene);
 }
 
 // --- FLUXO DE ADICIONAR HOTSPOT (PORTAL) ---
@@ -1372,12 +1804,34 @@ function renderFloorplanSidebar() {
     const previewContainer = document.getElementById("floorplan-preview-container");
     const previewImg = document.getElementById("floorplan-preview-img");
     const badgeStatus = document.getElementById("floorplan-status-badge");
+    const fpSection = document.getElementById("floorplan-sidebar-section");
     
-    if (!uploadZone || !previewContainer || !previewImg || !badgeStatus) return;
+    if (!uploadZone || !previewContainer || !previewImg || !badgeStatus || !fpSection) return;
+
+    // Remover lock overlay anterior se existir
+    const existingOverlay = fpSection.querySelector(".plan-feature-lock-overlay");
+    if (existingOverlay) existingOverlay.remove();
     
     // Se não for dono do tour (modo visitante), não exibe a área de edição na sidebar
     if (!state.isOwner) {
-        document.getElementById("floorplan-sidebar-section").style.display = "none";
+        fpSection.style.display = "none";
+        return;
+    }
+
+    // Validar se o plano possui recurso de Planta Baixa
+    const hasFloorPlans = state.features ? (state.features.floor_plans ?? false) : false;
+    if (!hasFloorPlans) {
+        fpSection.style.position = "relative";
+        const overlay = document.createElement("div");
+        overlay.className = "plan-feature-lock-overlay";
+        overlay.innerHTML = `
+            <div class="lock-overlay-content">
+                <i class="fa-solid fa-lock"></i>
+                <span>Planta Baixa</span>
+                <small>Disponível no Profissional</small>
+            </div>
+        `;
+        fpSection.appendChild(overlay);
         return;
     }
     
@@ -1644,6 +2098,174 @@ function updateActiveRadarAngle(yaw) {
             const offset = parseFloat(radar.yawOffset || 0);
             const angle = -yaw + offset;
             beam.style.transform = `rotate(${angle}deg)`;
+        }
+    }
+}
+
+// --- CONFIGURAÇÕES DE LOGO & PRIVACIDADE ---
+function updateSettingsSidebarUI() {
+    // 1. Atualizar UI da Logo Customizada
+    const logoUploadZone = document.getElementById("logo-upload-zone");
+    const logoPreviewContainer = document.getElementById("logo-preview-container");
+    const logoPreviewImg = document.getElementById("logo-preview-img");
+    const clientLogoImg = document.getElementById("client-logo-img");
+    const customClientLogo = document.getElementById("custom-client-logo");
+
+    const maxLogos = state.features ? (state.features.max_logos ?? 0) : 0;
+
+    if (state.tour && state.tour.logoUrl) {
+        if (logoUploadZone) logoUploadZone.style.display = "none";
+        if (logoPreviewContainer) logoPreviewContainer.style.display = "flex";
+        if (logoPreviewImg) logoPreviewImg.src = state.tour.logoUrl;
+        
+        // Exibir logo no viewer
+        if (clientLogoImg) clientLogoImg.src = state.tour.logoUrl;
+        if (customClientLogo) customClientLogo.style.display = "block";
+    } else {
+        if (logoUploadZone) {
+            logoUploadZone.style.display = "block";
+            const textEl = logoUploadZone.querySelector("span");
+            if (maxLogos === 0) {
+                logoUploadZone.style.pointerEvents = "none";
+                logoUploadZone.style.opacity = "0.5";
+                if (textEl) textEl.textContent = "Logo Customizada (Plano Básico+)";
+            } else {
+                logoUploadZone.style.pointerEvents = "auto";
+                logoUploadZone.style.opacity = "1";
+                if (textEl) textEl.textContent = "Carregar Logo (PNG transparente)";
+            }
+        }
+        if (logoPreviewContainer) logoPreviewContainer.style.display = "none";
+        if (logoPreviewImg) logoPreviewImg.src = "";
+        
+        // Ocultar logo do viewer
+        if (clientLogoImg) clientLogoImg.src = "";
+        if (customClientLogo) customClientLogo.style.display = "none";
+    }
+
+    // 2. Atualizar UI de Privacidade
+    const selectPrivacy = document.getElementById("select-privacy");
+    const passwordInputWrapper = document.getElementById("password-input-wrapper");
+    const inputPrivacyPassword = document.getElementById("input-privacy-password");
+
+    const hasPrivacyControl = state.features ? (state.features.privacy_control ?? false) : false;
+
+    if (selectPrivacy) {
+        if (!hasPrivacyControl) {
+            selectPrivacy.disabled = true;
+            selectPrivacy.style.opacity = "0.5";
+            selectPrivacy.style.cursor = "not-allowed";
+            selectPrivacy.title = "Disponível a partir do plano Profissional";
+            selectPrivacy.value = "public";
+            if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+            if (inputPrivacyPassword) inputPrivacyPassword.value = "";
+        } else {
+            selectPrivacy.disabled = false;
+            selectPrivacy.style.opacity = "1";
+            selectPrivacy.style.cursor = "pointer";
+            selectPrivacy.title = "";
+            
+            if (state.tour && state.tour.privacySettings) {
+                selectPrivacy.value = "password";
+                if (passwordInputWrapper) passwordInputWrapper.style.display = "block";
+                if (inputPrivacyPassword) inputPrivacyPassword.value = state.tour.privacySettings;
+            } else {
+                selectPrivacy.value = "public";
+                if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+                if (inputPrivacyPassword) inputPrivacyPassword.value = "";
+            }
+        }
+    }
+}
+
+// --- CONFIGURAÇÕES DE CENA ATIVA (SOM & GALERIA) ---
+function renderActiveSceneSettingsUI(scene) {
+    const section = document.getElementById("active-scene-settings-section");
+    if (!section) return;
+
+    if (!state.isEditMode || !scene) {
+        section.style.display = "none";
+        return;
+    }
+
+    section.style.display = "block";
+
+    // 1. Nome da Cena
+    const inputTitle = document.getElementById("input-scene-title");
+    if (inputTitle) inputTitle.value = scene.title || "";
+
+    // 2. Som Ambiente (MP3)
+    const hasSound = state.features ? (state.features.ambient_sound ?? false) : false;
+    const audioUploadZone = document.getElementById("audio-upload-zone");
+    const audioPreviewContainer = document.getElementById("audio-preview-container");
+    const audioPreviewFilename = document.getElementById("audio-preview-filename");
+
+    if (audioUploadZone && audioPreviewContainer) {
+        if (!hasSound) {
+            audioUploadZone.style.display = "block";
+            audioUploadZone.style.pointerEvents = "none";
+            audioUploadZone.style.opacity = "0.5";
+            const textEl = audioUploadZone.querySelector("span");
+            if (textEl) textEl.textContent = "Som Ambiente (Plano Pessoal+)";
+            audioPreviewContainer.style.display = "none";
+        } else {
+            audioUploadZone.style.pointerEvents = "auto";
+            audioUploadZone.style.opacity = "1";
+            const textEl = audioUploadZone.querySelector("span");
+            if (textEl) textEl.textContent = "Carregar Áudio (MP3)";
+
+            if (scene.ambientSound) {
+                audioUploadZone.style.display = "none";
+                audioPreviewContainer.style.display = "flex";
+                if (audioPreviewFilename) {
+                    const filename = scene.ambientSound.substring(scene.ambientSound.lastIndexOf('/') + 1);
+                    audioPreviewFilename.textContent = filename;
+                }
+            } else {
+                audioUploadZone.style.display = "block";
+                audioPreviewContainer.style.display = "none";
+            }
+        }
+    }
+
+    // 3. Galeria de Imagens 2D
+    const hasGallery = state.features ? (state.features.image_gallery ?? false) : false;
+    const galleryUploadZone = document.getElementById("gallery-upload-zone");
+    const thumbsList = document.getElementById("gallery-thumbs-list");
+
+    if (galleryUploadZone && thumbsList) {
+        thumbsList.innerHTML = "";
+        
+        if (!hasGallery) {
+            galleryUploadZone.style.display = "block";
+            galleryUploadZone.style.pointerEvents = "none";
+            galleryUploadZone.style.opacity = "0.5";
+            const textEl = galleryUploadZone.querySelector("span");
+            if (textEl) textEl.textContent = "Galeria de Fotos (Plano Profissional)";
+        } else {
+            galleryUploadZone.style.pointerEvents = "auto";
+            galleryUploadZone.style.opacity = "1";
+            const textEl = galleryUploadZone.querySelector("span");
+            if (textEl) textEl.textContent = "Adicionar Fotos (2D)";
+
+            if (scene.galleryImages && Array.isArray(scene.galleryImages)) {
+                scene.galleryImages.forEach((imgUrl, idx) => {
+                    const item = document.createElement("div");
+                    item.className = "gallery-thumb-item";
+                    item.innerHTML = `
+                        <img src="${imgUrl}" alt="Thumb">
+                        <button class="btn-remove-thumb" title="Remover Foto">&times;</button>
+                    `;
+                    item.querySelector(".btn-remove-thumb").onclick = (e) => {
+                        e.stopPropagation();
+                        scene.galleryImages.splice(idx, 1);
+                        renderActiveSceneSettingsUI(scene);
+                        saveTourToStorage();
+                        showToast("Foto removida da galeria.", "info");
+                    };
+                    thumbsList.appendChild(item);
+                });
+            }
         }
     }
 }

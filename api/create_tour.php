@@ -14,6 +14,16 @@ if (!$user || !checkSubscription($user)) {
     exit;
 }
 
+// Verificar limite de tours do plano
+if (!canCreateTour($_SESSION['user_id'])) {
+    http_response_code(403);
+    echo json_encode([
+        'success' => false,
+        'message' => 'Você atingiu o limite máximo de tours virtuais permitidos no seu plano atual. Faça um upgrade para continuar criando novos projetos!'
+    ]);
+    exit;
+}
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Método não permitido.']);
