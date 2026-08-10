@@ -7,10 +7,10 @@ RewriteEngine On
 # Evita loop de redirecionamento se a requisição já for para login.html
 RewriteCond %{REQUEST_URI} !login\.html$ [NC]
 
-# Caso 1: Se acessar a raiz (ex: /hml/) sem nenhum parâmetro, redireciona para login.html
+# Caso 1: Se acessar a raiz (ex: /hml/) sem nenhum parâmetro, redireciona para home.html
 RewriteCond %{QUERY_STRING} ^$
-RewriteRule ^$ login.html [R=301,L]
+RewriteRule ^$ home.html [R=301,L]
 
-# Caso 2: Se acessar index.html diretamente e sem nenhum parâmetro, redireciona para login.html
+# Caso 2: Se acessar index.html diretamente e sem nenhum parâmetro, redireciona para home.html
 RewriteCond %{QUERY_STRING} ^$
-RewriteRule ^index\.html$ login.html [R=301,L]
+RewriteRule ^index\.html$ home.html [R=301,L]

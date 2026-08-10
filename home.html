@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>360° Studio - Passeios Virtuais Interativos</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos específicos -->
+    <link rel="stylesheet" href="home.css">
+</head>
+<body>
+
+    <!-- DECOR GLOWS -->
+    <div class="decor-glow glow-1"></div>
+    <div class="decor-glow glow-2"></div>
+    <div class="decor-glow glow-3"></div>
+
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> 360° Studio
+        </div>
+        <ul class="nav-links">
+            <li><a href="#features">Funcionalidades</a></li>
+            <li><a href="#showcase">Demonstração</a></li>
+            <li><a href="#pricing">Planos</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-login" id="nav-btn-login">Entrar</a>
+            <a href="login.html?register=true" class="btn-nav-cta" id="nav-btn-register">Começar Grátis</a>
+        </div>
+    </nav>
+
+    <!-- HERO SECTION -->
+    <header class="hero">
+        <div class="hero-badge">
+            <i class="fa-solid fa-sparkles"></i> O Editor de Tour 360° mais completo e rápido
+        </div>
+        <h1>Crie Passeios Virtuais 360° Impressionantes em Minutos</h1>
+        <p>Apresente imóveis, comércios e espaços com realismo fotográfico, plantas baixas mapeadas, áudio ambiente e logomarca personalizada.</p>
+        
+        <div class="hero-ctas">
+            <a href="login.html?register=true" class="btn-primary-hero">Criar Conta Grátis</a>
+            <a href="#showcase" class="btn-secondary-hero">Ver Demonstrações</a>
+        </div>
+
+        <!-- MOCKUP FRAME -->
+        <div class="hero-mockup-frame">
+            <div class="hero-mockup-inner">
+                <!-- Imagem ilustrativa de tour virtual -->
+                <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80" alt="Mockup Editor 360">
+            </div>
+        </div>
+    </header>
+
+    <!-- FEATURES SECTION -->
+    <section id="features">
+        <div class="section-header">
+            <h2>Recursos Profissionais</h2>
+            <p>Tudo o que você precisa para criar experiências virtuais imersivas e convertíveis de alta qualidade.</p>
+        </div>
+
+        <div class="features-grid">
+            <!-- FEATURE 1 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-camera-retro"></i></div>
+                <h3>Editor 360° Interativo</h3>
+                <p>Envie fotos ou vídeos esféricos e crie vínculos, portais de transição e pontos de informação com facilidade.</p>
+            </div>
+
+            <!-- FEATURE 2 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-map-location-dot"></i></div>
+                <h3>Planta Baixa e Radar</h3>
+                <p>Mapeie a planta baixa do imóvel e vincule pinos direcionais de radar que mostram exatamente para onde o visitante olha.</p>
+            </div>
+
+            <!-- FEATURE 3 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-volume-high"></i></div>
+                <h3>Som Ambiente MP3</h3>
+                <p>Adicione trilhas sonoras ou narrações de áudio personalizadas em cada cena para criar uma experiência envolvente.</p>
+            </div>
+
+            <!-- FEATURE 4 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-images"></i></div>
+                <h3>Galeria de Fotos 2D</h3>
+                <p>Integre fotos tradicionais em alta definição direto nas cenas do passeio para destacar detalhes específicos do ambiente.</p>
+            </div>
+
+            <!-- FEATURE 5 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                <h3>Privacidade e Senha</h3>
+                <p>Proteja tours virtuais sigilosos ou em desenvolvimento restringindo o acesso através de senha de privacidade.</p>
+            </div>
+
+            <!-- FEATURE 6 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-certificate"></i></div>
+                <h3>White-label / Logo Própria</h3>
+                <p>Substitua a marca do estúdio pela sua própria logomarca profissional nos passeios virtuais de seus clientes.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SHOWCASE SECTION -->
+    <section id="showcase">
+        <div class="section-header">
+            <h2>Demonstrações em Tempo Real</h2>
+            <p>Explore passeios virtuais de modelo criados e renderizados 100% no 360° Studio.</p>
+        </div>
+
+        <div class="showcase-slider-container">
+            <!-- CASO 1 -->
+            <div class="showcase-card">
+                <div class="showcase-thumb">
+                    <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=600&q=80" alt="Residência Alto Padrão">
+                    <div class="showcase-play-btn" onclick="openShowcaseTour('demo-casa')"><i class="fa-solid fa-play"></i></div>
+                </div>
+                <div class="showcase-info">
+                    <h3>Residência Alto Padrão</h3>
+                    <p>Demonstração completa com Planta Baixa e Radar de orientação ativo.</p>
+                </div>
+            </div>
+
+            <!-- CASO 2 -->
+            <div class="showcase-card">
+                <div class="showcase-thumb">
+                    <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80" alt="Showroom Comercial">
+                    <div class="showcase-play-btn" onclick="openShowcaseTour('demo-showroom')"><i class="fa-solid fa-play"></i></div>
+                </div>
+                <div class="showcase-info">
+                    <h3>Showroom Corporativo</h3>
+                    <p>Galeria de fotos 2D integrada para detalhamento de mobiliários.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING SECTION -->
+    <section id="pricing">
+        <div class="section-header">
+            <h2>Nossos Planos de Assinatura</h2>
+            <p>Selecione a licença ideal de acordo com a sua escala e o nível de recursos exigidos.</p>
+        </div>
+
+        <div class="plans-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
+            <!-- GRÁTIS -->
+            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Grátis</h3>
+                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 0</div>
+                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 5 tours ativos</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 10 cenas por tour</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Setas de navegação</li>
+                    <li style="opacity:0.5; text-decoration:line-through;"><i class="fa-solid fa-xmark" style="color:#ff4a5a;"></i> Sem anúncios</li>
+                </ul>
+                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Experimentar</a>
+            </div>
+
+            <!-- INICIANTE -->
+            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Iniciante</h3>
+                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 89,99</div>
+                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 10 tours ativos</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 20 cenas por tour</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Setas de navegação</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Sem anúncios</li>
+                </ul>
+                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
+            </div>
+
+            <!-- BÁSICO -->
+            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Básico</h3>
+                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 129,99</div>
+                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 50 tours ativos</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 20 cenas por tour</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Marca d'água própria (1)</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Sem anúncios</li>
+                </ul>
+                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
+            </div>
+
+            <!-- PESSOAL -->
+            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Pessoal</h3>
+                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 199,99</div>
+                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 100 tours ativos</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 50 cenas por tour</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Som ambiente MP3</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Marca d'água própria (2)</li>
+                </ul>
+                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
+            </div>
+
+            <!-- PROFISSIONAL -->
+            <div class="plan-card highlighted" style="padding: 24px; border: 2px solid var(--color-accent-purple); border-radius: 12px; display: flex; flex-direction: column; background: rgba(30, 24, 45, 0.7); position: relative;">
+                <span class="plan-badge-popular" style="top: -10px;">Melhor Opção</span>
+                <h3 style="font-size: 18px; margin-bottom: 6px;">Profissional</h3>
+                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 349,99</div>
+                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Tours Ilimitados</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Cenas Ilimitadas</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Planta Baixa Interativa</li>
+                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Privacidade por Senha</li>
+                </ul>
+                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- CALL TO ACTION -->
+    <section class="cta-section" style="padding: 40px 8%; text-align: center;">
+        <div class="cta-banner">
+            <h2>Pronto para criar experiências incríveis?</h2>
+            <p>Cadastre-se hoje mesmo e comece a criar tours 360° em menos de 5 minutos, sem cartão de crédito necessário.</p>
+            <a href="login.html?register=true" class="btn-primary-hero">Experimentar Grátis agora</a>
+        </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <div class="footer-grid">
+            <div class="footer-about">
+                <h3>360° Studio</h3>
+                <p>Plataforma SaaS robusta e dinâmica de gerenciamento e exibição de passeios virtuais 360° de alta qualidade.</p>
+                <div class="footer-socials">
+                    <a href="#" class="social-link"><i class="fa-brands fa-instagram"></i></a>
+                    <a href="#" class="social-link"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#" class="social-link"><i class="fa-brands fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-links-col">
+                <h4>Produto</h4>
+                <ul>
+                    <li><a href="#features">Funcionalidades</a></li>
+                    <li><a href="#pricing">Planos de Preços</a></li>
+                    <li><a href="#showcase">Showcase</a></li>
+                </ul>
+            </div>
+            <div class="footer-links-col">
+                <h4>Suporte</h4>
+                <ul>
+                    <li><a href="#">Ajuda & FAQ</a></li>
+                    <li><a href="#">Contato</a></li>
+                    <li><a href="#">Termos de Uso</a></li>
+                </ul>
+            </div>
+            <div class="footer-links-col">
+                <h4>Acesso</h4>
+                <ul>
+                    <li><a href="login.html">Login</a></li>
+                    <li><a href="login.html?register=true">Criar Conta</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 360° Studio. Todos os direitos reservados.
+        </div>
+    </footer>
+
+    <script src="home.js"></script>
+</body>
+</html>
