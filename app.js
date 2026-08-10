@@ -637,6 +637,7 @@ function initDOMEvents() {
                     }
                     if (btn) btn.click();
                 }
+            }
         }
     });
 
@@ -1087,6 +1088,11 @@ function toggleSidebar() {
         openToolTab(lastTab);
     }
 }
+
+// Vinculação Global
+window.openToolTab = openToolTab;
+window.closeToolDrawer = closeToolDrawer;
+window.toggleSidebar = toggleSidebar;
 
 // --- AUXILIAR: PROCESSAMENTO E OTIMIZAÇÃO DE MÍDIA 360 ---
 function processAndOptimizeFile(file) {
