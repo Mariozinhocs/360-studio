@@ -16,7 +16,7 @@ if ($tourId === 'demo-casa') {
             'id' => 'scene-sala',
             'title' => 'Vista Externa & Jardim',
             'type' => 'image',
-            'sourceUrl' => 'https://raw.githubusercontent.com/aframevr/aframe/master/examples/boilerplate/panorama/puydesancy.jpg',
+            'sourceUrl' => 'assets/demo/garden.jpg',
             'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
             'galleryImages' => [],
             'hotspots' => [
@@ -33,7 +33,7 @@ if ($tourId === 'demo-casa') {
             'id' => 'scene-suite',
             'title' => 'Galeria Principal',
             'type' => 'image',
-            'sourceUrl' => 'https://pannellum.org/images/bma-0.jpg',
+            'sourceUrl' => 'assets/demo/livingroom.jpg',
             'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
             'galleryImages' => [],
             'hotspots' => [
@@ -93,7 +93,7 @@ if ($tourId === 'demo-showroom') {
             'id' => 'scene-main',
             'title' => 'Showroom Principal',
             'type' => 'image',
-            'sourceUrl' => 'https://pannellum.org/images/bma-0.jpg',
+            'sourceUrl' => 'assets/demo/showroom.jpg',
             'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
             'galleryImages' => [
                 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=600&q=80',
@@ -113,7 +113,7 @@ if ($tourId === 'demo-showroom') {
             'id' => 'scene-office',
             'title' => 'Escritório de Atendimento',
             'type' => 'image',
-            'sourceUrl' => 'https://pannellum.org/images/bma-1.jpg',
+            'sourceUrl' => 'assets/demo/office.jpg',
             'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
             'galleryImages' => [
                 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80'
