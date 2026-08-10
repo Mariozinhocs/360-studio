@@ -26,11 +26,16 @@
 <body>
     <div class="app-container">
         <!-- SIDEBAR DE CONTROLE -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <div class="logo">
-                    <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
-                    <span class="logo-text">360°<span class="highlight">Studio</span></span>
+                <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <div class="logo">
+                        <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                        <span class="logo-text">360°<span class="highlight">Studio</span></span>
+                    </div>
+                    <button id="btn-collapse-sidebar" class="btn-sidebar-toggle" title="Recolher barra lateral (Shift + S)">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
                 </div>
                 <p class="subtitle">A-Team Tour Platform</p>
             </div>
@@ -217,9 +222,14 @@
         <main class="viewer-container">
             <!-- Barra Superior do Visualizador -->
             <header class="top-bar">
-                <div class="tour-info">
-                    <h1 id="tour-display-title">Meu Tour Virtual 360</h1>
-                    <p id="scene-display-title">Nenhuma cena selecionada</p>
+                <div style="display: flex; align-items: center; gap: 15px;">
+                    <button id="btn-toggle-sidebar" class="btn-sidebar-toggle-top" title="Ocultar / Expandir barra lateral (Shift + S)">
+                        <i class="fa-solid fa-bars-staggered"></i>
+                    </button>
+                    <div class="tour-info">
+                        <h1 id="tour-display-title">Meu Tour Virtual 360</h1>
+                        <p id="scene-display-title">Nenhuma cena selecionada</p>
+                    </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <a href="dashboard.html" id="btn-dashboard" class="mode-btn" style="text-decoration: none; display: flex; align-items: center; gap: 5px;">

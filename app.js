@@ -965,6 +965,62 @@ function initDOMEvents() {
             }
         });
     }
+
+    // --- Controle de Colapso / Expansão da Barra Lateral ---
+    const btnCollapseSidebar = document.getElementById("btn-collapse-sidebar");
+    const btnToggleSidebar = document.getElementById("btn-toggle-sidebar");
+    
+    if (btnCollapseSidebar) {
+        btnCollapseSidebar.addEventListener("click", () => {
+            toggleSidebar(false);
+        });
+    }
+
+    if (btnToggleSidebar) {
+        btnToggleSidebar.addEventListener("click", () => {
+            toggleSidebar();
+        });
+    }
+
+    // Atalho de Teclado (Shift + S para alternar painel)
+    window.addEventListener("keydown", (e) => {
+        if (e.shiftKey && (e.key === "S" || e.key === "s")) {
+            if (!["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) {
+                e.preventDefault();
+                toggleSidebar();
+            }
+        }
+    });
+
+    // Restaurar estado anterior salvo no navegador
+    const savedCollapsed = localStorage.getItem("sidebar_collapsed");
+    if (savedCollapsed === "true") {
+        const sidebar = document.getElementById("sidebar");
+        if (sidebar) sidebar.classList.add("collapsed");
+    }
+}
+
+// --- FUNÇÃO PARA ALTERNAR BARRA LATERAL ---
+function toggleSidebar(forceState = null) {
+    const sidebar = document.getElementById("sidebar");
+    if (!sidebar) return;
+
+    const shouldCollapse = forceState !== null ? !forceState : !sidebar.classList.contains("collapsed");
+
+    if (shouldCollapse) {
+        sidebar.classList.add("collapsed");
+        localStorage.setItem("sidebar_collapsed", "true");
+        showToast("Painel lateral recolhido.", "info");
+    } else {
+        sidebar.classList.remove("collapsed");
+        localStorage.setItem("sidebar_collapsed", "false");
+        showToast("Painel lateral expandido.", "info");
+    }
+
+    // Dispara evento de redimensionamento para o Three.js / A-Frame se ajustar perfeitamente
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, 360);
 }
 
 // --- AUXILIAR: PROCESSAMENTO E OTIMIZAÇÃO DE MÍDIA 360 ---
