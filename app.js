@@ -1000,36 +1000,92 @@ function initDOMEvents() {
     }
 }
 
-// --- FUNÇÃO PARA ALTERNAR BARRA LATERAL ---
-function toggleSidebar(action = 'toggle') {
-    const sidebar = document.getElementById("sidebar");
-    if (!sidebar) return;
+// --- SISTEMA MODULAR DE FERRAMENTAS (RAIL + DRAWER) ---
+function openToolTab(tabName) {
+    const drawer = document.getElementById("editor-drawer");
+    if (!drawer) return;
 
-    let isCurrentlyCollapsed = sidebar.classList.contains("collapsed");
-    let shouldCollapse = false;
+    const railBtns = document.querySelectorAll(".tool-rail-btn[data-tab]");
+    const panes = document.querySelectorAll(".drawer-pane");
+    const drawerTitle = document.getElementById("drawer-active-title");
 
-    if (action === 'collapse' || action === true) {
-        shouldCollapse = true;
-    } else if (action === 'expand' || action === false) {
-        shouldCollapse = false;
-    } else {
-        shouldCollapse = !isCurrentlyCollapsed;
+    const titles = {
+        'scenes': '<i class="fa-solid fa-layer-group"></i> Cenas do Tour',
+        'upload': '<i class="fa-solid fa-cloud-arrow-up"></i> Carregar Mídia 360°',
+        'hotspots': '<i class="fa-solid fa-location-dot"></i> Portais de Navegação',
+        'floorplan': '<i class="fa-solid fa-map"></i> Planta Baixa',
+        'media': '<i class="fa-solid fa-photo-film"></i> Som & Galeria 2D',
+        'settings': '<i class="fa-solid fa-sliders"></i> Ajustes do Tour'
+    };
+
+    // Se o drawer já está aberto nesta mesma aba, recolhe/colapsa!
+    if (drawer.classList.contains("open") && drawer.dataset.activeTab === tabName) {
+        closeToolDrawer();
+        return;
     }
 
-    if (shouldCollapse) {
-        sidebar.classList.add("collapsed");
-        localStorage.setItem("sidebar_collapsed", "true");
-        showToast("Painel lateral recolhido.", "info");
-    } else {
-        sidebar.classList.remove("collapsed");
-        localStorage.setItem("sidebar_collapsed", "false");
-        showToast("Painel lateral expandido.", "info");
-    }
+    // Abre o painel drawer
+    drawer.classList.add("open");
+    drawer.dataset.activeTab = tabName;
+    if (drawerTitle) drawerTitle.innerHTML = titles[tabName] || 'Ferramentas';
 
-    // Dispara evento de redimensionamento para o Three.js / A-Frame se ajustar perfeitamente
+    // Atualiza botões da barra vertical
+    railBtns.forEach(btn => {
+        if (btn.dataset.tab === tabName) {
+            btn.classList.add("active");
+        } else {
+            btn.classList.remove("active");
+        }
+    });
+
+    // Exibe apenas o painel selecionado
+    panes.forEach(pane => {
+        if (pane.id === `pane-${tabName}`) {
+            pane.style.display = "block";
+        } else {
+            pane.style.display = "none";
+        }
+    });
+
+    localStorage.setItem("editor_active_tab", tabName);
+    localStorage.setItem("editor_drawer_open", "true");
+
+    // Redimensionamento suave do A-Frame Three.js
     setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
-    }, 360);
+    }, 320);
+}
+
+function closeToolDrawer() {
+    const drawer = document.getElementById("editor-drawer");
+    if (!drawer) return;
+
+    drawer.classList.remove("open");
+    drawer.dataset.activeTab = "";
+
+    document.querySelectorAll(".tool-rail-btn[data-tab]").forEach(btn => {
+        btn.classList.remove("active");
+    });
+
+    localStorage.setItem("editor_drawer_open", "false");
+
+    showToast("Painel recolhido.", "info");
+
+    setTimeout(() => {
+        window.dispatchEvent(new Event('resize'));
+    }, 320);
+}
+
+function toggleSidebar() {
+    const drawer = document.getElementById("editor-drawer");
+    if (!drawer) return;
+
+    if (drawer.classList.contains("open")) {
+        closeToolDrawer();
+    } else {
+        const lastTab = localStorage.getItem("editor_active_tab") || "scenes";
+        openToolTab(lastTab);
+    }
 }
 
 // --- AUXILIAR: PROCESSAMENTO E OTIMIZAÇÃO DE MÍDIA 360 ---

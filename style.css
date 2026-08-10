@@ -57,41 +57,163 @@ body {
     position: relative;
 }
 
-/* --- SIDEBAR --- */
-.sidebar {
-    width: var(--sidebar-width);
+/* --- SIDEBAR MODULAR (RAIL + EXPANDABLE DRAWER) --- */
+.sidebar-modular {
+    display: flex;
+    height: 100vh;
+    z-index: 10;
+    flex-shrink: 0;
+    position: relative;
+}
+
+/* 1. ICON RAIL */
+.editor-tool-rail {
+    width: 68px;
     background-color: var(--bg-sidebar);
     border-right: 1px solid var(--border-glass);
     display: flex;
     flex-direction: column;
-    z-index: 10;
-    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    z-index: 12;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.4);
+    height: 100%;
+}
+
+.rail-top, .rail-bottom {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.rail-nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin: auto 0;
+}
+
+.tool-rail-btn {
+    width: 50px;
+    height: 52px;
+    border-radius: 12px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: var(--transition-smooth);
+    text-decoration: none;
+    font-family: var(--font-main);
+    padding: 4px 2px;
+}
+
+.tool-rail-btn i {
+    font-size: 17px;
+    transition: transform 0.2s ease;
+}
+
+.tool-rail-btn span {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+.tool-rail-btn:hover {
+    color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.tool-rail-btn.active {
+    color: #fff;
+    background: linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(79, 172, 254, 0.2));
+    border-color: var(--color-accent);
+    box-shadow: 0 0 16px rgba(0, 242, 254, 0.35);
+}
+
+.tool-rail-btn.active i {
+    color: var(--color-accent);
+    transform: scale(1.1);
+}
+
+.tool-rail-btn.rail-brand {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #00f2fe, #4facfe);
+    color: #0a0b0e;
+    box-shadow: 0 0 18px rgba(0, 242, 254, 0.5);
+    margin-bottom: 8px;
+}
+
+.tool-rail-btn.rail-brand i {
+    font-size: 18px;
+}
+
+.tool-rail-btn.rail-brand:hover {
+    transform: scale(1.08) rotate(5deg);
+}
+
+/* 2. DRAWER PANEL */
+.editor-drawer {
+    width: 0;
+    max-width: 0;
+    background-color: var(--bg-sidebar);
+    border-right: 1px solid var(--border-glass);
+    display: flex;
+    flex-direction: column;
+    z-index: 11;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
-    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+}
+
+.editor-drawer.open {
+    width: 320px;
+    max-width: 320px;
+    opacity: 1;
+    pointer-events: auto;
     overflow-y: auto;
     overflow-x: hidden;
 }
 
-.sidebar.collapsed {
-    margin-left: calc(-1 * var(--sidebar-width)) !important;
-    width: 0 !important;
-    min-width: 0 !important;
-    max-width: 0 !important;
-    padding: 0 !important;
-    opacity: 0 !important;
-    pointer-events: none !important;
-    overflow: hidden !important;
-    border: none !important;
+.drawer-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-glass);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.15);
 }
 
-.btn-sidebar-toggle {
+.drawer-header h3 {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.drawer-close-btn {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--border-glass);
     color: var(--text-secondary);
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -99,11 +221,30 @@ body {
     transition: var(--transition-smooth);
 }
 
-.btn-sidebar-toggle:hover {
-    background: rgba(0, 242, 254, 0.15);
-    color: var(--color-accent);
-    border-color: var(--color-accent);
-    transform: scale(1.05);
+.drawer-close-btn:hover {
+    background: rgba(255, 74, 90, 0.15);
+    color: #ff4a5a;
+    border-color: #ff4a5a;
+}
+
+.drawer-content {
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.drawer-pane {
+    animation: fadeInPane 0.25s ease;
+}
+
+@keyframes fadeInPane {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .btn-sidebar-toggle-top {

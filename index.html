@@ -21,200 +21,234 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.2.0">
+    <link rel="stylesheet" href="style.css?v=1.3.0">
 </head>
 <body>
     <div class="app-container">
-        <!-- SIDEBAR DE CONTROLE -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div style="display: flex; align-items: center; justify-content: space-between;">
-                    <div class="logo">
-                        <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
-                        <span class="logo-text">360°<span class="highlight">Studio</span></span>
-                    </div>
-                    <button id="btn-collapse-sidebar" class="btn-sidebar-toggle" title="Recolher barra lateral (Shift + S)" onclick="toggleSidebar('collapse')">
-                        <i class="fa-solid fa-chevron-left"></i>
+        <!-- SIDEBAR DE FERRAMENTAS MODULAR (RAIL + DRAWER) -->
+        <aside class="sidebar-modular" id="sidebar">
+            <!-- 1. ICON RAIL (Barra Vertical Compacta) -->
+            <div class="editor-tool-rail">
+                <div class="rail-top">
+                    <a href="dashboard.html" class="tool-rail-btn rail-brand" title="Voltar ao Painel">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </a>
+                </div>
+
+                <div class="rail-nav">
+                    <button class="tool-rail-btn active" data-tab="scenes" title="Cenas do Tour" onclick="openToolTab('scenes')">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Cenas</span>
+                    </button>
+
+                    <button class="tool-rail-btn" data-tab="upload" title="Carregar Mídia 360°" onclick="openToolTab('upload')">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <span>Upload</span>
+                    </button>
+
+                    <button class="tool-rail-btn" data-tab="hotspots" title="Portais de Navegação" onclick="openToolTab('hotspots')">
+                        <i class="fa-solid fa-location-dot"></i>
+                        <span>Portais</span>
+                    </button>
+
+                    <button class="tool-rail-btn" data-tab="floorplan" title="Planta Baixa" onclick="openToolTab('floorplan')">
+                        <i class="fa-solid fa-map"></i>
+                        <span>Planta</span>
+                    </button>
+
+                    <button class="tool-rail-btn" data-tab="media" title="Som Ambiente & Galeria 2D" onclick="openToolTab('media')">
+                        <i class="fa-solid fa-photo-film"></i>
+                        <span>Mídia</span>
+                    </button>
+
+                    <button class="tool-rail-btn" data-tab="settings" title="Ajustes do Tour" onclick="openToolTab('settings')">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Ajustes</span>
                     </button>
                 </div>
-                <p class="subtitle">A-Team Tour Platform</p>
-            </div>
 
-            <!-- Seção de Gerenciamento do Tour -->
-            <div class="tour-meta-card">
-                <div class="meta-field">
-                    <label for="tour-title-input">Nome do Tour</label>
-                    <input type="text" id="tour-title-input" value="Meu Tour Virtual 360">
-                </div>
-            </div>
-
-            <!-- Upload Area -->
-            <div class="upload-section">
-                <h3>Carregar Mídia 360°</h3>
-                <div class="drag-drop-zone" id="drop-zone">
-                    <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
-                    <p class="upload-text">Arraste fotos/vídeos ou clique para selecionar</p>
-                    <span class="file-info">Suporta JPG e MP4 360° (Equiretangulares)</span>
-                    <input type="file" id="file-input" multiple accept="image/jpeg,image/png,video/mp4" style="display: none;">
-                </div>
-                <!-- Barra de progresso de upload -->
-                <div id="upload-progress-container" class="upload-progress-container" style="display: none; margin-top: 12px;">
-                    <div class="upload-progress-info">
-                        <span id="upload-filename">Enviando arquivo...</span>
-                        <span id="upload-percentage">0%</span>
-                    </div>
-                    <div class="upload-progress-bar-bg">
-                        <div id="upload-progress-bar" class="upload-progress-bar" style="width: 0%;"></div>
-                    </div>
+                <div class="rail-bottom">
+                    <button class="tool-rail-btn" id="btn-export" title="Exportar Tour (JSON)">
+                        <i class="fa-solid fa-download"></i>
+                        <span>Exportar</span>
+                    </button>
+                    <a href="dashboard.html" class="tool-rail-btn" title="Painel de Controle">
+                        <i class="fa-solid fa-house"></i>
+                        <span>Painel</span>
+                    </a>
                 </div>
             </div>
 
-            <!-- Lista de Cenas -->
-            <div class="scenes-section">
-                <div class="section-title-row">
-                    <h3>Cenas do Tour</h3>
-                    <span class="badge" id="scenes-count">0</span>
-                </div>
-                <div class="scenes-list" id="scenes-list">
-                    <!-- Gerado dinamicamente -->
-                </div>
-            </div>
-
-            <!-- Configurações da Cena Ativa (Som & Galeria) -->
-            <div class="active-scene-settings-section" id="active-scene-settings-section" style="display: none; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 15px; margin-top: 15px;">
-                <div class="section-title-row">
-                    <h3>Configurações da Cena Ativa</h3>
-                </div>
-                
-                <!-- Nome da Cena -->
-                <div style="margin-top: 10px;">
-                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Nome da Cena</label>
-                    <input type="text" id="input-scene-title" style="width: 100%; padding: 8px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px; outline: none;">
+            <!-- 2. DRAWER (Painel Expansível da Ferramenta Ativa) -->
+            <div class="editor-drawer open" id="editor-drawer" data-active-tab="scenes">
+                <div class="drawer-header">
+                    <h3 id="drawer-active-title">Cenas do Tour</h3>
+                    <button class="drawer-close-btn" title="Recolher Painel" onclick="closeToolDrawer()">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
                 </div>
 
-                <!-- Som Ambiente (MP3) -->
-                <div style="margin-top: 15px;">
-                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Som Ambiente (MP3)</label>
-                    
-                    <!-- Estado sem áudio -->
-                    <div id="audio-upload-zone" class="audio-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
-                        <i class="fa-solid fa-volume-high" style="font-size: 16px; color: var(--color-purple); margin-bottom: 4px; display: block;"></i>
-                        <span style="font-size: 11px; opacity: 0.8;">Carregar Áudio (MP3)</span>
-                        <input type="file" id="audio-file-input" accept="audio/mpeg" style="display: none;">
+                <div class="drawer-content">
+                    <!-- PAINEL: CENAS -->
+                    <div class="drawer-pane" id="pane-scenes" style="display: block;">
+                        <div class="tour-meta-card">
+                            <div class="meta-field">
+                                <label for="tour-title-input">Nome do Tour</label>
+                                <input type="text" id="tour-title-input" value="Meu Tour Virtual 360">
+                            </div>
+                        </div>
+                        <div class="scenes-section" style="padding: 16px 20px;">
+                            <div class="section-title-row">
+                                <h3>Lista de Cenas</h3>
+                                <span class="badge" id="scenes-count">0</span>
+                            </div>
+                            <div class="scenes-list" id="scenes-list" style="margin-top: 10px;">
+                                <!-- Gerado dinamicamente -->
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Estado com áudio ativo -->
-                    <div id="audio-preview-container" style="display: none; align-items: center; gap: 10px; margin-top: 5px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 6px; background: rgba(255,255,255,0.03);">
-                        <i class="fa-solid fa-file-audio" style="font-size: 18px; color: #00f2fe;"></i>
-                        <span id="audio-preview-filename" style="font-size: 11px; color: var(--text-secondary); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">audio.mp3</span>
-                        <button id="btn-delete-audio" class="btn btn-secondary btn-sm" title="Remover Áudio" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 4px 8px; font-size: 11px;">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Galeria 2D Complementar -->
-                <div style="margin-top: 15px;">
-                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Galeria de Imagens 2D</label>
-                    <div id="gallery-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s; margin-bottom: 8px;">
-                        <i class="fa-solid fa-images" style="font-size: 16px; color: var(--color-blue); margin-bottom: 4px; display: block;"></i>
-                        <span style="font-size: 11px; opacity: 0.8;">Adicionar Fotos (2D)</span>
-                        <input type="file" id="gallery-file-input" accept="image/jpeg,image/png" multiple style="display: none;">
-                    </div>
-                    <div id="gallery-thumbs-list" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;">
-                        <!-- Imagens da galeria aparecem aqui -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Lista de Hotspots da Cena Ativa (Apenas no Modo Edição) -->
-            <div class="hotspots-section" id="hotspots-sidebar-section" style="display: none;">
-                <div class="section-title-row">
-                    <h3>Portais desta Cena</h3>
-                    <span class="badge" id="hotspots-count">0</span>
-                </div>
-                <div class="hotspots-list" id="hotspots-list">
-                    <!-- Gerado dinamicamente -->
-                </div>
-            </div>
-
-            <!-- Planta Baixa (Mapa Interativo) -->
-            <div class="floorplan-section" id="floorplan-sidebar-section">
-                <div class="section-title-row">
-                    <h3>Planta Baixa</h3>
-                    <span class="badge" id="floorplan-status-badge" style="background: rgba(255,255,255,0.1); color: var(--text-secondary); font-size: 10px;">Sem Mapa</span>
-                </div>
-                
-                <!-- Estado sem mapa -->
-                <div id="floorplan-upload-zone" class="floorplan-upload-zone" style="margin-top: 10px;">
-                    <i class="fa-solid fa-map-location-dot" style="font-size: 24px; color: var(--color-purple); margin-bottom: 8px;"></i>
-                    <p style="font-size: 12px; margin: 0; opacity: 0.8;">Carregar Planta Baixa (JPG/PNG)</p>
-                    <input type="file" id="floorplan-file-input" accept="image/jpeg,image/png" style="display: none;">
-                </div>
-
-                <!-- Estado com mapa -->
-                <div id="floorplan-preview-container" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px;">
-                    <div class="floorplan-preview-box">
-                        <img id="floorplan-preview-img" src="" alt="Planta Baixa" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: block; max-height: 120px; object-fit: contain; background: rgba(0,0,0,0.2);">
-                    </div>
-                    <div class="floorplan-actions-row" style="display: flex; gap: 8px;">
-                        <button id="btn-open-floorplan-editor" class="btn btn-secondary btn-sm btn-flex" style="flex: 1; border-color: #00f2fe; color: #00f2fe; background: rgba(0, 242, 254, 0.08); font-size: 11px; padding: 6px;">
-                            <i class="fa-solid fa-arrows-to-dot"></i> Ajustar Radares
-                        </button>
-                        <button id="btn-delete-floorplan" class="btn btn-secondary btn-sm" title="Excluir Planta Baixa" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 6px 10px;">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Configurações do Tour (Logo & Privacidade) -->
-            <div class="settings-section" id="tour-settings-sidebar-section">
-                <div class="section-title-row">
-                    <h3>Configurações do Tour</h3>
-                </div>
-                
-                <!-- Upload de Logomarca -->
-                <div class="setting-item" style="margin-top: 10px;">
-                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Logomarca do Cliente</label>
-                    
-                    <!-- Estado sem logo -->
-                    <div id="logo-upload-zone" class="logo-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
-                        <i class="fa-solid fa-cloud-arrow-up" style="font-size: 16px; color: var(--color-accent); margin-bottom: 4px; display: block;"></i>
-                        <span style="font-size: 11px; opacity: 0.8;">Carregar Logo (PNG transparente)</span>
-                        <input type="file" id="logo-file-input" accept="image/png" style="display: none;">
+                    <!-- PAINEL: UPLOAD -->
+                    <div class="drawer-pane" id="pane-upload" style="display: none;">
+                        <div class="upload-section" style="padding: 16px 20px;">
+                            <div class="drag-drop-zone" id="drop-zone">
+                                <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                                <p class="upload-text">Arraste fotos/vídeos ou clique para selecionar</p>
+                                <span class="file-info">Suporta JPG e MP4 360° (Equiretangulares)</span>
+                                <input type="file" id="file-input" multiple accept="image/jpeg,image/png,video/mp4" style="display: none;">
+                            </div>
+                            <!-- Barra de progresso de upload -->
+                            <div id="upload-progress-container" class="upload-progress-container" style="display: none; margin-top: 12px;">
+                                <div class="upload-progress-info">
+                                    <span id="upload-filename">Enviando arquivo...</span>
+                                    <span id="upload-percentage">0%</span>
+                                </div>
+                                <div class="upload-progress-bar-bg">
+                                    <div id="upload-progress-bar" class="upload-progress-bar" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Estado com logo carregada -->
-                    <div id="logo-preview-container" style="display: none; align-items: center; gap: 10px; margin-top: 5px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 6px; background: rgba(255,255,255,0.03);">
-                        <img id="logo-preview-img" src="" alt="Logo" style="height: 32px; max-width: 100px; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px;">
-                        <span style="font-size: 11px; color: var(--text-secondary); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Logo ativa</span>
-                        <button id="btn-delete-logo" class="btn btn-secondary btn-sm" title="Excluir Logo" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 4px 8px; font-size: 11px;">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
+                    <!-- PAINEL: PORTAIS / HOTSPOTS -->
+                    <div class="drawer-pane" id="pane-hotspots" style="display: none;">
+                        <div class="hotspots-section" id="hotspots-sidebar-section" style="padding: 16px 20px;">
+                            <div class="section-title-row">
+                                <h3>Portais desta Cena</h3>
+                                <span class="badge" id="hotspots-count">0</span>
+                            </div>
+                            <div class="hotspots-list" id="hotspots-list" style="margin-top: 10px;">
+                                <!-- Gerado dinamicamente -->
+                            </div>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Controle de Privacidade -->
-                <div class="setting-item" style="margin-top: 15px;">
-                    <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Acesso e Privacidade</label>
-                    <select id="select-privacy" class="form-control" style="width: 100%; padding: 8px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px; outline: none; cursor: pointer;">
-                        <option value="public">Público (Todos podem ver)</option>
-                        <option value="password">Protegido por Senha</option>
-                    </select>
-                    
-                    <!-- Campo de Senha -->
-                    <div id="password-input-wrapper" style="display: none; margin-top: 8px; position: relative;">
-                        <input type="text" id="input-privacy-password" placeholder="Definir senha de acesso" style="width: 100%; padding: 8px 30px 8px 10px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 12px; outline: none;">
-                        <i class="fa-solid fa-key" style="position: absolute; right: 10px; top: 10px; font-size: 12px; color: var(--text-secondary);"></i>
+                    <!-- PAINEL: PLANTA BAIXA -->
+                    <div class="drawer-pane" id="pane-floorplan" style="display: none;">
+                        <div class="floorplan-section" id="floorplan-sidebar-section" style="padding: 16px 20px;">
+                            <div class="section-title-row">
+                                <h3>Planta Baixa</h3>
+                                <span class="badge" id="floorplan-status-badge" style="background: rgba(255,255,255,0.1); color: var(--text-secondary); font-size: 10px;">Sem Mapa</span>
+                            </div>
+                            
+                            <!-- Estado sem mapa -->
+                            <div id="floorplan-upload-zone" class="floorplan-upload-zone" style="margin-top: 10px;">
+                                <i class="fa-solid fa-map-location-dot" style="font-size: 24px; color: var(--color-purple); margin-bottom: 8px;"></i>
+                                <p style="font-size: 12px; margin: 0; opacity: 0.8;">Carregar Planta Baixa (JPG/PNG)</p>
+                                <input type="file" id="floorplan-file-input" accept="image/jpeg,image/png" style="display: none;">
+                            </div>
+
+                            <!-- Estado com mapa -->
+                            <div id="floorplan-preview-container" style="display: none; flex-direction: column; gap: 10px; margin-top: 10px;">
+                                <div class="floorplan-preview-box">
+                                    <img id="floorplan-preview-img" src="" alt="Planta Baixa" style="width: 100%; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1); display: block; max-height: 120px; object-fit: contain; background: rgba(0,0,0,0.2);">
+                                </div>
+                                <div class="floorplan-actions-row" style="display: flex; gap: 8px;">
+                                    <button id="btn-open-floorplan-editor" class="btn btn-secondary btn-sm btn-flex" style="flex: 1; border-color: #00f2fe; color: #00f2fe; background: rgba(0, 242, 254, 0.08); font-size: 11px; padding: 6px;">
+                                        <i class="fa-solid fa-arrows-to-dot"></i> Ajustar Radares
+                                    </button>
+                                    <button id="btn-delete-floorplan" class="btn btn-secondary btn-sm" title="Excluir Planta Baixa" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 6px 10px;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PAINEL: MÍDIA (SOM & GALERIA 2D) -->
+                    <div class="drawer-pane" id="pane-media" style="display: none;">
+                        <div class="active-scene-settings-section" id="active-scene-settings-section" style="padding: 16px 20px;">
+                            <!-- Nome da Cena -->
+                            <div>
+                                <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Nome da Cena Ativa</label>
+                                <input type="text" id="input-scene-title" style="width: 100%; padding: 8px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px; outline: none;">
+                            </div>
+
+                            <!-- Som Ambiente (MP3) -->
+                            <div style="margin-top: 15px;">
+                                <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Som Ambiente (MP3)</label>
+                                <div id="audio-upload-zone" class="audio-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
+                                    <i class="fa-solid fa-volume-high" style="font-size: 16px; color: var(--color-purple); margin-bottom: 4px; display: block;"></i>
+                                    <span style="font-size: 11px; opacity: 0.8;">Carregar Áudio (MP3)</span>
+                                    <input type="file" id="audio-file-input" accept="audio/mpeg" style="display: none;">
+                                </div>
+                                <div id="audio-preview-container" style="display: none; align-items: center; gap: 10px; margin-top: 5px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 6px; background: rgba(255,255,255,0.03);">
+                                    <i class="fa-solid fa-file-audio" style="font-size: 18px; color: #00f2fe;"></i>
+                                    <span id="audio-preview-filename" style="font-size: 11px; color: var(--text-secondary); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">audio.mp3</span>
+                                    <button id="btn-delete-audio" class="btn btn-secondary btn-sm" title="Remover Áudio" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 4px 8px; font-size: 11px;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Galeria 2D Complementar -->
+                            <div style="margin-top: 15px;">
+                                <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Galeria de Imagens 2D</label>
+                                <div id="gallery-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s; margin-bottom: 8px;">
+                                    <i class="fa-solid fa-images" style="font-size: 16px; color: var(--color-blue); margin-bottom: 4px; display: block;"></i>
+                                    <span style="font-size: 11px; opacity: 0.8;">Adicionar Fotos (2D)</span>
+                                    <input type="file" id="gallery-file-input" accept="image/jpeg,image/png" multiple style="display: none;">
+                                </div>
+                                <div id="gallery-thumbs-list" style="display: flex; flex-wrap: wrap; gap: 5px; margin-top: 5px;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PAINEL: AJUSTES (LOGO & PRIVACIDADE) -->
+                    <div class="drawer-pane" id="pane-settings" style="display: none;">
+                        <div class="settings-section" id="tour-settings-sidebar-section" style="padding: 16px 20px;">
+                            <!-- Upload de Logomarca -->
+                            <div class="setting-item">
+                                <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Logomarca do Cliente</label>
+                                <div id="logo-upload-zone" class="logo-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
+                                    <i class="fa-solid fa-cloud-arrow-up" style="font-size: 16px; color: var(--color-accent); margin-bottom: 4px; display: block;"></i>
+                                    <span style="font-size: 11px; opacity: 0.8;">Carregar Logo (PNG transparente)</span>
+                                    <input type="file" id="logo-file-input" accept="image/png" style="display: none;">
+                                </div>
+                                <div id="logo-preview-container" style="display: none; align-items: center; gap: 10px; margin-top: 5px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 6px; background: rgba(255,255,255,0.03);">
+                                    <img id="logo-preview-img" src="" alt="Logo" style="height: 32px; max-width: 100px; object-fit: contain; background: rgba(0,0,0,0.3); border-radius: 4px; padding: 2px;">
+                                    <span style="font-size: 11px; color: var(--text-secondary); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Logo ativa</span>
+                                    <button id="btn-delete-logo" class="btn btn-secondary btn-sm" title="Excluir Logo" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 4px 8px; font-size: 11px;">
+                                        <i class="fa-solid fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Controle de Privacidade -->
+                            <div class="setting-item" style="margin-top: 15px;">
+                                <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Acesso e Privacidade</label>
+                                <select id="select-privacy" class="form-control" style="width: 100%; padding: 8px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px; outline: none; cursor: pointer;">
+                                    <option value="public">Público (Todos podem ver)</option>
+                                    <option value="password">Protegido por Senha</option>
+                                </select>
+                                <div id="password-input-wrapper" style="display: none; margin-top: 8px; position: relative;">
+                                    <input type="text" id="input-privacy-password" placeholder="Definir senha de acesso" style="width: 100%; padding: 8px 30px 8px 10px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.15); border-radius: 6px; color: #fff; font-size: 12px; outline: none;">
+                                    <i class="fa-solid fa-key" style="position: absolute; right: 10px; top: 10px; font-size: 12px; color: var(--text-secondary);"></i>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-            
-            <div class="sidebar-footer">
-                <button id="btn-export" class="btn btn-secondary">
-                    <i class="fa-solid fa-download"></i> Exportar Tour (JSON)
-                </button>
             </div>
         </aside>
 
@@ -473,6 +507,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.2.0"></script>
+    <script src="app.js?v=1.3.0"></script>
 </body>
 </html>
