@@ -9,6 +9,149 @@ if (empty($tourId)) {
     exit;
 }
 
+// RETORNAR DEMONSTRAÇÕES MOCKADAS
+if ($tourId === 'demo-casa') {
+    $scenes = [
+        [
+            'id' => 'scene-sala',
+            'title' => 'Vista Externa & Jardim',
+            'type' => 'image',
+            'sourceUrl' => 'https://raw.githubusercontent.com/aframevr/aframe/master/examples/boilerplate/panorama/puydesancy.jpg',
+            'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            'galleryImages' => [],
+            'hotspots' => [
+                [
+                    'id' => 'hotspot-sala-to-suite',
+                    'type' => 'portal',
+                    'targetSceneId' => 'scene-suite',
+                    'position' => ['x' => 4.2, 'y' => -0.8, 'z' => -2.5],
+                    'label' => 'Entrar na Galeria Principal'
+                ]
+            ]
+        ],
+        [
+            'id' => 'scene-suite',
+            'title' => 'Galeria Principal',
+            'type' => 'image',
+            'sourceUrl' => 'https://pannellum.org/images/bma-0.jpg',
+            'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
+            'galleryImages' => [],
+            'hotspots' => [
+                [
+                    'id' => 'hotspot-suite-to-sala',
+                    'type' => 'portal',
+                    'targetSceneId' => 'scene-sala',
+                    'position' => ['x' => -3.5, 'y' => -0.5, 'z' => 3.2],
+                    'label' => 'Voltar para o Jardim'
+                ]
+            ]
+        ]
+    ];
+    $floorPlan = [
+        'image' => 'https://images.unsplash.com/photo-1580587771525-78b9dba3b914?auto=format&fit=crop&w=600&q=80',
+        'radars' => [
+            [
+                'sceneId' => 'scene-sala',
+                'x' => 40.0,
+                'y' => 55.0,
+                'yawOffset' => 0
+            ],
+            [
+                'sceneId' => 'scene-suite',
+                'x' => 70.0,
+                'y' => 40.0,
+                'yawOffset' => 90
+            ]
+        ]
+    ];
+    echo json_encode([
+        'success' => true,
+        'tour' => [
+            'tourId' => 'demo-casa',
+            'title' => 'Residência Alto Padrão (Demonstração)',
+            'scenes' => $scenes,
+            'floorPlan' => $floorPlan,
+            'logoUrl' => ''
+        ],
+        'is_owner' => false,
+        'show_ads' => false,
+        'is_locked' => false,
+        'features' => [
+            'floor_plans' => true,
+            'ambient_sound' => true,
+            'image_gallery' => true,
+            'privacy_control' => true,
+            'max_logos' => 1
+        ]
+    ]);
+    exit;
+}
+
+if ($tourId === 'demo-showroom') {
+    $scenes = [
+        [
+            'id' => 'scene-main',
+            'title' => 'Showroom Principal',
+            'type' => 'image',
+            'sourceUrl' => 'https://pannellum.org/images/bma-0.jpg',
+            'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+            'galleryImages' => [
+                'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=600&q=80',
+                'https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=600&q=80'
+            ],
+            'hotspots' => [
+                [
+                    'id' => 'hotspot-main-to-office',
+                    'type' => 'portal',
+                    'targetSceneId' => 'scene-office',
+                    'position' => ['x' => 3.8, 'y' => -0.5, 'z' => -2.8],
+                    'label' => 'Entrar no Escritório'
+                ]
+            ]
+        ],
+        [
+            'id' => 'scene-office',
+            'title' => 'Escritório de Atendimento',
+            'type' => 'image',
+            'sourceUrl' => 'https://pannellum.org/images/bma-1.jpg',
+            'ambientSound' => 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3',
+            'galleryImages' => [
+                'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=600&q=80'
+            ],
+            'hotspots' => [
+                [
+                    'id' => 'hotspot-office-to-main',
+                    'type' => 'portal',
+                    'targetSceneId' => 'scene-main',
+                    'position' => ['x' => -3.8, 'y' => -0.5, 'z' => 2.8],
+                    'label' => 'Voltar ao Showroom'
+                ]
+            ]
+        ]
+    ];
+    echo json_encode([
+        'success' => true,
+        'tour' => [
+            'tourId' => 'demo-showroom',
+            'title' => 'Showroom Corporativo (Demonstração)',
+            'scenes' => $scenes,
+            'floorPlan' => null,
+            'logoUrl' => ''
+        ],
+        'is_owner' => false,
+        'show_ads' => false,
+        'is_locked' => false,
+        'features' => [
+            'floor_plans' => false,
+            'ambient_sound' => true,
+            'image_gallery' => true,
+            'privacy_control' => true,
+            'max_logos' => 1
+        ]
+    ]);
+    exit;
+}
+
 try {
     // Buscar o tour e juntar com os dados do usuário criador para validar status da assinatura e obter recursos adicionais
     $stmt = $pdo->prepare("
