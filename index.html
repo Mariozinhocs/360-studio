@@ -21,7 +21,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.1.0">
+    <link rel="stylesheet" href="style.css?v=1.2.0">
 </head>
 <body>
     <div class="app-container">
@@ -33,7 +33,7 @@
                         <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
                         <span class="logo-text">360°<span class="highlight">Studio</span></span>
                     </div>
-                    <button id="btn-collapse-sidebar" class="btn-sidebar-toggle" title="Recolher barra lateral (Shift + S)">
+                    <button id="btn-collapse-sidebar" class="btn-sidebar-toggle" title="Recolher barra lateral (Shift + S)" onclick="toggleSidebar('collapse')">
                         <i class="fa-solid fa-chevron-left"></i>
                     </button>
                 </div>
@@ -223,7 +223,7 @@
             <!-- Barra Superior do Visualizador -->
             <header class="top-bar">
                 <div style="display: flex; align-items: center; gap: 15px;">
-                    <button id="btn-toggle-sidebar" class="btn-sidebar-toggle-top" title="Ocultar / Expandir barra lateral (Shift + S)">
+                    <button id="btn-toggle-sidebar" class="btn-sidebar-toggle-top" title="Ocultar / Expandir barra lateral (Shift + S)" onclick="toggleSidebar()">
                         <i class="fa-solid fa-bars-staggered"></i>
                     </button>
                     <div class="tour-info">
@@ -473,6 +473,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.1.0"></script>
+    <script src="app.js?v=1.2.0"></script>
 </body>
 </html>

@@ -1001,11 +1001,20 @@ function initDOMEvents() {
 }
 
 // --- FUNÇÃO PARA ALTERNAR BARRA LATERAL ---
-function toggleSidebar(forceState = null) {
+function toggleSidebar(action = 'toggle') {
     const sidebar = document.getElementById("sidebar");
     if (!sidebar) return;
 
-    const shouldCollapse = forceState !== null ? !forceState : !sidebar.classList.contains("collapsed");
+    let isCurrentlyCollapsed = sidebar.classList.contains("collapsed");
+    let shouldCollapse = false;
+
+    if (action === 'collapse' || action === true) {
+        shouldCollapse = true;
+    } else if (action === 'expand' || action === false) {
+        shouldCollapse = false;
+    } else {
+        shouldCollapse = !isCurrentlyCollapsed;
+    }
 
     if (shouldCollapse) {
         sidebar.classList.add("collapsed");

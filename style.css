@@ -67,14 +67,22 @@ body {
     z-index: 10;
     flex-shrink: 0;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
-    transition: margin-left 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.25s ease;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
+    overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .sidebar.collapsed {
-    margin-left: calc(-1 * var(--sidebar-width));
-    opacity: 0;
-    pointer-events: none;
+    margin-left: calc(-1 * var(--sidebar-width)) !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    max-width: 0 !important;
+    padding: 0 !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    overflow: hidden !important;
+    border: none !important;
 }
 
 .btn-sidebar-toggle {
