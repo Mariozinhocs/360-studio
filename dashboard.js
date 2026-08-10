@@ -118,35 +118,19 @@ function renderSubscriptionInfo() {
         detail.textContent = planInfo.desc;
     }
 
-    // Se não for profissional, exibir botão para simular upgrade para o plano profissional
+    // Se não for profissional, exibir botão para simular upgrade de plano
     if (status !== 'profissional' || isExpired) {
         const btnSub = document.createElement("button");
         btnSub.className = "btn btn-accent btn-block btn-sm";
-        btnSub.innerHTML = `<i class="fa-solid fa-credit-card animate-pulse"></i> Upgrade para Profissional (Simulado)`;
+        btnSub.innerHTML = `<i class="fa-solid fa-gem animate-pulse"></i> Gerenciar / Efetuar Upgrade`;
         btnSub.onclick = simulateSubscription;
         actionsContainer.appendChild(btnSub);
     }
 }
 
-// --- SIMULAR PAGAMENTO / ASSINATURA ---
-async function simulateSubscription() {
-    showToast("Processando pagamento fictício (Stripe/Pix)...", "info");
-    
-    try {
-        const res = await fetch('api/mock_subscribe.php', { method: 'POST' });
-        const data = await res.json();
-
-        if (res.ok && data.success) {
-            showToast("Sucesso! Plano Premium ativado com sucesso.", "success");
-            
-            // Recarregar status de autenticação para atualizar visual do painel
-            await checkAuth();
-        } else {
-            showToast(data.message || "Falha ao assinar.", "error");
-        }
-    } catch (err) {
-        showToast("Erro de conexão.", "error");
-    }
+// --- REDIRECIONAR PARA TELA DE PLANOS ---
+function simulateSubscription() {
+    window.location.href = "plans.html";
 }
 
 // --- ESTATÍSTICAS ---

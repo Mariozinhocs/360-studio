@@ -190,7 +190,7 @@
                                 <span id="profile-display-plan-badge" class="sub-badge" style="display: inline-block;">Premium</span>
                                 <span id="profile-display-plan-detail" style="font-size: 12px; opacity: 0.7; margin-left: 8px;">Acesso ilimitado</span>
                             </div>
-                            <a href="#" id="profile-upgrade-link" class="highlight" style="font-size: 13px; text-decoration: none; font-weight: 600; color: #00f2fe;" onclick="alert('Funcionalidade de Assinatura/Upgrade em desenvolvimento (integração Stripe/Pix). Para testar o plano premium agora, utilize a simulação de pagamento na barra lateral do painel!'); return false;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Upgrade</a>
+                            <a href="#" id="profile-upgrade-link" class="highlight" style="font-size: 13px; text-decoration: none; font-weight: 600; color: #00f2fe;" onclick="closeProfileModal(); simulateSubscription(); return false;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Upgrade</a>
                         </div>
                     </div>
                 </div>
@@ -207,6 +207,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Script de lógica do Dashboard -->
-    <script src="dashboard.js?v=1.0.9"></script>
+    <script src="dashboard.js?v=1.1.0"></script>
 </body>
 </html>

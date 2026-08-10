@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planos de Assinatura - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Estilos específicos -->
+    <link rel="stylesheet" href="plans.css">
+</head>
+<body>
+
+    <!-- BARRA SUPERIOR -->
+    <header class="plans-header-nav">
+        <div class="plans-brand">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> 360° Studio
+        </div>
+        <a href="dashboard.html" class="btn-back-dashboard">
+            <i class="fa-solid fa-arrow-left"></i> Voltar ao Painel
+        </a>
+    </header>
+
+    <!-- INTRODUÇÃO -->
+    <section class="plans-intro">
+        <h1>Escolha o plano ideal para seus passeios 360°</h1>
+        <p>Crie, edite e compartilhe passeios virtuais interativos de forma profissional e escalável.</p>
+    </section>
+
+    <!-- BILLING TOGGLE -->
+    <div class="billing-toggle-container">
+        <span class="billing-label id="billing-monthly" class="active">Mensal</span>
+        <label class="switch">
+            <input type="checkbox" id="billing-checkbox">
+            <span class="slider"></span>
+        </label>
+        <span class="billing-label" id="billing-yearly">Anual</span>
+        <span class="discount-badge">Salvar 20%</span>
+    </div>
+
+    <!-- CARDS DOS PLANOS -->
+    <div class="plans-grid">
+        <!-- PLANO GRÁTIS -->
+        <div class="plan-card" data-plan="gratis">
+            <div class="plan-card-header">
+                <h2>Grátis</h2>
+                <p class="plan-desc">Perfeito para conhecer e criar seus primeiros tours virtuais.</p>
+            </div>
+            <div class="plan-price-block">
+                <div class="plan-price">R$ 0</div>
+                <div class="plan-price-period">grátis para sempre</div>
+            </div>
+            <button class="btn-select-plan" onclick="openCheckout('gratis')">Começar Grátis</button>
+            <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> 5 tours ativos</li>
+                <li><i class="fa-solid fa-check"></i> 10 cenas por tour</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Sem anúncios</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Remover marca d'água</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente & galeria</li>
+            </ul>
+        </div>
+
+        <!-- PLANO INICIANTE -->
+        <div class="plan-card" data-plan="iniciante">
+            <div class="plan-card-header">
+                <h2>Iniciante</h2>
+                <p class="plan-desc">Ideal para fotógrafos e corretores autônomos iniciantes.</p>
+            </div>
+            <div class="plan-price-block">
+                <div class="plan-price" data-monthly="19.90" data-yearly="15.90">R$ 19,90<span>/mês</span></div>
+                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
+            </div>
+            <button class="btn-select-plan" onclick="openCheckout('iniciante')">Assinar Plano</button>
+            <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> 10 tours ativos</li>
+                <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
+                <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Remover marca d'água</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente & galeria</li>
+            </ul>
+        </div>
+
+        <!-- PLANO BÁSICO -->
+        <div class="plan-card" data-plan="basico">
+            <div class="plan-card-header">
+                <h2>Básico</h2>
+                <p class="plan-desc">Excelente custo-benefício para pequenas agências ou estúdios.</p>
+            </div>
+            <div class="plan-price-block">
+                <div class="plan-price" data-monthly="39.90" data-yearly="31.90">R$ 39,90<span>/mês</span></div>
+                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
+            </div>
+            <button class="btn-select-plan" onclick="openCheckout('basico')">Assinar Plano</button>
+            <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> 50 tours ativos</li>
+                <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
+                <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                <li><i class="fa-solid fa-check"></i> Marca d'água customizada (1)</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente & galeria</li>
+            </ul>
+        </div>
+
+        <!-- PLANO PESSOAL -->
+        <div class="plan-card" data-plan="pessoal">
+            <div class="plan-card-header">
+                <h2>Pessoal</h2>
+                <p class="plan-desc">Para quem busca engajamento com som e galerias completas.</p>
+            </div>
+            <div class="plan-price-block">
+                <div class="plan-price" data-monthly="79.90" data-yearly="63.90">R$ 79,90<span>/mês</span></div>
+                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
+            </div>
+            <button class="btn-select-plan" onclick="openCheckout('pessoal')">Assinar Plano</button>
+            <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> 100 tours ativos</li>
+                <li><i class="fa-solid fa-check"></i> 50 cenas por tour</li>
+                <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                <li><i class="fa-solid fa-check"></i> Marca d'água customizada (2)</li>
+                <li><i class="fa-solid fa-check"></i> Som ambiente (MP3)</li>
+                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
+            </ul>
+        </div>
+
+        <!-- PLANO PROFISSIONAL -->
+        <div class="plan-card highlighted" data-plan="profissional">
+            <span class="plan-badge-popular">Mais Vendido</span>
+            <div class="plan-card-header">
+                <h2>Profissional</h2>
+                <p class="plan-desc">Acesso ilimitado e completo para grandes empresas.</p>
+            </div>
+            <div class="plan-price-block">
+                <div class="plan-price" data-monthly="149.90" data-yearly="119.90">R$ 149,90<span>/mês</span></div>
+                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
+            </div>
+            <button class="btn-select-plan" onclick="openCheckout('profissional')">Assinar Plano</button>
+            <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> Tours ilimitados</li>
+                <li><i class="fa-solid fa-check"></i> Cenas ilimitadas</li>
+                <li><i class="fa-solid fa-check"></i> Logomarcas ilimitadas</li>
+                <li><i class="fa-solid fa-check"></i> Planta baixa interativa</li>
+                <li><i class="fa-solid fa-check"></i> Som ambiente + Galeria 2D</li>
+                <li><i class="fa-solid fa-check"></i> Controle de privacidade</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- SEÇÃO COMPARATIVA -->
+    <section class="plans-comparison">
+        <h2>Comparação Detalhada</h2>
+        <div class="comparison-table-wrapper">
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Recurso / Limite</th>
+                        <th>Grátis</th>
+                        <th>Iniciante</th>
+                        <th>Básico</th>
+                        <th>Pessoal</th>
+                        <th>Profissional</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Tours Ativos</td>
+                        <td>5</td>
+                        <td>10</td>
+                        <td>50</td>
+                        <td>100</td>
+                        <td>Ilimitado</td>
+                    </tr>
+                    <tr>
+                        <td>Cenas por Tour</td>
+                        <td>10</td>
+                        <td>20</td>
+                        <td>20</td>
+                        <td>50</td>
+                        <td>Ilimitado</td>
+                    </tr>
+                    <tr>
+                        <td>Sem Anúncios</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Logomarcas do Cliente</td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>1</td>
+                        <td>2</td>
+                        <td>Ilimitado</td>
+                    </tr>
+                    <tr>
+                        <td>Som Ambiente MP3</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Galeria de Fotos 2D</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Planta Baixa Interativa</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Privacidade por Senha</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- MODAL DE CHECKOUT SIMULADO -->
+    <div class="checkout-modal" id="checkout-modal">
+        <div class="checkout-card">
+            <div class="checkout-header">
+                <h3>Finalizar Assinatura (Simulação)</h3>
+                <button class="checkout-close" onclick="closeCheckout()">&times;</button>
+            </div>
+            <div class="checkout-body">
+                <div class="checkout-plan-summary">
+                    <div>
+                        <span class="checkout-summary-name" id="summary-plan-name">Plano Profissional</span>
+                        <div style="font-size: 11px; color: var(--text-secondary);" id="summary-plan-period">Faturamento Mensal</div>
+                    </div>
+                    <span class="checkout-summary-price" id="summary-plan-price">R$ 149,90</span>
+                </div>
+
+                <!-- Método de Pagamento -->
+                <div class="checkout-tabs">
+                    <button class="checkout-tab-btn active" id="tab-pix" onclick="selectPaymentMethod('pix')">
+                        <i class="fa-brands fa-pix"></i> Pix
+                    </button>
+                    <button class="checkout-tab-btn" id="tab-card" onclick="selectPaymentMethod('card')">
+                        <i class="fa-solid fa-credit-card"></i> Cartão
+                    </button>
+                </div>
+
+                <!-- Formulário Pix -->
+                <div class="payment-form-pane active" id="pane-pix">
+                    <div class="pix-qr-container">
+                        <div class="pix-qr-box">
+                            <!-- QR Code mock -->
+                            <div class="pix-qr-placeholder"></div>
+                        </div>
+                        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 12px;">Escaneie o QR Code acima ou use o código Pix Copia e Cola:</p>
+                        <div class="pix-copia-cola-container">
+                            <span class="pix-copia-cola-text" id="pix-code">00020101021226870014br.gov.bcb.pix2565pix.360studio.com/pay/hml_checkout_mock_key_00918237</span>
+                            <button class="btn-copy-pix" onclick="copyPixCode()" title="Copiar Código"><i class="fa-solid fa-copy"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Formulário Cartão -->
+                <div class="payment-form-pane" id="pane-card">
+                    <div class="checkout-form-group">
+                        <label>Número do Cartão</label>
+                        <input type="text" placeholder="0000 0000 0000 0000" id="card-number">
+                    </div>
+                    <div class="checkout-form-row">
+                        <div class="checkout-form-group" style="flex: 2;">
+                            <label>Nome no Cartão</label>
+                            <input type="text" placeholder="Nome Completo" id="card-name">
+                        </div>
+                        <div class="checkout-form-group" style="flex: 1;">
+                            <label>Validade</label>
+                            <input type="text" placeholder="MM/AA" id="card-expiry">
+                        </div>
+                        <div class="checkout-form-group" style="flex: 1;">
+                            <label>CVV</label>
+                            <input type="text" placeholder="000" id="card-cvv">
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn-confirm-checkout" onclick="confirmPayment()">Confirmar Pagamento Simulado</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Container do Toast Notification -->
+    <div id="toast-container" style="position: fixed; bottom: 20px; right: 20px; z-index: 1100; display: flex; flex-direction: column; gap: 10px;"></div>
+
+    <script src="plans.js"></script>
+</body>
+</html>
