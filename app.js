@@ -176,7 +176,7 @@ async function loadTourFromServer(tourId, startMode = null) {
                 document.getElementById("scene-display-title").textContent = "Acesso Restrito";
                 
                 // Esconder elementos de edição por segurança
-                const sidebar = document.querySelector(".sidebar");
+                const sidebar = document.getElementById("sidebar");
                 if (sidebar) sidebar.style.display = "none";
                 
                 const modeSelector = document.querySelector(".mode-selector");
@@ -197,7 +197,7 @@ async function loadTourFromServer(tourId, startMode = null) {
             // Configurar modo público se não for proprietário ou se solicitado explicitamente
             if (!state.isOwner) {
                 // Esconder elementos de edição
-                const sidebar = document.querySelector(".sidebar");
+                const sidebar = document.getElementById("sidebar");
                 if (sidebar) sidebar.style.display = "none";
                 
                 const modeSelector = document.querySelector(".mode-selector");
@@ -911,6 +911,8 @@ function initDOMEvents() {
                 showToast("Imagens adicionadas à galeria da cena!", "success");
             }
         });
+    }
+
     // --- Controle de Galeria Lightbox (Modo Visitante) ---
     const btnViewGallery = document.getElementById("btn-view-gallery");
     const galleryLightbox = document.getElementById("gallery-lightbox");

@@ -66,6 +66,10 @@ body {
     position: relative;
 }
 
+.preview-mode .sidebar-modular {
+    display: none !important;
+}
+
 /* 1. ICON RAIL */
 .editor-tool-rail {
     width: 68px;
