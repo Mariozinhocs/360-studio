@@ -33,7 +33,7 @@
 
     <!-- BILLING TOGGLE -->
     <div class="billing-toggle-container">
-        <span class="billing-label id="billing-monthly" class="active">Mensal</span>
+        <span class="billing-label" id="billing-monthly" class="active">Mensal</span>
         <label class="switch">
             <input type="checkbox" id="billing-checkbox">
             <span class="slider"></span>
@@ -56,6 +56,7 @@
             </div>
             <button class="btn-select-plan" onclick="openCheckout('gratis')">Começar Grátis</button>
             <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
                 <li><i class="fa-solid fa-check"></i> 5 tours ativos</li>
                 <li><i class="fa-solid fa-check"></i> 10 cenas por tour</li>
                 <li class="disabled"><i class="fa-solid fa-xmark"></i> Sem anúncios</li>
@@ -72,11 +73,12 @@
                 <p class="plan-desc">Ideal para fotógrafos e corretores autônomos iniciantes.</p>
             </div>
             <div class="plan-price-block">
-                <div class="plan-price" data-monthly="19.90" data-yearly="15.90">R$ 19,90<span>/mês</span></div>
+                <div class="plan-price" data-monthly="89,99" data-yearly="71,99">R$ 89,99<span>/mês</span></div>
                 <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
             </div>
             <button class="btn-select-plan" onclick="openCheckout('iniciante')">Assinar Plano</button>
             <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
                 <li><i class="fa-solid fa-check"></i> 10 tours ativos</li>
                 <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
                 <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
@@ -93,11 +95,12 @@
                 <p class="plan-desc">Excelente custo-benefício para pequenas agências ou estúdios.</p>
             </div>
             <div class="plan-price-block">
-                <div class="plan-price" data-monthly="39.90" data-yearly="31.90">R$ 39,90<span>/mês</span></div>
+                <div class="plan-price" data-monthly="129,99" data-yearly="103,99">R$ 129,99<span>/mês</span></div>
                 <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
             </div>
             <button class="btn-select-plan" onclick="openCheckout('basico')">Assinar Plano</button>
             <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
                 <li><i class="fa-solid fa-check"></i> 50 tours ativos</li>
                 <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
                 <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
@@ -114,11 +117,12 @@
                 <p class="plan-desc">Para quem busca engajamento com som e galerias completas.</p>
             </div>
             <div class="plan-price-block">
-                <div class="plan-price" data-monthly="79.90" data-yearly="63.90">R$ 79,90<span>/mês</span></div>
+                <div class="plan-price" data-monthly="199,99" data-yearly="159,99">R$ 199,99<span>/mês</span></div>
                 <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
             </div>
             <button class="btn-select-plan" onclick="openCheckout('pessoal')">Assinar Plano</button>
             <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
                 <li><i class="fa-solid fa-check"></i> 100 tours ativos</li>
                 <li><i class="fa-solid fa-check"></i> 50 cenas por tour</li>
                 <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
@@ -136,11 +140,12 @@
                 <p class="plan-desc">Acesso ilimitado e completo para grandes empresas.</p>
             </div>
             <div class="plan-price-block">
-                <div class="plan-price" data-monthly="149.90" data-yearly="119.90">R$ 149,90<span>/mês</span></div>
+                <div class="plan-price" data-monthly="349,99" data-yearly="279,99">R$ 349,99<span>/mês</span></div>
                 <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
             </div>
             <button class="btn-select-plan" onclick="openCheckout('profissional')">Assinar Plano</button>
             <ul class="plan-features-list">
+                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
                 <li><i class="fa-solid fa-check"></i> Tours ilimitados</li>
                 <li><i class="fa-solid fa-check"></i> Cenas ilimitadas</li>
                 <li><i class="fa-solid fa-check"></i> Logomarcas ilimitadas</li>
@@ -167,6 +172,14 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td>Setas de Navegação</td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
                     <tr>
                         <td>Tours Ativos</td>
                         <td>5</td>
@@ -249,7 +262,7 @@
                         <span class="checkout-summary-name" id="summary-plan-name">Plano Profissional</span>
                         <div style="font-size: 11px; color: var(--text-secondary);" id="summary-plan-period">Faturamento Mensal</div>
                     </div>
-                    <span class="checkout-summary-price" id="summary-plan-price">R$ 149,90</span>
+                    <span class="checkout-summary-price" id="summary-plan-price">R$ 349,99</span>
                 </div>
 
                 <!-- Método de Pagamento -->
