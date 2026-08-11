@@ -61,6 +61,17 @@
         *   Widget flutuante para visitante que plota os pontos do mapa, permite a navegação cruzada entre cenas com clique direto na planta e exibe o cone do radar com efeito blur e gradiente cônico em tempo real.
         *   Bumps de cache-buster inseridos no `index.html` para `app.js` e `style.css` (v=1.1.0) para forçar recarregamento imediato.
 
+10. **Homologação e Validação de Planos (CONCLUÍDO):**
+    *   Deploy para o ambiente de homologação (HML) realizado com sucesso (`deploy-hml.ps1`).
+    *   Estrutura de banco de dados (`hml_users`, `hml_tours`) atualizada via `db_installer.php`.
+    *   Fluxos de login, cadastro, bloqueio de autofill e redirecionamento de raiz validados no HML.
+    *   Matriz de recursos e regras de limite de planos validadas com sucesso via upgrades simulados com Mercado Pago Pix/Cartão:
+        *   **Grátis:** Limitação de 5 tours ativos e 10 cenas confirmada (bloqueio de criação do 6º tour). Exibição de anúncios e bloqueios na Planta Baixa e Logotipo Customizado verificados.
+        *   **Iniciante:** Limite aumentado para 10 tours (liberando a criação do 6º tour).
+        *   **Básico:** Logotipo customizado (1 logo) ativado e anúncios removidos.
+        *   **Profissional:** Planta Baixa Interativa com radar direcional desbloqueada (lock overlay removido) e limite ilimitado.
+    *   **Contas de Teste no HML:** Criadas 6 contas de teste (`gratis_tester`, `iniciante_tester`, `basico_tester`, `pessoal_tester`, `profissional_tester`, `admin_tester`) com a senha padrão `senha360` via script `create_test_profiles.php` para simplificar homologação e auditorias de recursos.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
@@ -69,6 +80,7 @@
     *   [.gitignore](file:///g:/Meu%20Drive/Dev's/360/360/.gitignore) (Configuração de exclusão de arquivos sensíveis no Git [CONCLUÍDO])
     *   [.htaccess](file:///g:/Meu%20Drive/Dev's/360/360/.htaccess) (Redirecionamento automático de acessos à raiz sem parâmetros para login.html [CONCLUÍDO])
     *   [project_memory.md](file:///g:/Meu%20Drive/Dev's/360/360/project_memory.md) (Memória do projeto atualizada com status e roadmap [CONCLUÍDO])
+    *   [create_test_profiles.php](file:///g:/Meu%20Drive/Dev's/360/360/create_test_profiles.php) (Script de carga e reset de contas de teste por nível de plano no HML [CONCLUÍDO])
     *   [api/config.php](file:///g:/Meu%20Drive/Dev's/360/360/api/config.php) (Configurações de banco, sessão, helpers e fuso horário UTC forçado [CONCLUÍDO])
 *   **APIs do Painel:**
     *   [admin_helper.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/admin_helper.php) (Validação de privilégios e purga [CONCLUÍDO])
@@ -97,11 +109,9 @@
 
 ## 🎯 Próximos Passos (Ações para Continuar de Casa)
 
-1.  **Investigação e Correção (Nova Etapa):**
-    *   **Debug da Exclusão de Tours [CONCLUÍDO]:** Identificado que o botão de compartilhar (.btn-view-public) estava estruturado como `<button>` dentro do link `<a>` do card (violação da especificação HTML5 de tags interativas aninhadas). Isso forçava os navegadores a auto-corrigirem o DOM fechando e reabrindo links indesejados, fazendo o clique em excluir (`.btn-delete-project`) herdar o redirecionamento da página e cancelar o fetch do delete. Corrigido substituindo a tag `<button>` interna por `<span>` e adicionando `e.stopPropagation()` no botão de exclusão para evitar propagação indesejada.
-2.  **Deploy em Produção (`prod`):**
+1.  **Deploy em Produção (`prod`):**
     *   Executar o script `.\deploy-prod.ps1` localmente para enviar as atualizações testadas para o ambiente de produção.
-    *   Acessar `https://tour360.hubdigital360.com/db_installer.php` (URL de produção) para atualizar a estrutura de tabelas do banco produtivo com a coluna `deleted_at` e tipo `TINYINT`.
+    *   Acessar `https://tour360.hubdigital360.com/db_installer.php` (URL de produção) para atualizar a estrutura de tabelas do banco de produção.
 
 ---
 
