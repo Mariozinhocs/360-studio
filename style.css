@@ -1612,7 +1612,22 @@ a-scene {
     color: #888;
     font-weight: 600;
 }
-.google-ads-container .ads-header button {
+.google-ads-container .ads-header .ads-close-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.google-ads-container .ads-header .ads-countdown {
+    font-size: 10px;
+    color: #ff007f;
+    font-weight: 700;
+    background: rgba(255, 0, 127, 0.1);
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 0, 127, 0.2);
+    line-height: 1;
+}
+.google-ads-container .ads-header .close-ads-btn {
     background: none;
     border: none;
     color: #888;
@@ -1620,8 +1635,10 @@ a-scene {
     cursor: pointer;
     line-height: 1;
     padding: 0;
+    display: none;
+    transition: color 0.2s ease;
 }
-.google-ads-container .ads-header button:hover {
+.google-ads-container .ads-header .close-ads-btn:hover {
     color: #fff;
 }
 .google-ads-container .ads-body {

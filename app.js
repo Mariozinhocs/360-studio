@@ -220,6 +220,7 @@ async function loadTourFromServer(tourId, startMode = null) {
             if (state.showAds) {
                 if (watermark) watermark.style.display = "block";
                 if (adsContainer) adsContainer.style.display = "block";
+                startAdsTimer();
             } else {
                 if (watermark) watermark.style.display = "none";
                 if (adsContainer) adsContainer.style.display = "none";
@@ -653,9 +654,9 @@ function initDOMEvents() {
         logoUploadZone.addEventListener("click", () => logoFileInput.click());
         logoFileInput.addEventListener("change", async (e) => {
             if (e.target.files && e.target.files.length > 0) {
-                const file = e.target.files[0];
-                if (file.type !== "image/png") {
-                    showToast("Por favor, selecione apenas imagens no formato PNG (com fundo transparente preferencialmente).", "error");
+                const allowedLogoTypes = ["image/png", "image/webp", "image/avif", "image/jpeg"];
+                if (!allowedLogoTypes.includes(file.type)) {
+                    showToast("Por favor, selecione imagens em formato PNG, WEBP, AVIF ou JPG.", "error");
                     return;
                 }
                 
@@ -747,6 +748,7 @@ function initDOMEvents() {
                     if (state.showAds) {
                         if (watermark) watermark.style.display = "block";
                         if (adsContainer) adsContainer.style.display = "block";
+                        startAdsTimer();
                     } else {
                         if (watermark) watermark.style.display = "none";
                         if (adsContainer) adsContainer.style.display = "none";
@@ -1261,7 +1263,8 @@ async function handleFiles(files) {
         if (state.tour.tourId && state.tour.tourId !== "tour-local-default" && state.isOwner) {
             showToast(`Enviando "${res.title}" para o servidor...`, "info");
             const fileToUpload = res.blob || res.file;
-            const extension = res.type === 'video' ? 'mp4' : 'jpg';
+            const origExt = (res.file && res.file.name ? res.file.name.split('.').pop() : '') || 'jpg';
+            const extension = res.type === 'video' ? 'mp4' : (res.blob ? 'jpg' : origExt.toLowerCase());
             const serverUrl = await uploadFileToServer(fileToUpload, `${res.title}.${extension}`);
             if (serverUrl) {
                 finalSourceUrl = serverUrl;
@@ -1715,6 +1718,49 @@ function showToast(message, type = "info") {
         toast.classList.remove("show");
         setTimeout(() => toast.remove(), 400);
     }, 4000);
+}
+
+// --- TIMER DE ANÚNCIOS OBRIGATÓRIO (PLANO GRÁTIS) ---
+function startAdsTimer() {
+    const adsContainer = document.getElementById("google-ads-container");
+    const countdownEl = document.getElementById("ads-countdown");
+    const closeBtn = document.getElementById("close-ads-btn");
+    
+    if (!adsContainer || adsContainer.style.display === "none") return;
+    
+    // Configuração inicial: exibe o contador e esconde o botão de fechar
+    if (countdownEl) {
+        countdownEl.style.display = "inline-block";
+        countdownEl.textContent = "10s";
+    }
+    if (closeBtn) {
+        closeBtn.style.display = "none";
+    }
+    
+    let secondsLeft = 10;
+    
+    // Limpar qualquer intervalo anterior ativo para evitar múltiplos contadores simultâneos
+    if (window.adsIntervalId) {
+        clearInterval(window.adsIntervalId);
+    }
+    
+    window.adsIntervalId = setInterval(() => {
+        secondsLeft--;
+        if (countdownEl) {
+            countdownEl.textContent = `${secondsLeft}s`;
+        }
+        
+        if (secondsLeft <= 0) {
+            clearInterval(window.adsIntervalId);
+            window.adsIntervalId = null;
+            if (countdownEl) {
+                countdownEl.style.display = "none";
+            }
+            if (closeBtn) {
+                closeBtn.style.display = "block";
+            }
+        }
+    }, 1000);
 }
 
 function updateUI() {

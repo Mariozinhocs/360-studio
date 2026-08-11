@@ -31,8 +31,9 @@
     *   **Melhoria de Navegação (Modo Visualização):** O clique na miniatura do tour no dashboard redireciona o usuário diretamente em modo de visualização (`mode=view`), enquanto o botão "Editar" abre o editor.
     *   **Validador com tecla Enter:** Event delegation global implementado nos scripts para capturar a tecla Enter nos modais ativos (criação de tours, redefinição de senha, edição de perfil, hotspot modal) e simular o clique no botão de ação principal.
     *   **Debounce de Input:** Debounce de 500ms inserido na alteração do título do tour para evitar sobrecarga no servidor.
-    *   **Cache-Busters:** Cache-buster do dashboard atualizado para `v=1.0.5`, do editor para `v=1.0.4` e adicionado cache-buster `v=1.0.6` nos redirecionamentos para `login.html` no [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) e no [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) para forçar o recarregamento instantâneo do login nos navegadores de todos os usuários.
+    *   **Cache-Busters:** Cache-buster do dashboard atualizado para `v=1.0.5`, do editor para `v=1.0.4`, do index.html (style.css e app.js) para `v=1.3.4` para a nova contagem de anúncios, e adicionado cache-buster `v=1.0.6` nos redirecionamentos para `login.html` no [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) e no [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) para forçar o recarregamento instantâneo do login nos navegadores de todos os usuários.
     *   **Controle de Redirecionamento e Bloqueio de Autofill:** Removido o redirecionamento automático baseado em sessão ativa (`check_auth.php`) ao carregar o formulário em [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html). Além disso, as tags de formulário `<form>` foram convertidas em contêineres `<div>` e foi implementada uma limpeza contínua e interativa (`setInterval` de 50ms por 8s) que força o esvaziamento dos campos de entrada (`login-username` e `login-password`) até que seja detectada qualquer interação do usuário (como clique, foco, toque ou digitação). Isso impede a exposição de credenciais por autofill passivo de navegadores ou extensões, mantendo sempre a exibição limpa dos placeholders.
+    *   **Exibição Temporária Obrigatória de Anúncios:** O container de publicidades (`google-ads-container`) no [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) agora exibe obrigatoriamente a propaganda por 10 segundos antes de disponibilizar o botão de fechar. Durante esses 10 segundos, exibe-se um contador regressivo (`#ads-countdown`) estilizado de forma premium e oculta-se o botão `#close-ads-btn`. Após a contagem, o contador é ocultado e o botão de fechar é ativado.
 5.  **Limpeza de Mídias Órfãs e Validação de Resolução (Implantado em HML):**
     *   **Exclusão Física Automática:** A remoção de cenas ([save_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/save_tour.php)) ou exclusão de projetos inteiros ([delete_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/delete_tour.php)) agora apaga fisicamente os respectivos arquivos da pasta `uploads/` no servidor, protegendo o espaço em disco contra arquivos órfãos.
     *   **Validação 8K no Backend:** Inserida verificação de largura/altura com `getimagesize()` no backend ([api/upload.php](file:///g:/Meu%20Drive/Dev's/360/360/api/upload.php)) para rejeitar imagens que excedam 8192px (8K), garantindo segurança e integridade de renderização.
@@ -123,3 +124,28 @@
 *   **Controle de Recursos baseados em Plano de Assinatura (Design Pronto):**
     *   Taguear funcionalidades do tour (como a Planta Baixa Interativa) para checagens de recursos do plano ativo (ex: `hasFeature('floor_plan')`).
     *   Criar um painel de Super Admin para gerenciar e associar quais recursos estão ativos em cada plano de assinatura.
+
+---
+
+## 📈 11. Plano Estratégico de Marca, Pitch de Vendas e Tráfego Pago
+
+*   **Identidade e Posicionamento (Branding):**
+    *   **Proposta Única de Valor (UVP):** *"A plataforma brasileira mais intuitiva e completa para criar, hospedar e compartilhar passeios virtuais 360° com plantas baixas inteligentes e radar interativo."*
+    *   **Arquétipo:** O Criador / Inovador (moderno, ágil, premium e sem burocracia).
+    *   **Slogans:** *"Não mostre fotos. Transporte seu cliente para dentro do espaço."* / *"Do upload à experiência imersiva em minutos."*
+    *   **Diferenciais:** Preço em Reais via Pix/Cartão, planta baixa com radar em tempo real, 100% responsivo em browser sem apps externos, compatível com qualquer câmera 360° ou render 3D.
+*   **Pitch Comercial (4 Etapas):**
+    1.  *Problema:* Fotos 2D estáticas não vendem a sensação de espaço; imobiliárias perdem tempo com visitas desqualificadas.
+    2.  *Solução:* Plataforma 360° Studio com portais entre cômodos, planta baixa e radar em tempo real.
+    3.  *Demonstração:* Link ou QR Code na placa que permite tour autônomo 24h e botão de contato no WhatsApp.
+    4.  *CTA:* Criação de conta com até 5 tours 100% grátis para validação imediata.
+*   **Pilares de Redes Sociais (Instagram, TikTok, LinkedIn):**
+    *   Vídeos de impacto visual / Reels mostrando antes/depois e a sincronização do radar com a câmera 360°.
+    *   Dicas práticas de captação fotográfica 360° para corretores e fotógrafos.
+    *   Artigos no LinkedIn focados em diretores imobiliários e aumento de conversão de vendas.
+*   **Plano de Tráfego Pago (Ads & Funil):**
+    *   *Topo de Funil (Meta Ads):* Vídeos de demonstração rápida atraindo para o Plano Grátis.
+    *   *Meio de Funil (Meta/YouTube):* Carrossel de recursos (Planta com Radar + Portais + Marca Própria).
+    *   *Fundo de Funil (Google Search):* Palavras-chave de alta intenção (*"criar tour virtual 360"*, *"plataforma de passeio 360"*).
+    *   *Remarketing:* Banners para usuários cadastrados no plano grátis realizarem upgrade para planos pagos.
+

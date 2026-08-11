@@ -36,18 +36,18 @@ if ($file['error'] !== UPLOAD_ERR_OK) {
 }
 
 // Extensões permitidas
-$allowed_extensions = ['jpg', 'jpeg', 'png', 'mp4'];
+$allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'mp4'];
 $file_info = pathinfo($file['name']);
 $extension = strtolower($file_info['extension'] ?? '');
 
 if (!in_array($extension, $allowed_extensions)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Formato não permitido. Envie apenas JPG, JPEG, PNG ou MP4.']);
+    echo json_encode(['success' => false, 'message' => 'Formato não permitido. Envie apenas JPG, JPEG, PNG, WEBP, AVIF ou MP4.']);
     exit;
 }
 
 // Tipos MIME permitidos
-$allowed_mimes = ['image/jpeg', 'image/png', 'video/mp4'];
+$allowed_mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/x-webp', 'video/mp4'];
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mime_type = finfo_file($finfo, $file['tmp_name']);
 finfo_close($finfo);
@@ -74,12 +74,31 @@ if ($file['size'] > $max_allowed_size) {
 
 // Validar dimensões da imagem (Máximo 8K = 8192px largura ou altura)
 if (!$is_video) {
-    $dimensions = getimagesize($file['tmp_name']);
-    if ($dimensions !== false) {
-        $width = $dimensions[0];
-        $height = $dimensions[1];
-        $max_dimension = 8192;
-        
+    $width = 0;
+    $height = 0;
+    $dimensions = @getimagesize($file['tmp_name']);
+    
+    if ($dimensions !== false && isset($dimensions[0], $dimensions[1])) {
+        $width = (int)$dimensions[0];
+        $height = (int)$dimensions[1];
+    } elseif ($extension === 'webp' && function_exists('imagecreatefromwebp')) {
+        $img = @imagecreatefromwebp($file['tmp_name']);
+        if ($img) {
+            $width = imagesx($img);
+            $height = imagesy($img);
+            imagedestroy($img);
+        }
+    } elseif ($extension === 'avif' && function_exists('imagecreatefromavif')) {
+        $img = @imagecreatefromavif($file['tmp_name']);
+        if ($img) {
+            $width = imagesx($img);
+            $height = imagesy($img);
+            imagedestroy($img);
+        }
+    }
+
+    $max_dimension = 8192;
+    if ($width > 0 && $height > 0) {
         if ($width > $max_dimension || $height > $max_dimension) {
             http_response_code(400);
             echo json_encode([
@@ -88,10 +107,6 @@ if (!$is_video) {
             ]);
             exit;
         }
-    } else {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Não foi possível validar as dimensões da imagem.']);
-        exit;
     }
 }
 
