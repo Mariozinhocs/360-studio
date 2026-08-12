@@ -21,7 +21,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.3.5">
+    <link rel="stylesheet" href="style.css?v=1.3.6">
 </head>
 <body>
     <div class="app-container">
@@ -287,7 +287,7 @@
             <!-- CANVAS DE RENDERIZAÇÃO 360° (A-FRAME) -->
             <div class="canvas-wrapper" id="canvas-wrapper">
                 <!-- A-Scene do A-Frame -->
-                <a-scene embedded loading-screen="dotsColor: #00f2fe; backgroundColor: #0d0e12" raycaster="objects: .hotspot-element">
+                <a-scene embedded loading-screen="dotsColor: #00f2fe; backgroundColor: #0d0e12" cursor="rayOrigin: mouse" raycaster="objects: .hotspot-element, [click-listener], #sky-viewer, #video-viewer, a-sky, a-videosphere">
                     <!-- Elementos de mídia carregados dinamicamente no asset manager -->
                     <a-assets id="assets-manager">
                         <!-- Imagens e vídeos de amostra serão inseridos aqui pelo JS -->
@@ -296,12 +296,11 @@
                     <!-- Câmera com cursor para interagir com os hotspots -->
                     <a-entity id="rig" position="0 0 0">
                         <a-camera id="camera" look-controls="pointerLockEnabled: false; reverseMouseDrag: true" wasd-controls="enabled: false" rotation-listener>
-                            <!-- Cursor visual que aparece no centro da tela no modo edição e visualização se necessário -->
+                            <!-- Cursor visual de mira no modo edição -->
                             <a-cursor id="scene-cursor" 
                                       position="0 0 -1" 
                                       geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.015" 
                                       material="color: #00f2fe; shader: flat; opacity: 0.8"
-                                      raycaster="objects: .hotspot-element"
                                       visible="false">
                             </a-cursor>
                         </a-camera>
@@ -429,6 +428,25 @@
                     </div>
                 </div>
             </div>
+
+            <!-- BARRA DE NAVEGAÇÃO INFERIOR DE CENAS (CARROSSEL) -->
+            <div class="scenes-navigation-bar" id="scenes-navigation-bar" style="display: none;">
+                <button class="nav-arrow-btn" id="btn-prev-scene" title="Cena Anterior">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                
+                <div class="scenes-carousel-track" id="scenes-carousel-track">
+                    <!-- Miniaturas das cenas geradas dinamicamente -->
+                </div>
+
+                <button class="nav-arrow-btn" id="btn-next-scene" title="Próxima Cena">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+
+                <button class="nav-toggle-strip-btn" id="btn-toggle-scene-strip" title="Ocultar / Mostrar Miniaturas">
+                    <i class="fa-solid fa-images"></i>
+                </button>
+            </div>
         </main>
     </div>
 
@@ -515,6 +533,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.3.5"></script>
+    <script src="app.js?v=1.3.6"></script>
 </body>
 </html>

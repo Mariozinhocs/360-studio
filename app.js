@@ -40,7 +40,7 @@ function debounce(func, wait) {
 }
 
 // --- CONFIGURAÇÃO E CONSTANTES ---
-const HOTSPOT_ICON_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='42' fill='rgba(10, 12, 20, 0.7)' stroke='%2300f2fe' stroke-width='5' filter='drop-shadow(0px 0px 4px rgba(0, 242, 254, 0.8))'/><path d='M50 20 L72 52 L58 52 L58 75 L42 75 L42 52 L28 52 Z' fill='%2300f2fe'/></svg>";
+const HOTSPOT_ICON_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='50%' r='50%'><stop offset='0%' stop-color='%2300f2fe' stop-opacity='1'/><stop offset='70%' stop-color='%234facfe' stop-opacity='0.85'/><stop offset='100%' stop-color='%230a0e1a' stop-opacity='0.8'/></radialGradient></defs><circle cx='50' cy='50' r='46' fill='url(%23g)' stroke='%23ffffff' stroke-width='4'/><circle cx='50' cy='50' r='38' fill='none' stroke='%2300f2fe' stroke-width='3' stroke-dasharray='6,4'/><path d='M50 20 L74 52 L58 52 L58 76 L42 76 L42 52 L26 52 Z' fill='%23ffffff'/><circle cx='50' cy='50' r='6' fill='%2300f2fe'/></svg>";
 
 const DEMO_SCENES = [
     {
@@ -85,12 +85,20 @@ AFRAME.registerComponent('click-listener', {
             // Apenas reage se estivermos no modo criador E no estado de adicionar hotspot
             if (!state.isEditMode || !state.isAddingHotspot) return;
 
-            const intersection = evt.detail.intersection;
-            if (intersection) {
-                const point = intersection.point;
-                // Calculamos a distância ideal (5 metros) para fixar o hotspot em uma esfera perfeita ao redor da câmera
+            let point = evt.detail && evt.detail.intersection ? evt.detail.intersection.point : null;
+            
+            if (!point) {
+                const camera = document.getElementById("camera");
+                if (camera) {
+                    const dir = new THREE.Vector3(0, 0, -1);
+                    dir.applyQuaternion(camera.object3D.quaternion);
+                    point = dir.clone().multiplyScalar(5);
+                }
+            }
+
+            if (point) {
                 const targetDistance = 5;
-                const distance = Math.sqrt(point.x * point.x + point.y * point.y + point.z * point.z);
+                const distance = Math.sqrt(point.x * point.x + point.y * point.y + point.z * point.z) || 1;
                 
                 state.pendingHotspotPos = {
                     x: (point.x / distance) * targetDistance,
@@ -151,6 +159,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderScenesList();
         renderFloorplanSidebar();
         renderVisitorFloorplanWidget();
+        renderScenesCarousel();
         updateUI();
     }
 });
@@ -455,65 +464,73 @@ function setActiveScene(sceneId) {
 
     // Atualizar UI de configurações da cena ativa
     renderActiveSceneSettingsUI(scene);
+    
+    // Atualizar carrossel de navegação inferior
+    renderScenesCarousel();
 }
 
 // --- RENDERIZAÇÃO DE HOTSPOTS NO ESPAÇO 3D ---
 function renderHotspots(hotspotsList) {
     const container = document.getElementById("hotspots-container");
+    if (!container) return;
     container.innerHTML = ""; // Limpa hotspots anteriores
 
-    if (!hotspotsList) return;
+    if (!hotspotsList || !Array.isArray(hotspotsList)) return;
 
     hotspotsList.forEach(hotspot => {
-        // Criamos uma entidade A-Frame para o hotspot
+        if (!hotspot || !hotspot.position) return;
+
+        // Entidade A-Frame para o hotspot
         const entity = document.createElement("a-entity");
-        
-        // Atributos de posicionamento no espaço 3D
         entity.setAttribute("position", `${hotspot.position.x} ${hotspot.position.y} ${hotspot.position.z}`);
         entity.setAttribute("look-at", "#camera");
         
-        // Elemento visual do hotspot (Plane com a imagem de seta)
+        // Elemento visual do hotspot (Plane circular com ícone)
         const icon = document.createElement("a-plane");
         icon.setAttribute("class", "hotspot-element");
         icon.setAttribute("src", HOTSPOT_ICON_URL);
-        icon.setAttribute("width", "0.6");
-        icon.setAttribute("height", "0.6");
+        icon.setAttribute("width", "0.85");
+        icon.setAttribute("height", "0.85");
         icon.setAttribute("transparent", "true");
         icon.setAttribute("material", "shader: flat; depthTest: false; transparent: true");
         
         // Animação Hover no A-Frame
-        icon.setAttribute("animation__mouseenter", "property: scale; to: 1.2 1.2 1.2; dur: 200; startEvents: mouseenter");
+        icon.setAttribute("animation__mouseenter", "property: scale; to: 1.25 1.25 1.25; dur: 200; startEvents: mouseenter");
         icon.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 200; startEvents: mouseleave");
+
+        const targetTitle = hotspot.label || getSceneTitle(hotspot.targetSceneId);
 
         // Elemento de texto flutuante (Tooltip)
         const text = document.createElement("a-text");
-        text.setAttribute("value", hotspot.label);
+        text.setAttribute("value", targetTitle);
         text.setAttribute("align", "center");
-        text.setAttribute("position", "0 0.6 0");
-        text.setAttribute("width", "4");
+        text.setAttribute("position", "0 0.7 0");
+        text.setAttribute("width", "4.5");
         text.setAttribute("color", "#ffffff");
         text.setAttribute("font", "koku");
         
         // Fundo do texto para melhor leitura
         const textBg = document.createElement("a-plane");
+        textBg.setAttribute("class", "hotspot-element");
         textBg.setAttribute("color", "#0a0b0e");
-        textBg.setAttribute("width", (hotspot.label.length * 0.12) + 0.4);
-        textBg.setAttribute("height", "0.35");
-        textBg.setAttribute("position", "0 0.6 -0.01");
-        textBg.setAttribute("opacity", "0.85");
+        textBg.setAttribute("width", (targetTitle.length * 0.12) + 0.5);
+        textBg.setAttribute("height", "0.38");
+        textBg.setAttribute("position", "0 0.7 -0.01");
+        textBg.setAttribute("opacity", "0.88");
         textBg.setAttribute("transparent", "true");
         textBg.setAttribute("material", "shader: flat; depthTest: false");
 
         // Evento de clique para transição
-        icon.addEventListener("click", (evt) => {
-            evt.stopPropagation();
-            
-            // Efeito visual de fade no visualizador
+        const handlePortalClick = (evt) => {
+            if (evt) evt.stopPropagation();
             triggerSceneTransition(() => {
                 setActiveScene(hotspot.targetSceneId);
-                showToast(`Transicionado para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
+                showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
             });
-        });
+        };
+
+        icon.addEventListener("click", handlePortalClick);
+        textBg.addEventListener("click", handlePortalClick);
 
         // Monta a estrutura da entidade
         entity.appendChild(icon);
@@ -556,6 +573,67 @@ function triggerSceneTransition(callback) {
             fade.remove();
         }, 360);
     }, 260);
+}
+
+// --- NAVEGAÇÃO ENTRE CENAS (CARROSSEL E BOTÕES) ---
+function goToNextScene() {
+    if (!state.tour || !state.tour.scenes || state.tour.scenes.length <= 1) return;
+    const currentIdx = state.tour.scenes.findIndex(s => s.id === state.activeSceneId);
+    const nextIdx = (currentIdx + 1) % state.tour.scenes.length;
+    triggerSceneTransition(() => {
+        setActiveScene(state.tour.scenes[nextIdx].id);
+    });
+}
+
+function goToPrevScene() {
+    if (!state.tour || !state.tour.scenes || state.tour.scenes.length <= 1) return;
+    const currentIdx = state.tour.scenes.findIndex(s => s.id === state.activeSceneId);
+    const prevIdx = (currentIdx - 1 + state.tour.scenes.length) % state.tour.scenes.length;
+    triggerSceneTransition(() => {
+        setActiveScene(state.tour.scenes[prevIdx].id);
+    });
+}
+
+function renderScenesCarousel() {
+    const track = document.getElementById("scenes-carousel-track");
+    const bar = document.getElementById("scenes-navigation-bar");
+    if (!track || !bar) return;
+
+    if (!state.tour || !state.tour.scenes || state.tour.scenes.length === 0) {
+        bar.style.display = "none";
+        return;
+    }
+
+    bar.style.display = "flex";
+    track.innerHTML = "";
+
+    state.tour.scenes.forEach((scene, index) => {
+        const thumb = document.createElement("div");
+        thumb.className = `scene-nav-thumb ${scene.id === state.activeSceneId ? 'active' : ''}`;
+        thumb.title = `${index + 1}. ${scene.title}`;
+        
+        let imgHtml = "";
+        if (scene.type === "image") {
+            imgHtml = `<img src="${scene.sourceUrl}" alt="${scene.title}" onerror="this.style.display='none'">`;
+        } else {
+            imgHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#00f2fe;"><i class="fa-solid fa-video"></i></div>`;
+        }
+
+        thumb.innerHTML = `
+            ${imgHtml}
+            <div class="thumb-title-tooltip">${scene.title}</div>
+        `;
+
+        thumb.onclick = () => {
+            if (scene.id !== state.activeSceneId) {
+                triggerSceneTransition(() => {
+                    setActiveScene(scene.id);
+                });
+            }
+        };
+
+        track.appendChild(thumb);
+    });
 }
 
 // --- EVENTOS DO DOM & INTERFACE ---
@@ -615,6 +693,30 @@ function initDOMEvents() {
     document.getElementById("btn-zoom-out").addEventListener("click", () => adjustZoom(8));
     document.getElementById("btn-reset-cam").addEventListener("click", resetCamera);
     document.getElementById("btn-fullscreen").addEventListener("click", toggleFullscreen);
+
+    // Controles de Navegação Inferior de Cenas
+    const btnPrevScene = document.getElementById("btn-prev-scene");
+    const btnNextScene = document.getElementById("btn-next-scene");
+    const btnToggleSceneStrip = document.getElementById("btn-toggle-scene-strip");
+
+    if (btnPrevScene) btnPrevScene.addEventListener("click", goToPrevScene);
+    if (btnNextScene) btnNextScene.addEventListener("click", goToNextScene);
+    if (btnToggleSceneStrip) {
+        btnToggleSceneStrip.addEventListener("click", () => {
+            const bar = document.getElementById("scenes-navigation-bar");
+            if (bar) bar.classList.toggle("collapsed");
+        });
+    }
+
+    // Teclas de atalho para navegar entre cenas (Setas Direita e Esquerda)
+    window.addEventListener("keydown", (e) => {
+        if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
+        if (e.key === "ArrowLeft") {
+            goToPrevScene();
+        } else if (e.key === "ArrowRight") {
+            goToNextScene();
+        }
+    });
 
     // Modals & Hotspot Form
     document.getElementById("btn-close-modal").addEventListener("click", closeHotspotModal);
@@ -1365,6 +1467,9 @@ function renderScenesList() {
 
         list.appendChild(card);
     });
+
+    // Manter carrossel inferior sincronizado
+    renderScenesCarousel();
 }
 
 function setStartScene(sceneId) {

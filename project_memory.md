@@ -73,6 +73,12 @@
         *   **Profissional:** Planta Baixa Interativa com radar direcional desbloqueada (lock overlay removido) e limite ilimitado.
     *   **Contas de Teste no HML:** Criadas 6 contas de teste (`gratis_tester`, `iniciante_tester`, `basico_tester`, `pessoal_tester`, `profissional_tester`, `admin_tester`) com a senha padrão `senha360` via script `create_test_profiles.php` para simplificar homologação e auditorias de recursos.
 
+11. **Barra de Navegação de Cenas e Otimização de Hotspots 3D (CONCLUÍDO):**
+    *   **Barra Inferior de Miniaturas (Strip / Carousel):** Adicionada barra flutuante em vidro escuro no rodapé com rolagem horizontal de todas as cenas, botão de cena anterior/próxima e atalhos de teclado (Setas Esquerda e Direita).
+    *   **Correção de Raycaster e Posicionamento de Hotspots:** Adicionado `cursor="rayOrigin: mouse"` e raycaster estendido para `a-sky` e `.hotspot-element`, permitindo mira e clique direto pelo mouse/touch tanto no modo de edição quanto no modo visualização.
+    *   **Ícones e Labels 3D:** Hotspots agora possuem visual com degradê radial e anéis pulsantes com texto voltado sempre para a câmera (`look-at="#camera"`).
+    *   **Suporte Universal AVIF/WebP:** Inclusão de verificação por assinaturas binárias (*magic numbers*) em [api/upload.php](file:///g:/Meu%20Drive/Dev's/360/360/api/upload.php).
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
