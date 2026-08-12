@@ -107,9 +107,11 @@
     *   [update_profile.php](file:///g:/Meu%20Drive/Dev's/360/360/api/update_profile.php) (Endpoint para atualizar informações pessoais, fuso horário e plano do usuário logado [CONCLUÍDO])
     *   [save_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/save_tour.php) (Suporte a floor_plan_json e exclusão física de planta órfã [CONCLUÍDO])
     *   [get_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/get_tour.php) (Inclusão de floor_plan_json na resposta da API [CONCLUÍDO])
+    *   [recover_password.php](file:///g:/Meu%20Drive/Dev's/360/360/api/recover_password.php) (Endpoint para solicitação de recuperação de senha por e-mail [CONCLUÍDO])
+    *   [reset_password_with_token.php](file:///g:/Meu%20Drive/Dev's/360/360/api/reset_password_with_token.php) (Endpoint para redefinir senha usando token [CONCLUÍDO])
 *   **Banco de Dados:**
-    *   [schema.sql](file:///g:/Meu%20Drive/Dev's/360/360/api/schema.sql) (Ajuste para TINYINT, coluna deleted_at, timezone e floor_plan_json [CONCLUÍDO])
-    *   [db_installer.php](file:///g:/Meu%20Drive/Dev's/360/360/db_installer.php) (Conversão de tipo e inclusão de deleted_at, timezone e floor_plan_json de forma segura [CONCLUÍDO])
+    *   [schema.sql](file:///g:/Meu%20Drive/Dev's/360/360/api/schema.sql) (Ajuste para TINYINT, deleted_at, timezone, floor_plan_json e colunas de recuperação de senha [CONCLUÍDO])
+    *   [db_installer.php](file:///g:/Meu%20Drive/Dev's/360/360/db_installer.php) (Conversão de tipo, deleted_at, timezone, floor_plan_json e colunas de recuperação de forma segura [CONCLUÍDO])
 *   **Interface:**
     *   [admin.html](file:///g:/Meu%20Drive/Dev's/360/360/admin.html) (Filtro lixeira, restaurar em lote e cache-buster v=1.0.5 [CONCLUÍDO])
     *   [admin.js](file:///g:/Meu%20Drive/Dev's/360/360/admin.js) (Eventos, lixeira, formatDate com fuso local e checkAdminAuth de auto-logout no PC com remoção do sessionStorage no logout [CONCLUÍDO])
@@ -118,7 +120,7 @@
     *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Card da Planta na sidebar, modal do editor, widget de radar do visitante e cache-buster v=1.3.8 [CONCLUÍDO])
     *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium, modal de planta, popup de anúncios e cache-buster v=1.3.8 [CONCLUÍDO])
     *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (Carrossel inferior, scroll lateral de setas, hotspots pulsantes com aro simples no grátis vs. raio/seta laranja no pago, feedback de clique de 120ms e cache-buster v=1.3.8 [CONCLUÍDO])
-    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect, bloqueio de autofill por divs e gravação de session_active no sessionStorage [CONCLUÍDO])
+    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect, bloqueio de autofill por divs, gravação de session_active no sessionStorage, link Esqueci minha senha e cards de recuperação/redefinição [CONCLUÍDO])
     *   [plans.js](file:///g:/Meu%20Drive/Dev's/360/360/plans.js) (Validação checkAuth de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
     *   [home.js](file:///g:/Meu%20Drive/Dev's/360/360/home.js) (Validação checkUserSession de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
 
