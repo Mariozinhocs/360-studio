@@ -36,20 +36,10 @@ if (empty($tourId) || empty($title) || $scenes === null) {
     exit;
 }
 
-// Validar limites de cenas do plano
+// Validar plano do usuário
 $plan = $user['subscription_status'] ?? 'gratis';
 if (!checkSubscription($user)) {
     $plan = 'gratis';
-}
-
-$maxScenes = PLANS_MATRIX[$plan]['max_scenes'] ?? 10;
-if ($maxScenes !== -1 && is_array($scenes) && count($scenes) > $maxScenes) {
-    http_response_code(403);
-    echo json_encode([
-        'success' => false,
-        'message' => "Seu plano atual (" . PLANS_MATRIX[$plan]['name'] . ") permite no máximo {$maxScenes} imagens 360° por tour. Você tentou salvar um tour com " . count($scenes) . " imagens. Faça um upgrade para continuar!"
-    ]);
-    exit;
 }
 
 // Desabilitar salvamento de planta baixa se o plano não permitir

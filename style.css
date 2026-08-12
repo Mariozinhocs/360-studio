@@ -2027,3 +2027,131 @@ a-scene {
     transform: scale(1.08);
 }
 
+/* --- ESTILOS DE CENAS BLOQUEADAS PELO PLANO (SOFT LIMIT) --- */
+.scene-card.locked {
+    border-color: rgba(255, 68, 68, 0.4) !important;
+    background: rgba(40, 10, 18, 0.45) !important;
+    position: relative;
+    cursor: pointer;
+}
+.scene-card.locked:hover {
+    border-color: #ff4444 !important;
+    background: rgba(60, 15, 25, 0.6) !important;
+    box-shadow: 0 0 15px rgba(255, 68, 68, 0.35);
+}
+
+.scene-card.locked .scene-thumb {
+    position: relative;
+    border-color: rgba(255, 68, 68, 0.6) !important;
+}
+
+.scene-card.locked .scene-thumb .locked-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 0, 5, 0.65);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff4444;
+    font-size: 18px;
+    z-index: 2;
+}
+
+.badge-locked {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff6b6b;
+    border: 1px solid rgba(255, 68, 68, 0.4);
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-weight: 600;
+    margin-top: 4px;
+}
+
+/* Carrossel Inferior - Miniatura Bloqueada */
+.scene-nav-thumb.locked {
+    border-color: rgba(255, 68, 68, 0.6) !important;
+    background: rgba(40, 10, 18, 0.6);
+}
+.scene-nav-thumb.locked:hover {
+    border-color: #ff4444 !important;
+    box-shadow: 0 0 12px rgba(255, 68, 68, 0.5);
+}
+.scene-nav-thumb.locked .thumb-locked-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(20, 0, 5, 0.6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ff4444;
+    font-size: 15px;
+    z-index: 2;
+}
+
+/* Modal de Bloqueio por Limite do Plano / CTA de Upgrade */
+.locked-cta-card {
+    text-align: center;
+    padding: 32px 28px !important;
+    max-width: 480px;
+    border: 1px solid rgba(255, 68, 68, 0.3) !important;
+    background: rgba(18, 12, 18, 0.94) !important;
+}
+
+.locked-icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: rgba(255, 68, 68, 0.15);
+    border: 2px solid rgba(255, 68, 68, 0.5);
+    color: #ff4444;
+    font-size: 26px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(255, 68, 68, 0.25);
+}
+
+.locked-cta-card h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #fff;
+}
+
+.locked-cta-card p {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #cbd5e1;
+    margin-bottom: 24px;
+}
+
+.locked-modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn-upgrade-cta {
+    background: linear-gradient(135deg, #ff0844 0%, #ffb199 100%) !important;
+    border: none !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    padding: 10px 20px !important;
+    text-decoration: none !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 4px 15px rgba(255, 8, 68, 0.4) !important;
+    transition: all 0.2s ease !important;
+}
+.btn-upgrade-cta:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(255, 8, 68, 0.6) !important;
+}
+

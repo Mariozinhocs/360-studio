@@ -469,6 +469,38 @@ function setActiveScene(sceneId) {
     renderScenesCarousel();
 }
 
+// --- FUNÇÕES DE CONTROLE DE BLOQUEIO DE CENA (SOFT LIMIT) ---
+function isSceneLocked(index) {
+    const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+    if (maxAllowed === -1) return false;
+    return index >= maxAllowed;
+}
+
+function openSceneLockedModal(scene, index) {
+    const modal = document.getElementById("scene-locked-modal");
+    if (!modal) return;
+
+    const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+    const planName = (state.features && state.features.name) || "Grátis";
+    
+    const planNameEl = document.getElementById("locked-plan-name");
+    const planLimitEl = document.getElementById("locked-plan-limit");
+    if (planNameEl) planNameEl.textContent = planName;
+    if (planLimitEl) planLimitEl.textContent = `${maxAllowed} cenas`;
+    
+    const titleEl = document.getElementById("locked-modal-title");
+    if (titleEl && scene) {
+        titleEl.innerHTML = `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> ${scene.title} (Bloqueada)`;
+    }
+
+    modal.classList.add("active");
+}
+
+function closeSceneLockedModal() {
+    const modal = document.getElementById("scene-locked-modal");
+    if (modal) modal.classList.remove("active");
+}
+
 // --- RENDERIZAÇÃO DE HOTSPOTS NO ESPAÇO 3D ---
 function renderHotspots(hotspotsList) {
     const container = document.getElementById("hotspots-container");
@@ -479,6 +511,9 @@ function renderHotspots(hotspotsList) {
 
     hotspotsList.forEach(hotspot => {
         if (!hotspot || !hotspot.position) return;
+
+        const targetIndex = state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === hotspot.targetSceneId) : -1;
+        const isTargetLocked = targetIndex !== -1 && isSceneLocked(targetIndex);
 
         // Entidade A-Frame para o hotspot
         const entity = document.createElement("a-entity");
@@ -492,13 +527,16 @@ function renderHotspots(hotspotsList) {
         icon.setAttribute("width", "0.85");
         icon.setAttribute("height", "0.85");
         icon.setAttribute("transparent", "true");
-        icon.setAttribute("material", "shader: flat; depthTest: false; transparent: true");
+        icon.setAttribute("material", isTargetLocked 
+            ? "shader: flat; depthTest: false; transparent: true; color: #ff4444" 
+            : "shader: flat; depthTest: false; transparent: true");
         
         // Animação Hover no A-Frame
         icon.setAttribute("animation__mouseenter", "property: scale; to: 1.25 1.25 1.25; dur: 200; startEvents: mouseenter");
         icon.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 200; startEvents: mouseleave");
 
-        const targetTitle = hotspot.label || getSceneTitle(hotspot.targetSceneId);
+        const baseTitle = hotspot.label || getSceneTitle(hotspot.targetSceneId);
+        const targetTitle = (isTargetLocked ? "🔒 " : "") + baseTitle + (isTargetLocked ? " (Bloqueada)" : "");
 
         // Elemento de texto flutuante (Tooltip)
         const text = document.createElement("a-text");
@@ -506,23 +544,28 @@ function renderHotspots(hotspotsList) {
         text.setAttribute("align", "center");
         text.setAttribute("position", "0 0.7 0");
         text.setAttribute("width", "4.5");
-        text.setAttribute("color", "#ffffff");
+        text.setAttribute("color", isTargetLocked ? "#ff6b6b" : "#ffffff");
         text.setAttribute("font", "koku");
         
         // Fundo do texto para melhor leitura
         const textBg = document.createElement("a-plane");
         textBg.setAttribute("class", "hotspot-element");
-        textBg.setAttribute("color", "#0a0b0e");
+        textBg.setAttribute("color", isTargetLocked ? "#20080d" : "#0a0b0e");
         textBg.setAttribute("width", (targetTitle.length * 0.12) + 0.5);
         textBg.setAttribute("height", "0.38");
         textBg.setAttribute("position", "0 0.7 -0.01");
-        textBg.setAttribute("opacity", "0.88");
+        textBg.setAttribute("opacity", "0.92");
         textBg.setAttribute("transparent", "true");
         textBg.setAttribute("material", "shader: flat; depthTest: false");
 
         // Evento de clique para transição
         const handlePortalClick = (evt) => {
             if (evt) evt.stopPropagation();
+            if (isTargetLocked) {
+                const targetScene = state.tour.scenes[targetIndex];
+                openSceneLockedModal(targetScene, targetIndex);
+                return;
+            }
             triggerSceneTransition(() => {
                 setActiveScene(hotspot.targetSceneId);
                 showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
@@ -580,6 +623,10 @@ function goToNextScene() {
     if (!state.tour || !state.tour.scenes || state.tour.scenes.length <= 1) return;
     const currentIdx = state.tour.scenes.findIndex(s => s.id === state.activeSceneId);
     const nextIdx = (currentIdx + 1) % state.tour.scenes.length;
+    if (isSceneLocked(nextIdx)) {
+        openSceneLockedModal(state.tour.scenes[nextIdx], nextIdx);
+        return;
+    }
     triggerSceneTransition(() => {
         setActiveScene(state.tour.scenes[nextIdx].id);
     });
@@ -589,6 +636,10 @@ function goToPrevScene() {
     if (!state.tour || !state.tour.scenes || state.tour.scenes.length <= 1) return;
     const currentIdx = state.tour.scenes.findIndex(s => s.id === state.activeSceneId);
     const prevIdx = (currentIdx - 1 + state.tour.scenes.length) % state.tour.scenes.length;
+    if (isSceneLocked(prevIdx)) {
+        openSceneLockedModal(state.tour.scenes[prevIdx], prevIdx);
+        return;
+    }
     triggerSceneTransition(() => {
         setActiveScene(state.tour.scenes[prevIdx].id);
     });
@@ -608,9 +659,10 @@ function renderScenesCarousel() {
     track.innerHTML = "";
 
     state.tour.scenes.forEach((scene, index) => {
+        const locked = isSceneLocked(index);
         const thumb = document.createElement("div");
-        thumb.className = `scene-nav-thumb ${scene.id === state.activeSceneId ? 'active' : ''}`;
-        thumb.title = `${index + 1}. ${scene.title}`;
+        thumb.className = `scene-nav-thumb ${scene.id === state.activeSceneId ? 'active' : ''} ${locked ? 'locked' : ''}`;
+        thumb.title = `${index + 1}. ${scene.title}${locked ? ' (Bloqueada pelo plano)' : ''}`;
         
         let imgHtml = "";
         if (scene.type === "image") {
@@ -619,12 +671,19 @@ function renderScenesCarousel() {
             imgHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#00f2fe;"><i class="fa-solid fa-video"></i></div>`;
         }
 
+        const lockOverlay = locked ? `<div class="thumb-locked-overlay"><i class="fa-solid fa-lock"></i></div>` : '';
+
         thumb.innerHTML = `
             ${imgHtml}
-            <div class="thumb-title-tooltip">${scene.title}</div>
+            ${lockOverlay}
+            <div class="thumb-title-tooltip">${locked ? '🔒 ' : ''}${scene.title}</div>
         `;
 
         thumb.onclick = () => {
+            if (locked) {
+                openSceneLockedModal(scene, index);
+                return;
+            }
             if (scene.id !== state.activeSceneId) {
                 triggerSceneTransition(() => {
                     setActiveScene(scene.id);
@@ -722,6 +781,10 @@ function initDOMEvents() {
     document.getElementById("btn-close-modal").addEventListener("click", closeHotspotModal);
     document.getElementById("btn-cancel-hotspot").addEventListener("click", closeHotspotModal);
     document.getElementById("btn-save-hotspot").addEventListener("click", saveHotspot);
+    
+    // Modal de Bloqueio por Limite do Plano
+    const btnCloseLocked = document.getElementById("btn-close-locked-modal");
+    if (btnCloseLocked) btnCloseLocked.addEventListener("click", closeSceneLockedModal);
 
     // Exportação
     btnExport.addEventListener("click", exportTourJSON);
@@ -1343,20 +1406,6 @@ function uploadFileToServer(fileOrBlob, filename) {
 async function handleFiles(files) {
     if (!files || files.length === 0) return;
 
-    // 1. Validar limites do plano antes de iniciar qualquer upload ou processamento
-    const currentCount = state.tour.scenes ? state.tour.scenes.length : 0;
-    const newCount = files.length;
-    const maxScenes = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
-    const planName = state.features ? (state.features.name || "Grátis") : "Grátis";
-
-    if (maxScenes !== -1 && (currentCount + newCount) > maxScenes) {
-        const availableSlots = Math.max(0, maxScenes - currentCount);
-        alert(`⚠️ Limite do Plano Excedido!\n\nSeu plano atual (${planName}) permite no máximo ${maxScenes} imagens 360° por tour.\n\nVocê já possui ${currentCount} cena(s) e tentou enviar mais ${newCount}.\nVocê só pode adicionar mais ${availableSlots} cena(s) ou fazer upgrade para o Plano Profissional (Ilimitado).`);
-        const fileInput = document.getElementById("file-input");
-        if (fileInput) fileInput.value = "";
-        return;
-    }
-
     showToast("Processando e otimizando mídias 360°... Aguarde.", "info");
     
     const promises = Array.from(files).map(file => processAndOptimizeFile(file));
@@ -1413,69 +1462,92 @@ async function handleFiles(files) {
         renderScenesList();
         updateUI();
         
-        // Ativa a última cena carregada
-        if (lastLoadedId) {
-            setActiveScene(lastLoadedId);
+        const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+        const totalCount = state.tour.scenes.length;
+
+        if (maxAllowed !== -1 && totalCount > maxAllowed) {
+            showToast(`${loadedCount} mídia(s) adicionada(s)! As ${maxAllowed} primeiras estão ativas. As restantes estão salvas e bloqueadas pelo plano.`, "info");
+            // Se a cena ativa atual estiver bloqueada ou não existir, ativa a primeira liberada
+            const currentIdx = state.tour.scenes.findIndex(s => s.id === state.activeSceneId);
+            if (currentIdx === -1 || isSceneLocked(currentIdx)) {
+                setActiveScene(state.tour.scenes[0].id);
+            }
+        } else {
+            // Ativa a última cena carregada se estiver dentro do limite
+            if (lastLoadedId) {
+                setActiveScene(lastLoadedId);
+            }
+            showToast(`${loadedCount} mídia(s) 360° carregada(s) e salvas com sucesso!`, "success");
         }
-        
-        showToast(`${loadedCount} mídia(s) 360° carregada(s) com sucesso!`, "success");
     }
 }
 
 // --- RENDERIZAÇÃO DA BARRA LATERAL ---
 function renderScenesList() {
     const list = document.getElementById("scenes-list");
+    if (!list) return;
     list.innerHTML = "";
 
-    document.getElementById("scenes-count").textContent = state.tour.scenes.length;
+    const countEl = document.getElementById("scenes-count");
+    if (countEl) countEl.textContent = state.tour.scenes.length;
 
     state.tour.scenes.forEach((scene, index) => {
+        const locked = isSceneLocked(index);
         const card = document.createElement("div");
-        card.className = `scene-card ${scene.id === state.activeSceneId ? 'active' : ''}`;
+        card.className = `scene-card ${scene.id === state.activeSceneId ? 'active' : ''} ${locked ? 'locked' : ''}`;
         card.dataset.id = scene.id;
 
         // Marcador de cena inicial
         const isStart = index === 0;
 
-        // Cria a miniatura
+        // Miniatura
         let thumbContent = "";
         if (scene.type === "image") {
-            // Se for imagem demo ou se tivermos acesso direto à imagem
             thumbContent = `<img src="${scene.sourceUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`;
         }
         
+        const lockedThumbOverlay = locked ? `<div class="locked-overlay"><i class="fa-solid fa-lock"></i></div>` : '';
+        const lockedBadge = locked ? `<span class="badge-locked"><i class="fa-solid fa-lock"></i> Bloqueada</span>` : '';
+
         card.innerHTML = `
             <div class="scene-thumb">
                 ${thumbContent}
+                ${lockedThumbOverlay}
                 <i class="fa-solid ${scene.type === 'video' ? 'fa-video' : 'fa-image'}" style="${scene.type === 'image' && scene.sourceUrl.startsWith('blob') ? 'display: none;' : ''}"></i>
             </div>
             <div class="scene-info">
-                <h4 class="scene-title">${scene.title}</h4>
+                <h4 class="scene-title">${locked ? '🔒 ' : ''}${scene.title}</h4>
                 <div class="scene-meta">
                     <i class="fa-solid ${scene.type === 'video' ? 'fa-film' : 'fa-camera'}"></i>
                     <span>${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'}</span>
                 </div>
+                ${lockedBadge}
             </div>
-            ${isStart ? '<span class="badge-start-scene">Início</span>' : ''}
+            ${isStart && !locked ? '<span class="badge-start-scene">Início</span>' : ''}
             <div class="scene-actions">
-                ${!isStart ? `<button class="action-icon-btn btn-star" title="Definir como Cena Inicial"><i class="fa-solid fa-star"></i></button>` : ''}
+                ${!isStart && !locked ? `<button class="action-icon-btn btn-star" title="Definir como Cena Inicial"><i class="fa-solid fa-star"></i></button>` : ''}
                 <button class="action-icon-btn btn-delete" title="Excluir Cena"><i class="fa-solid fa-trash"></i></button>
             </div>
         `;
 
-        // Evento de clique para ativar a cena
+        // Evento de clique para ativar a cena ou abrir modal de upgrade
         card.addEventListener("click", (e) => {
-            // Ignora se clicou em botões de ação
             if (e.target.closest(".scene-actions")) return;
+            if (locked) {
+                openSceneLockedModal(scene, index);
+                return;
+            }
             setActiveScene(scene.id);
         });
 
         // Ações do Card
         const btnDelete = card.querySelector(".btn-delete");
-        btnDelete.addEventListener("click", (e) => {
-            e.stopPropagation();
-            deleteScene(scene.id);
-        });
+        if (btnDelete) {
+            btnDelete.addEventListener("click", (e) => {
+                e.stopPropagation();
+                deleteScene(scene.id);
+            });
+        }
 
         const btnStar = card.querySelector(".btn-star");
         if (btnStar) {

@@ -527,6 +527,26 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal de Bloqueio por Limite do Plano / Upgrade CTA -->
+        <div id="scene-locked-modal" class="modal-overlay">
+            <div class="modal-card glassmorphism-card locked-cta-card">
+                <div class="locked-icon-wrapper">
+                    <i class="fa-solid fa-lock animate-pulse"></i>
+                </div>
+                <h3 id="locked-modal-title">Cena Bloqueada pelo Limite do Plano</h3>
+                <p id="locked-modal-desc">
+                    Seu plano atual (<span id="locked-plan-name" style="font-weight: bold; color: #00f2fe;">Grátis</span>) permite a navegação nas primeiras <span id="locked-plan-limit" style="font-weight: bold; color: #fff;">10 cenas</span> deste tour.<br><br>
+                    Esta foto 360° foi enviada e salva com sucesso, mas para torná-la navegável para você e seus visitantes, faça o upgrade da sua assinatura!
+                </p>
+                <div class="locked-modal-actions">
+                    <button class="btn btn-secondary" id="btn-close-locked-modal">Fechar</button>
+                    <a href="plans.html" class="btn btn-accent btn-upgrade-cta">
+                        <i class="fa-solid fa-crown"></i> Desbloquear Todas as Cenas
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Notificações Toast -->

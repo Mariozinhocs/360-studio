@@ -79,6 +79,13 @@
     *   **Ícones e Labels 3D:** Hotspots agora possuem visual com degradê radial e anéis pulsantes com texto voltado sempre para a câmera (`look-at="#camera"`).
     *   **Suporte Universal AVIF/WebP:** Inclusão de verificação por assinaturas binárias (*magic numbers*) em [api/upload.php](file:///g:/Meu%20Drive/Dev's/360/360/api/upload.php).
 
+12. **Monetização e Gestão de Limites (Soft-Lock de Cenas + Hard Limit de Tours com Upgrade CTA) (CONCLUÍDO):**
+    *   **Upload e Salvamento Ilimitado de Cenas:** O usuário pode fazer upload de qualquer quantidade de imagens (ex: 12 fotos no Grátis); todas são salvas e persistidas no banco sem erro 403.
+    *   **Soft-Lock Visual nas Cenas Excedentes:** As cenas acima do limite do plano (ex: a partir da 11ª no Grátis) ficam com card/miniatura avermelhado escuro, badge e overlay de cadeado 🔒.
+    *   **Modal de Upgrade CTA nas Cenas:** Clicar em qualquer cena bloqueada (na sidebar, no carrossel ou em um hotspot 3D) abre um modal persuasivo de Upgrade de Plano com link para `plans.html`.
+    *   **Hard Limit de Tours com Modal CTA no Dashboard:** O usuário é impedido de ultrapassar a quantidade de tours ativos do seu plano (ex: 5 no Grátis), mas ao clicar no botão "Novo Tour" quando cheio, abre um modal de Upgrade CTA exclusivo.
+    *   **Purga Automática de Mídias Órfãs:** Criado [api/clean_orphans.php](file:///g:/Meu%20Drive/Dev's/360/360/api/clean_orphans.php) integrado ao painel admin e rotinas de manutenção para apagar automaticamente arquivos abandonados na pasta `/uploads/`.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados

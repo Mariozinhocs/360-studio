@@ -295,11 +295,42 @@ async function createTour() {
     }
 }
 
-// --- MODAL DE CRIAÇÃO ---
+// --- MODAL DE CRIAÇÃO & LIMITES ---
 function openCreateModal() {
+    const user = dashboardState.user;
+    if (!user) return;
+
     // Se o plano do usuário expirou, impede criação
-    if (dashboardState.user.subscription_status === 'expired') {
+    if (user.subscription_status === 'expired') {
         showToast("Seu plano expirou! Assine o Premium para criar novos projetos.", "error");
+        return;
+    }
+
+    const plansMaxTours = {
+        'gratis': 5,
+        'iniciante': 10,
+        'basico': 50,
+        'pessoal': 100,
+        'profissional': -1
+    };
+
+    const status = user.subscription_status || 'gratis';
+    const maxTours = plansMaxTours[status] ?? 5;
+    const currentTours = dashboardState.tours ? dashboardState.tours.length : 0;
+
+    // Se atingiu o limite de tours do plano, abre modal de Upgrade CTA
+    if (maxTours !== -1 && currentTours >= maxTours) {
+        const planNames = {
+            'gratis': 'Grátis (5 tours)',
+            'iniciante': 'Iniciante (10 tours)',
+            'basico': 'Básico (50 tours)',
+            'pessoal': 'Pessoal (100 tours)'
+        };
+        const planNameEl = document.getElementById("tour-limit-plan-name");
+        if (planNameEl) planNameEl.textContent = planNames[status] || status;
+
+        const modal = document.getElementById("tour-limit-modal");
+        if (modal) modal.classList.add("active");
         return;
     }
     
@@ -309,6 +340,11 @@ function openCreateModal() {
 
 function closeCreateModal() {
     document.getElementById("create-tour-modal").classList.remove("active");
+}
+
+function closeTourLimitModal() {
+    const modal = document.getElementById("tour-limit-modal");
+    if (modal) modal.classList.remove("active");
 }
 
 // --- MODAL DE PERFIL ---
@@ -458,6 +494,9 @@ function initDOMEvents() {
     document.getElementById("btn-close-create-modal").onclick = closeCreateModal;
     document.getElementById("btn-cancel-create").onclick = closeCreateModal;
     document.getElementById("btn-submit-create").onclick = createTour;
+    
+    const btnCloseTourLimit = document.getElementById("btn-close-tour-limit-modal");
+    if (btnCloseTourLimit) btnCloseTourLimit.onclick = closeTourLimitModal;
 
     // Perfil Modal
     document.getElementById("btn-edit-profile").onclick = openProfileModal;
