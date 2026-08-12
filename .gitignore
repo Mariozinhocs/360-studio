@@ -9,11 +9,7 @@ ftp_config_prod.json
 # Banco de Dados Local / Temporários
 users.json
 
-# IDEs e Editores
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Uploads locais e rascunhos de teste
+draft/
+uploads/
+
