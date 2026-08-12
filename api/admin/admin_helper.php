@@ -44,3 +44,14 @@ try {
     error_log("Erro ao purgar usuários na lixeira: " . $e->getMessage());
 }
 
+// Purga automática de mídias órfãs na pasta uploads
+try {
+    require_once dirname(__DIR__) . '/clean_orphans.php';
+    if (function_exists('purgeOrphanUploads')) {
+        purgeOrphanUploads($pdo);
+    }
+} catch (Exception $e) {
+    error_log("Erro ao purgar mídias órfãs: " . $e->getMessage());
+}
+
+

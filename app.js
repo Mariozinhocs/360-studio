@@ -1341,7 +1341,21 @@ function uploadFileToServer(fileOrBlob, filename) {
 
 // --- TRATAMENTO DOS ARQUIVOS DE UPLOAD ---
 async function handleFiles(files) {
-    if (files.length === 0) return;
+    if (!files || files.length === 0) return;
+
+    // 1. Validar limites do plano antes de iniciar qualquer upload ou processamento
+    const currentCount = state.tour.scenes ? state.tour.scenes.length : 0;
+    const newCount = files.length;
+    const maxScenes = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+    const planName = state.features ? (state.features.name || "Grátis") : "Grátis";
+
+    if (maxScenes !== -1 && (currentCount + newCount) > maxScenes) {
+        const availableSlots = Math.max(0, maxScenes - currentCount);
+        alert(`⚠️ Limite do Plano Excedido!\n\nSeu plano atual (${planName}) permite no máximo ${maxScenes} imagens 360° por tour.\n\nVocê já possui ${currentCount} cena(s) e tentou enviar mais ${newCount}.\nVocê só pode adicionar mais ${availableSlots} cena(s) ou fazer upgrade para o Plano Profissional (Ilimitado).`);
+        const fileInput = document.getElementById("file-input");
+        if (fileInput) fileInput.value = "";
+        return;
+    }
 
     showToast("Processando e otimizando mídias 360°... Aguarde.", "info");
     
@@ -1390,13 +1404,19 @@ async function handleFiles(files) {
         lastLoadedId = id;
     }
 
+    // Limpar o input de arquivo
+    const fileInput = document.getElementById("file-input");
+    if (fileInput) fileInput.value = "";
+
     if (loadedCount > 0) {
-        saveTourToStorage();
+        await saveTourToStorage();
         renderScenesList();
         updateUI();
         
         // Ativa a última cena carregada
-        setActiveScene(lastLoadedId);
+        if (lastLoadedId) {
+            setActiveScene(lastLoadedId);
+        }
         
         showToast(`${loadedCount} mídia(s) 360° carregada(s) com sucesso!`, "success");
     }
