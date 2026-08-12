@@ -28,7 +28,7 @@ $expires_at = !empty($data['subscription_expires_at']) ? trim($data['subscriptio
 $is_admin = isset($data['is_admin']) && $data['is_admin'] !== '' ? (int)$data['is_admin'] : null;
 
 // Validar status
-if (!empty($status) && !in_array($status, ['trial', 'active', 'expired'])) {
+if (!empty($status) && !in_array($status, ['gratis', 'iniciante', 'basico', 'pessoal', 'profissional', 'trial', 'active', 'expired'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Status de assinatura inválido.']);
     exit;

@@ -204,16 +204,22 @@ function renderUsersTable() {
         }
 
         // Subscription badge
-        let subBadgeClass = "badge-status-expired";
-        let subStatusName = "Expirado";
-        
-        if (user.subscription_status === 'active') {
-            subBadgeClass = "badge-status-active";
-            subStatusName = "Premium";
-        } else if (user.subscription_status === 'trial') {
-            subBadgeClass = "badge-status-trial";
-            subStatusName = "Trial";
-        }
+        const plansMap = {
+            'gratis': { name: 'Grátis', class: 'badge-status-trial' },
+            'iniciante': { name: 'Iniciante', class: 'badge-status-active' },
+            'basico': { name: 'Básico', class: 'badge-status-active' },
+            'pessoal': { name: 'Pessoal', class: 'badge-status-active' },
+            'profissional': { name: 'Profissional', class: 'badge-status-active' },
+            'trial': { name: 'Trial', class: 'badge-status-trial' },
+            'active': { name: 'Premium', class: 'badge-status-active' },
+            'expired': { name: 'Expirado', class: 'badge-status-expired' }
+        };
+
+        const statusKey = user.subscription_status || 'gratis';
+        const planInfo = plansMap[statusKey] || plansMap['gratis'];
+
+        let subBadgeClass = planInfo.class;
+        let subStatusName = planInfo.name;
         
         const subBadge = `<span class="badge-status ${subBadgeClass}">${subStatusName}</span>`;
 
@@ -358,7 +364,10 @@ function openEditModal(user) {
     document.getElementById("edit-user-name").value = user.name || "";
     document.getElementById("edit-user-username").value = user.username || "";
     document.getElementById("edit-user-email").value = user.email || "";
-    document.getElementById("edit-sub-status").value = user.subscription_status || "trial";
+    let statusVal = user.subscription_status || "gratis";
+    if (statusVal === "trial") statusVal = "gratis";
+    if (statusVal === "active") statusVal = "profissional";
+    document.getElementById("edit-sub-status").value = statusVal;
 
     // Configurar dropdown do nível de permissão
     const roleSelect = document.getElementById("edit-is-admin-select");

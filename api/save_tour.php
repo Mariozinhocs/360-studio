@@ -37,10 +37,7 @@ if (empty($tourId) || empty($title) || $scenes === null) {
 }
 
 // Validar plano do usuário
-$plan = $user['subscription_status'] ?? 'gratis';
-if (!checkSubscription($user)) {
-    $plan = 'gratis';
-}
+$plan = resolvePlanName($user);
 
 // Desabilitar salvamento de planta baixa se o plano não permitir
 if (!hasFeature($user, 'floor_plans')) {

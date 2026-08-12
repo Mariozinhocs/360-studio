@@ -191,7 +191,7 @@ try {
 
     // Obter logo_url se o criador tiver o recurso ativo
     $logoUrl = null;
-    if (!empty($tour['logo_url']) && (PLANS_MATRIX[$tour['subscription_status']]['max_logos'] ?? 0) > 0) {
+    if (!empty($tour['logo_url']) && (PLANS_MATRIX[resolvePlanName($owner)]['max_logos'] ?? 0) > 0) {
         $logoUrl = $tour['logo_url'];
     }
 
@@ -232,10 +232,7 @@ try {
 
     $features = [];
     if ($is_owner) {
-        $plan = $tour['subscription_status'] ?? 'gratis';
-        if (!checkSubscription($owner)) {
-            $plan = 'gratis';
-        }
+        $plan = resolvePlanName($owner);
         $features = PLANS_MATRIX[$plan] ?? [];
     }
 

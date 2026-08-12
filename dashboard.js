@@ -98,7 +98,9 @@ function renderSubscriptionInfo() {
         'expired': { name: 'Expirado', class: 'badge-expired', desc: 'Sua assinatura expirou.' }
     };
 
-    const status = user.subscription_status || 'gratis';
+    let status = user.subscription_status || 'gratis';
+    if (status === 'trial') status = 'gratis';
+    if (status === 'active') status = 'profissional';
     const planInfo = plansMap[status] || plansMap['gratis'];
 
     badge.classList.add(planInfo.class);
@@ -321,7 +323,9 @@ function openCreateModal() {
         'profissional': -1
     };
 
-    const status = user.subscription_status || 'gratis';
+    let status = user.subscription_status || 'gratis';
+    if (status === 'trial') status = 'gratis';
+    if (status === 'active') status = 'profissional';
     const maxTours = plansMaxTours[status] ?? 5;
     const currentTours = dashboardState.tours ? dashboardState.tours.length : 0;
 
@@ -398,7 +402,9 @@ function openProfileModal() {
                 'expired': { name: 'Expirado', class: 'badge-expired', desc: 'Assinatura expirada.' }
             };
 
-            const status = user.subscription_status || 'gratis';
+            let status = user.subscription_status || 'gratis';
+            if (status === 'trial') status = 'gratis';
+            if (status === 'active') status = 'profissional';
             const planInfo = plansMap[status] || plansMap['gratis'];
 
             badge.classList.add(planInfo.class);

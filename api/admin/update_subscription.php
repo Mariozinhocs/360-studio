@@ -21,7 +21,7 @@ if (!in_array($is_admin, [0, 1, 2])) {
     $is_admin = 0;
 }
 
-if ($user_id <= 0 || !in_array($status, ['trial', 'active', 'expired'])) {
+if ($user_id <= 0 || !in_array($status, ['gratis', 'iniciante', 'basico', 'pessoal', 'profissional', 'trial', 'active', 'expired'])) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'Parâmetros inválidos ou incompletos.']);
     exit;

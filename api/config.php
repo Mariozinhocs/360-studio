@@ -171,9 +171,14 @@ define('PLANS_MATRIX', [
     ]
 ]);
 
-// Helper para validar se o usuário possui acesso a um recurso específico
-function hasFeature($user, $featureName) {
+// Helper para normalizar o nome do plano (mapeia trial/active antigos para os planos corretos)
+function resolvePlanName($user) {
     $plan = $user['subscription_status'] ?? 'gratis';
+    if ($plan === 'trial') {
+        $plan = 'gratis';
+    } elseif ($plan === 'active') {
+        $plan = 'profissional'; // Trata a assinatura premium ativa sem nome de plano específico como Profissional
+    }
     if (!defined('PLANS_MATRIX') || !isset(PLANS_MATRIX[$plan])) {
         $plan = 'gratis';
     }
@@ -182,7 +187,12 @@ function hasFeature($user, $featureName) {
     if (!checkSubscription($user)) {
         $plan = 'gratis';
     }
-    
+    return $plan;
+}
+
+// Helper para validar se o usuário possui acesso a um recurso específico
+function hasFeature($user, $featureName) {
+    $plan = resolvePlanName($user);
     return PLANS_MATRIX[$plan][$featureName] ?? false;
 }
 
@@ -197,10 +207,7 @@ function canCreateTour($userId) {
         return false;
     }
     
-    $plan = $user['subscription_status'] ?? 'gratis';
-    if (!checkSubscription($user)) {
-        $plan = 'gratis';
-    }
+    $plan = resolvePlanName($user);
     
     $maxTours = PLANS_MATRIX[$plan]['max_tours'] ?? 5;
     if ($maxTours === -1) {
@@ -232,10 +239,7 @@ function canAddScene($tourId) {
         return false;
     }
     
-    $plan = $user['subscription_status'] ?? 'gratis';
-    if (!checkSubscription($user)) {
-        $plan = 'gratis';
-    }
+    $plan = resolvePlanName($user);
     
     $maxScenes = PLANS_MATRIX[$plan]['max_scenes'] ?? 10;
     if ($maxScenes === -1) {
