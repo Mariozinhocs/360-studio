@@ -24,6 +24,13 @@ async function initDashboard() {
 
 // --- VERIFICAÇÃO DE AUTH ---
 async function checkAuth() {
+    const isPC = !/Mobi|Android|iPhone|iPad|Windows Phone/i.test(navigator.userAgent);
+    if (isPC && !sessionStorage.getItem('session_active')) {
+        await fetch('api/logout.php');
+        window.location.href = 'login.html?v=1.0.6';
+        return false;
+    }
+
     try {
         const res = await fetch('api/check_auth.php');
         const data = await res.json();
@@ -482,6 +489,7 @@ function initDOMEvents() {
     // Logout
     document.getElementById("btn-logout").onclick = async () => {
         try {
+            sessionStorage.removeItem('session_active');
             await fetch('api/logout.php');
             window.location.href = 'login.html?v=1.0.6';
         } catch (err) {

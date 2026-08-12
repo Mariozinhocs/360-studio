@@ -40,7 +40,9 @@ function debounce(func, wait) {
 }
 
 // --- CONFIGURAÇÃO E CONSTANTES ---
-const HOTSPOT_ICON_URL = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='50%' r='50%'><stop offset='0%' stop-color='%2300f2fe' stop-opacity='1'/><stop offset='70%' stop-color='%234facfe' stop-opacity='0.85'/><stop offset='100%' stop-color='%230a0e1a' stop-opacity='0.8'/></radialGradient></defs><circle cx='50' cy='50' r='46' fill='url(%23g)' stroke='%23ffffff' stroke-width='4'/><circle cx='50' cy='50' r='38' fill='none' stroke='%2300f2fe' stroke-width='3' stroke-dasharray='6,4'/><path d='M50 20 L74 52 L58 52 L58 76 L42 76 L42 52 L26 52 Z' fill='%23ffffff'/><circle cx='50' cy='50' r='6' fill='%2300f2fe'/></svg>";
+const HOTSPOT_ICON_FREE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='rgba(0,0,0,0.4)' stroke='%23ffffff' stroke-width='6'/><circle cx='50' cy='50' r='25' fill='none' stroke='%23ffffff' stroke-width='3' opacity='0.7'/></svg>";
+
+const HOTSPOT_ICON_PREMIUM = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='50%' r='50%'><stop offset='0%' stop-color='%231a1b24' stop-opacity='0.95'/><stop offset='100%' stop-color='%230e0f14' stop-opacity='0.85'/></radialGradient></defs><circle cx='50' cy='50' r='44' fill='url(%23g)' stroke='%23ffffff' stroke-width='5'/><circle cx='50' cy='50' r='36' fill='none' stroke='%23ff6a00' stroke-width='2' stroke-dasharray='4,3' opacity='0.6'/><path d='M52 16 L32 50 L46 50 L38 84 L68 46 L50 46 Z' fill='%23ff6a00' filter='drop-shadow(0px 0px 5px rgba(255,106,0,0.5))'/></svg>";
 
 const DEMO_SCENES = [
     {
@@ -509,6 +511,9 @@ function renderHotspots(hotspotsList) {
 
     if (!hotspotsList || !Array.isArray(hotspotsList)) return;
 
+    const isGratis = !!state.showAds;
+    const activeIconUrl = isGratis ? HOTSPOT_ICON_FREE : HOTSPOT_ICON_PREMIUM;
+
     hotspotsList.forEach(hotspot => {
         if (!hotspot || !hotspot.position) return;
 
@@ -520,10 +525,13 @@ function renderHotspots(hotspotsList) {
         entity.setAttribute("position", `${hotspot.position.x} ${hotspot.position.y} ${hotspot.position.z}`);
         entity.setAttribute("look-at", "#camera");
         
+        // Pulsação suave contínua no elemento pai (Apenas escala)
+        entity.setAttribute("animation__pulse", "property: scale; from: 1 1 1; to: 1.08 1.08 1.08; dir: alternate; loop: true; dur: 900; easing: easeInOutQuad");
+        
         // Elemento visual do hotspot (Plane circular com ícone)
         const icon = document.createElement("a-plane");
         icon.setAttribute("class", "hotspot-element");
-        icon.setAttribute("src", HOTSPOT_ICON_URL);
+        icon.setAttribute("src", activeIconUrl);
         icon.setAttribute("width", "0.85");
         icon.setAttribute("height", "0.85");
         icon.setAttribute("transparent", "true");
@@ -558,7 +566,7 @@ function renderHotspots(hotspotsList) {
         textBg.setAttribute("transparent", "true");
         textBg.setAttribute("material", "shader: flat; depthTest: false");
 
-        // Evento de clique para transição
+        // Evento de clique para transição com feedback visual rápido
         const handlePortalClick = (evt) => {
             if (evt) evt.stopPropagation();
             if (isTargetLocked) {
@@ -566,10 +574,17 @@ function renderHotspots(hotspotsList) {
                 openSceneLockedModal(targetScene, targetIndex);
                 return;
             }
-            triggerSceneTransition(() => {
-                setActiveScene(hotspot.targetSceneId);
-                showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
-            });
+            
+            // Feedback de clique: encolhe temporariamente
+            icon.setAttribute("scale", "0.75 0.75 0.75");
+            
+            setTimeout(() => {
+                icon.setAttribute("scale", "1 1 1");
+                triggerSceneTransition(() => {
+                    setActiveScene(hotspot.targetSceneId);
+                    showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
+                });
+            }, 120);
         };
 
         icon.addEventListener("click", handlePortalClick);

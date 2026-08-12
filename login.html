@@ -181,6 +181,7 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
+                    sessionStorage.setItem('session_active', 'true');
                     showToast('Login efetuado! Redirecionando...', 'success');
                     setTimeout(() => window.location.href = 'dashboard.html', 1000);
                 } else {
@@ -212,6 +213,7 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
+                    sessionStorage.setItem('session_active', 'true');
                     showToast('Cadastro concluído com sucesso! Redirecionando...', 'success');
                     setTimeout(() => window.location.href = 'dashboard.html', 1000);
                 } else {

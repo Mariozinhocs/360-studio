@@ -112,13 +112,15 @@
     *   [db_installer.php](file:///g:/Meu%20Drive/Dev's/360/360/db_installer.php) (Conversão de tipo e inclusão de deleted_at, timezone e floor_plan_json de forma segura [CONCLUÍDO])
 *   **Interface:**
     *   [admin.html](file:///g:/Meu%20Drive/Dev's/360/360/admin.html) (Filtro lixeira, restaurar em lote e cache-buster v=1.0.5 [CONCLUÍDO])
-    *   [admin.js](file:///g:/Meu%20Drive/Dev's/360/360/admin.js) (Eventos, Enter validation, lixeira e formatDate utilizando fuso do administrador com correção de regex [CONCLUÍDO])
+    *   [admin.js](file:///g:/Meu%20Drive/Dev's/360/360/admin.js) (Eventos, lixeira, formatDate com fuso local e checkAdminAuth de auto-logout no PC com remoção do sessionStorage no logout [CONCLUÍDO])
     *   [dashboard.html](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.html) (Adicionado botão e modal de edição de perfil, e bump de cache-buster v=1.0.8 [CONCLUÍDO])
-    *   [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) (Links de miniatura, addEventListener nos cliques, logs de exclusão e cache-buster v=1.0.6 no redirect de login [CONCLUÍDO])
-    *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Card da Planta na sidebar, modal do editor, widget de radar do visitante e cache-buster v=1.1.0 [CONCLUÍDO])
-    *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium do card, modal de planta baixa e widget de radar com conic-gradient e cache-buster v=1.1.0 [CONCLUÍDO])
-    *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (A-Frame rotation-listener, uploads de planta baixa, cliques em pontos, slider de offsets, widget dinâmico e cache-buster v=1.1.0 [CONCLUÍDO])
-    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect de sessão, e convertidos formulários em divs com manipulação de enter/clique e limpeza contínua pré-interação para contornar autofill forçado [CONCLUÍDO])
+    *   [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) (Miniaturas, logs, checkAuth de auto-logout no PC com remoção de sessionStorage no logout [CONCLUÍDO])
+    *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Card da Planta na sidebar, modal do editor, widget de radar do visitante e cache-buster v=1.3.8 [CONCLUÍDO])
+    *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium, modal de planta, popup de anúncios e cache-buster v=1.3.8 [CONCLUÍDO])
+    *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (Carrossel inferior, scroll lateral de setas, hotspots pulsantes com aro simples no grátis vs. raio/seta laranja no pago, feedback de clique de 120ms e cache-buster v=1.3.8 [CONCLUÍDO])
+    *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect, bloqueio de autofill por divs e gravação de session_active no sessionStorage [CONCLUÍDO])
+    *   [plans.js](file:///g:/Meu%20Drive/Dev's/360/360/plans.js) (Validação checkAuth de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
+    *   [home.js](file:///g:/Meu%20Drive/Dev's/360/360/home.js) (Validação checkUserSession de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
 
 ---
 

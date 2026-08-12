@@ -42,6 +42,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 // Verificar se o usuário está logado
 async function checkAuth() {
+    const isPC = !/Mobi|Android|iPhone|iPad|Windows Phone/i.test(navigator.userAgent);
+    if (isPC && !sessionStorage.getItem('session_active')) {
+        try {
+            const res = await fetch("api/check_auth.php");
+            const data = await res.json();
+            if (res.ok && data.success) {
+                await fetch("api/logout.php");
+            }
+        } catch (e) {}
+        currentUser = null;
+        return;
+    }
+
     try {
         const res = await fetch("api/check_auth.php");
         const data = await res.json();
