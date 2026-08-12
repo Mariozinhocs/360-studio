@@ -186,10 +186,10 @@ function renderTours() {
         }
         
         // Link de visualização pública
-        const publicUrl = `${window.location.origin}${window.location.pathname.replace("dashboard.html", "index.html")}?id=${tour.id}`;
+        const publicUrl = `${window.location.origin}${window.location.pathname.replace("dashboard.html", "index.html")}?id=${tour.id}&v=1.3.8`;
 
         card.innerHTML = `
-            <a href="index.html?id=${tour.id}&mode=view" class="project-preview-link" style="text-decoration: none; color: inherit; display: block;">
+            <a href="index.html?id=${tour.id}&mode=view&v=1.3.8" class="project-preview-link" style="text-decoration: none; color: inherit; display: block;">
                 <div class="project-preview">
                     ${imgTag}
                     <div class="project-overlay">
@@ -207,7 +207,7 @@ function renderTours() {
                 <span class="project-date">Atualizado em: ${formatDate(tour.updated_at)}</span>
                 
                 <div class="project-actions">
-                    <a href="index.html?id=${tour.id}" class="btn btn-primary btn-sm btn-flex">
+                    <a href="index.html?id=${tour.id}&v=1.3.8" class="btn btn-primary btn-sm btn-flex">
                         <i class="fa-solid fa-edit"></i> Editar
                     </a>
                     <button class="btn btn-secondary btn-sm btn-delete-project" data-id="${tour.id}">
@@ -292,7 +292,7 @@ async function createTour() {
             closeCreateModal();
             // Redireciona diretamente para o editor
             setTimeout(() => {
-                window.location.href = `index.html?id=${data.tourId}`;
+                window.location.href = `index.html?id=${data.tourId}&v=1.3.8`;
             }, 800);
         } else {
             showToast(data.message || "Falha ao criar o projeto.", "error");

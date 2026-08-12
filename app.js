@@ -329,13 +329,28 @@ function setActiveScene(sceneId) {
 
     state.activeSceneId = sceneId;
     
+    // Configurar rotação inicial da cena (Yaw) e resetar orientação da câmera para 0 0 0
+    const skyViewer = document.getElementById("sky-viewer");
+    const videoViewer = document.getElementById("video-viewer");
+    const initialYaw = parseFloat(scene.initialYaw || 0);
+    if (skyViewer) skyViewer.setAttribute("rotation", `0 ${initialYaw} 0`);
+    if (videoViewer) videoViewer.setAttribute("rotation", `0 ${initialYaw} 0`);
+
+    const camera = document.getElementById("camera");
+    if (camera) {
+        camera.setAttribute("rotation", "0 0 0");
+        const lookControls = camera.components['look-controls'];
+        if (lookControls) {
+            lookControls.pitchObject.rotation.x = 0;
+            lookControls.yawObject.rotation.y = 0;
+        }
+    }
+    
     // Exibir feedback de carregamento
     const sceneDisplayTitle = document.getElementById("scene-display-title");
     sceneDisplayTitle.textContent = `${scene.title} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
 
     // Atualizar no A-Frame
-    const skyViewer = document.getElementById("sky-viewer");
-    const videoViewer = document.getElementById("video-viewer");
     const assetsManager = document.getElementById("assets-manager");
     const videoControls = document.getElementById("video-controls");
 
@@ -478,7 +493,7 @@ function isSceneLocked(index) {
     return index >= maxAllowed;
 }
 
-function openSceneLockedModal(scene, index) {
+function openUpgradeModal(title, desc) {
     const modal = document.getElementById("scene-locked-modal");
     if (!modal) return;
 
@@ -491,11 +506,23 @@ function openSceneLockedModal(scene, index) {
     if (planLimitEl) planLimitEl.textContent = `${maxAllowed} cenas`;
     
     const titleEl = document.getElementById("locked-modal-title");
-    if (titleEl && scene) {
-        titleEl.innerHTML = `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> ${scene.title} (Bloqueada)`;
+    if (titleEl) {
+        titleEl.innerHTML = title;
+    }
+
+    const descEl = document.getElementById("locked-modal-desc");
+    if (descEl) {
+        descEl.innerHTML = desc;
     }
 
     modal.classList.add("active");
+}
+
+function openSceneLockedModal(scene, index) {
+    const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+    const title = `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> ${scene ? scene.title : 'Cena'} (Bloqueada)`;
+    const desc = `Seu plano atual (<span id="locked-plan-name" style="font-weight: bold; color: #00f2fe;">Grátis</span>) permite a navegação nas primeiras <span id="locked-plan-limit" style="font-weight: bold; color: #fff;">${maxAllowed} cenas</span> deste tour.<br><br>Esta foto 360° foi enviada e salva com sucesso, mas para torná-la navegável para você e seus visitantes, faça o upgrade da sua assinatura!`;
+    openUpgradeModal(title, desc);
 }
 
 function closeSceneLockedModal() {
@@ -1038,6 +1065,61 @@ function initDOMEvents() {
                 saveTourToStorage();
             }
         }, 500));
+    }
+
+    const inputInitialYaw = document.getElementById("input-initial-yaw");
+    const btnSetInitialYaw = document.getElementById("btn-set-initial-yaw");
+
+    if (inputInitialYaw) {
+        inputInitialYaw.addEventListener("input", (e) => {
+            if (!state.activeSceneId) return;
+            const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (!isPaid) {
+                inputInitialYaw.value = Math.round(scene ? (scene.initialYaw || 0) : 0);
+                openUpgradeModal("<i class='fa-solid fa-crown' style='color:#ffaa00;'></i> Recurso Exclusivo PRO", "A definição da <strong>Posição Inicial da Imagem (Ângulo de Início)</strong> é um recurso premium disponível nos planos pagos. Faça o upgrade agora para personalizar a orientação inicial de suas cenas!");
+                return;
+            }
+            if (scene) {
+                const val = parseFloat(e.target.value || 0);
+                scene.initialYaw = val;
+                
+                const skyViewer = document.getElementById("sky-viewer");
+                const videoViewer = document.getElementById("video-viewer");
+                if (skyViewer) skyViewer.setAttribute("rotation", `0 ${val} 0`);
+                if (videoViewer) videoViewer.setAttribute("rotation", `0 ${val} 0`);
+
+                saveTourToStorage();
+            }
+        });
+    }
+
+    if (btnSetInitialYaw) {
+        btnSetInitialYaw.addEventListener("click", () => {
+            if (!state.activeSceneId) return;
+            const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
+            if (!isPaid) {
+                openUpgradeModal("<i class='fa-solid fa-crown' style='color:#ffaa00;'></i> Recurso Exclusivo PRO", "A definição da <strong>Posição Inicial da Imagem (Ângulo de Início)</strong> é um recurso premium disponível nos planos pagos. Faça o upgrade agora para personalizar a orientação inicial de suas cenas!");
+                return;
+            }
+            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+            if (scene) {
+                const currentYaw = state.activeYawAngle || 0;
+                scene.initialYaw = currentYaw;
+                
+                if (inputInitialYaw) {
+                    inputInitialYaw.value = Math.round(currentYaw);
+                }
+
+                const skyViewer = document.getElementById("sky-viewer");
+                const videoViewer = document.getElementById("video-viewer");
+                if (skyViewer) skyViewer.setAttribute("rotation", `0 ${currentYaw} 0`);
+                if (videoViewer) videoViewer.setAttribute("rotation", `0 ${currentYaw} 0`);
+
+                saveTourToStorage();
+                showToast(`Ângulo inicial definido para ${Math.round(currentYaw)}° com sucesso!`, "success");
+            }
+        });
     }
 
     if (audioUploadZone && audioFileInput) {
@@ -2616,6 +2698,42 @@ function renderActiveSceneSettingsUI(scene) {
     // 1. Nome da Cena
     const inputTitle = document.getElementById("input-scene-title");
     if (inputTitle) inputTitle.value = scene.title || "";
+
+    // 1b. Posição Inicial da Imagem (Yaw)
+    const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
+    const inputInitialYaw = document.getElementById("input-initial-yaw");
+    const btnSetInitialYaw = document.getElementById("btn-set-initial-yaw");
+    const badgeInitialYawPro = document.getElementById("badge-initial-yaw-pro");
+
+    if (inputInitialYaw) {
+        inputInitialYaw.value = Math.round(scene.initialYaw || 0);
+    }
+
+    if (!isPaid) {
+        if (badgeInitialYawPro) badgeInitialYawPro.style.display = "inline-block";
+        if (inputInitialYaw) {
+            inputInitialYaw.disabled = true;
+            inputInitialYaw.style.opacity = "0.5";
+        }
+        if (btnSetInitialYaw) {
+            btnSetInitialYaw.style.opacity = "0.6";
+            btnSetInitialYaw.style.background = "rgba(255,255,255,0.05)";
+            btnSetInitialYaw.style.color = "rgba(255,255,255,0.4)";
+            btnSetInitialYaw.style.borderColor = "rgba(255,255,255,0.1)";
+        }
+    } else {
+        if (badgeInitialYawPro) badgeInitialYawPro.style.display = "none";
+        if (inputInitialYaw) {
+            inputInitialYaw.disabled = false;
+            inputInitialYaw.style.opacity = "1";
+        }
+        if (btnSetInitialYaw) {
+            btnSetInitialYaw.style.opacity = "1";
+            btnSetInitialYaw.style.background = "rgba(0, 242, 254, 0.08)";
+            btnSetInitialYaw.style.color = "#00f2fe";
+            btnSetInitialYaw.style.borderColor = "rgba(0, 242, 254, 0.3)";
+        }
+    }
 
     // 2. Som Ambiente (MP3)
     const hasSound = state.features ? (state.features.ambient_sound ?? false) : false;

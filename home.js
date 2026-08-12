@@ -70,5 +70,5 @@ async function checkUserSession() {
 // Abrir passeios virtuais de demonstração
 function openShowcaseTour(tourId) {
     // Abre a visualização em nova aba
-    window.open(`index.html?id=${tourId}`, "_blank");
+    window.open(`index.html?id=${tourId}&v=1.3.8`, "_blank");
 }
