@@ -14,6 +14,8 @@ CREATE TABLE IF NOT EXISTS {PREFIX}users (
     subscription_expires_at DATETIME NULL,
     timezone VARCHAR(100) DEFAULT 'America/Sao_Paulo',
     deleted_at DATETIME NULL DEFAULT NULL,
+    password_reset_token VARCHAR(255) DEFAULT NULL,
+    password_reset_expires DATETIME DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

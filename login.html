@@ -45,6 +45,9 @@
                 <div class="form-group">
                     <label for="login-password"><i class="fa-solid fa-lock"></i> Senha</label>
                     <input type="password" id="login-password" required placeholder="••••••••">
+                    <div style="text-align: right; margin-top: 5px;">
+                        <a href="#" id="link-show-recover" style="font-size: 12px; color: var(--color-accent); text-decoration: none; font-weight: 500;">Esqueci minha senha</a>
+                    </div>
                 </div>
                 <button type="button" id="btn-login-submit" class="btn btn-primary btn-block">
                     <span>Entrar na Plataforma</span> <i class="fa-solid fa-arrow-right-to-bracket"></i>
@@ -86,6 +89,54 @@
             </div>
             <div class="auth-footer">
                 <span>Já possui conta? <a href="#" id="link-show-login">Faça login</a></span>
+            </div>
+        </div>
+
+        <!-- CARD RECUPERAÇÃO DE SENHA -->
+        <div class="auth-card glassmorphism" id="recover-card">
+            <h2>Recuperar Senha</h2>
+            <p class="auth-subtitle">Informe seu e-mail para receber as instruções de recuperação</p>
+
+            <div id="recover-form">
+                <div class="form-group">
+                    <label for="recover-email"><i class="fa-regular fa-envelope"></i> E-mail Cadastrado</label>
+                    <input type="email" id="recover-email" required placeholder="seuemail@exemplo.com">
+                </div>
+                <button type="button" id="btn-recover-submit" class="btn btn-primary btn-block">
+                    <span>Solicitar Link de Recuperação</span> <i class="fa-regular fa-paper-plane"></i>
+                </button>
+            </div>
+            <!-- Exibição do link de debug para conveniência no MVP/HML -->
+            <div id="recover-debug-container" style="display: none; margin-top: 15px; padding: 10px; background: rgba(0, 242, 254, 0.1); border: 1px solid rgba(0, 242, 254, 0.3); border-radius: 5px; font-size: 13px; text-align: center;">
+                <p style="margin: 0 0 5px 0; color: #00f2fe; font-weight: bold;"><i class="fa-solid fa-bug"></i> Link de Teste do MVP:</p>
+                <a id="recover-debug-link" href="#" style="color: #ffffff; text-decoration: underline; font-weight: 500;">Clique aqui para redefinir diretamente</a>
+            </div>
+            <div class="auth-footer">
+                <span>Lembrou da senha? <a href="#" id="link-recover-back-to-login">Voltar para o login</a></span>
+            </div>
+        </div>
+
+        <!-- CARD DEFINIR NOVA SENHA -->
+        <div class="auth-card glassmorphism" id="reset-card">
+            <h2>Nova Senha</h2>
+            <p class="auth-subtitle">Crie uma nova senha de acesso segura para sua conta</p>
+
+            <div id="reset-form">
+                <input type="hidden" id="reset-token">
+                <div class="form-group">
+                    <label for="reset-password"><i class="fa-solid fa-lock"></i> Nova Senha</label>
+                    <input type="password" id="reset-password" required minlength="6" placeholder="(mín. 6 caracteres)">
+                </div>
+                <div class="form-group">
+                    <label for="reset-confirm-password"><i class="fa-solid fa-lock"></i> Confirmar Nova Senha</label>
+                    <input type="password" id="reset-confirm-password" required minlength="6" placeholder="Confirme a nova senha">
+                </div>
+                <button type="button" id="btn-reset-submit" class="btn btn-accent btn-block">
+                    <span>Salvar Nova Senha</span> <i class="fa-solid fa-circle-check"></i>
+                </button>
+            </div>
+            <div class="auth-footer">
+                <span>Deseja cancelar? <a href="#" id="link-reset-back-to-login">Voltar para o login</a></span>
             </div>
         </div>
     </div>
@@ -143,22 +194,57 @@
             }, 4000);
         }
 
-        // Toggles entre Login e Cadastro
+        // Toggles entre os Cards
         const loginCard = document.getElementById('login-card');
         const registerCard = document.getElementById('register-card');
+        const recoverCard = document.getElementById('recover-card');
+        const resetCard = document.getElementById('reset-card');
+        
         const linkShowRegister = document.getElementById('link-show-register');
         const linkShowLogin = document.getElementById('link-show-login');
+        const linkShowRecover = document.getElementById('link-show-recover');
+        const linkRecoverBackToLogin = document.getElementById('link-recover-back-to-login');
+        const linkResetBackToLogin = document.getElementById('link-reset-back-to-login');
+
+        // Atalho para ocultar todos os cards
+        const hideAllCards = () => {
+            loginCard.classList.remove('active');
+            registerCard.classList.remove('active');
+            recoverCard.classList.remove('active');
+            resetCard.classList.remove('active');
+        };
 
         linkShowRegister.addEventListener('click', (e) => {
             e.preventDefault();
-            loginCard.classList.remove('active');
+            hideAllCards();
             registerCard.classList.add('active');
         });
 
         linkShowLogin.addEventListener('click', (e) => {
             e.preventDefault();
-            registerCard.classList.remove('active');
+            hideAllCards();
             loginCard.classList.add('active');
+        });
+
+        linkShowRecover.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllCards();
+            recoverCard.classList.add('active');
+        });
+
+        linkRecoverBackToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllCards();
+            loginCard.classList.add('active');
+            document.getElementById('recover-debug-container').style.display = 'none';
+        });
+
+        linkResetBackToLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            hideAllCards();
+            loginCard.classList.add('active');
+            // Limpa o token da URL para não recarregar no reset
+            window.history.replaceState({}, document.title, window.location.pathname);
         });
 
 
@@ -247,6 +333,105 @@
         addEnterSubmit('register-username', submitRegister);
         addEnterSubmit('register-email', submitRegister);
         addEnterSubmit('register-password', submitRegister);
+
+        // Submeter Formulário de Recuperação de Senha
+        const submitRecover = async () => {
+            const email = document.getElementById('recover-email').value;
+
+            if (!email) {
+                showToast('Por favor, informe seu e-mail.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('api/recover_password.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showToast(data.message, 'success');
+                    if (data.debug_link) {
+                        const debugContainer = document.getElementById('recover-debug-container');
+                        const debugLink = document.getElementById('recover-debug-link');
+                        debugLink.href = data.debug_link;
+                        debugContainer.style.display = 'block';
+                    }
+                } else {
+                    showToast(data.message || 'Erro ao processar solicitação.', 'error');
+                }
+            } catch (err) {
+                showToast('Erro ao comunicar com o servidor.', 'error');
+            }
+        };
+
+        // Submeter Formulário de Definição de Nova Senha
+        const submitReset = async () => {
+            const token = document.getElementById('reset-token').value;
+            const password = document.getElementById('reset-password').value;
+            const confirmPassword = document.getElementById('reset-confirm-password').value;
+
+            if (!password || !confirmPassword) {
+                showToast('Por favor, preencha todos os campos.', 'error');
+                return;
+            }
+
+            if (password !== confirmPassword) {
+                showToast('As senhas não coincidem.', 'error');
+                return;
+            }
+
+            if (password.length < 6) {
+                showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
+                return;
+            }
+
+            try {
+                const res = await fetch('api/reset_password_with_token.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ token, password })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => {
+                        hideAllCards();
+                        loginCard.classList.add('active');
+                        // Limpa o token da URL para ficar limpo
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                        document.getElementById('reset-password').value = '';
+                        document.getElementById('reset-confirm-password').value = '';
+                    }, 2000);
+                } else {
+                    showToast(data.message || 'Erro ao redefinir senha.', 'error');
+                }
+            } catch (err) {
+                showToast('Erro ao comunicar com o servidor.', 'error');
+            }
+        };
+
+        // Adicionar eventos de clique
+        document.getElementById('btn-recover-submit').addEventListener('click', submitRecover);
+        document.getElementById('btn-reset-submit').addEventListener('click', submitReset);
+
+        // Adicionar teclas enter
+        addEnterSubmit('recover-email', submitRecover);
+        addEnterSubmit('reset-password', submitReset);
+        addEnterSubmit('reset-confirm-password', submitReset);
+
+        // Tratar Token na URL se houver (Redirecionamento automático)
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlToken = urlParams.get('token');
+        if (urlToken) {
+            hideAllCards();
+            resetCard.classList.add('active');
+            document.getElementById('reset-token').value = urlToken;
+            showToast('Link de recuperação detectado! Defina sua nova senha.', 'info');
+        }
     </script>
 </body>
 </html>

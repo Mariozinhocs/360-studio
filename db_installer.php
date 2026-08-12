@@ -94,6 +94,24 @@ try {
             echo "Coluna 'timezone' já existe.\n";
         }
 
+        // Verifica se a coluna password_reset_token existe
+        $col_reset_token = $pdo->query("SHOW COLUMNS FROM `{$users_table}` LIKE 'password_reset_token'");
+        if ($col_reset_token->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$users_table}` ADD COLUMN password_reset_token VARCHAR(255) DEFAULT NULL AFTER deleted_at");
+            echo "Coluna 'password_reset_token' adicionada com sucesso!\n";
+        } else {
+            echo "Coluna 'password_reset_token' já existe.\n";
+        }
+
+        // Verifica se a coluna password_reset_expires existe
+        $col_reset_expires = $pdo->query("SHOW COLUMNS FROM `{$users_table}` LIKE 'password_reset_expires'");
+        if ($col_reset_expires->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$users_table}` ADD COLUMN password_reset_expires DATETIME DEFAULT NULL AFTER password_reset_token");
+            echo "Coluna 'password_reset_expires' adicionada com sucesso!\n";
+        } else {
+            echo "Coluna 'password_reset_expires' já existe.\n";
+        }
+
         // Verifica se a coluna floor_plan_json existe na tabela de tours
         $tours_table = $prefix . 'tours';
         $col_floorplan = $pdo->query("SHOW COLUMNS FROM `{$tours_table}` LIKE 'floor_plan_json'");
