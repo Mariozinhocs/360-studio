@@ -46,15 +46,72 @@ if (!in_array($extension, $allowed_extensions)) {
     exit;
 }
 
-// Tipos MIME permitidos
-$allowed_mimes = ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/x-webp', 'video/mp4'];
+// Tipos MIME e Assinaturas Binárias
 $finfo = finfo_open(FILEINFO_MIME_TYPE);
 $mime_type = finfo_file($finfo, $file['tmp_name']);
 finfo_close($finfo);
 
-if (!in_array($mime_type, $allowed_mimes)) {
+$fp = @fopen($file['tmp_name'], 'rb');
+$header = $fp ? fread($fp, 32) : '';
+if ($fp) fclose($fp);
+
+$isValidMime = false;
+
+// 1. JPEG: \xFF\xD8\xFF
+if (in_array($extension, ['jpg', 'jpeg']) && (
+    $mime_type === 'image/jpeg' || 
+    (strlen($header) >= 3 && substr($header, 0, 3) === "\xFF\xD8\xFF")
+)) {
+    $isValidMime = true;
+    $mime_type = 'image/jpeg';
+}
+// 2. PNG: \x89PNG\r\n\x1a\n
+elseif ($extension === 'png' && (
+    $mime_type === 'image/png' || 
+    (strlen($header) >= 8 && substr($header, 0, 8) === "\x89PNG\r\n\x1a\n")
+)) {
+    $isValidMime = true;
+    $mime_type = 'image/png';
+}
+// 3. WEBP: RIFF....WEBP
+elseif ($extension === 'webp' && (
+    in_array($mime_type, ['image/webp', 'image/x-webp', 'application/octet-stream']) ||
+    (strlen($header) >= 12 && substr($header, 0, 4) === 'RIFF' && substr($header, 8, 4) === 'WEBP')
+)) {
+    $isValidMime = true;
+    $mime_type = 'image/webp';
+}
+// 4. AVIF: ftypavif, ftypavis, ftypmif1, ftypmsf1, etc.
+elseif ($extension === 'avif' && (
+    in_array($mime_type, ['image/avif', 'image/x-avif', 'image/heif', 'image/heic', 'video/mp4', 'video/quicktime', 'application/octet-stream']) ||
+    (strlen($header) >= 12 && substr($header, 4, 4) === 'ftyp' && (
+        substr($header, 8, 4) === 'avif' || 
+        substr($header, 8, 4) === 'avis' || 
+        substr($header, 8, 4) === 'mif1' || 
+        substr($header, 8, 4) === 'msf1' ||
+        substr($header, 8, 4) === 'MA1B' ||
+        substr($header, 8, 4) === 'MA1A'
+    ))
+)) {
+    $isValidMime = true;
+    $mime_type = 'image/avif';
+}
+// 5. MP4: ftyp in first 16 bytes
+elseif ($extension === 'mp4' && (
+    in_array($mime_type, ['video/mp4', 'video/quicktime', 'application/octet-stream']) ||
+    (strlen($header) >= 8 && substr($header, 4, 4) === 'ftyp')
+)) {
+    $isValidMime = true;
+    $mime_type = 'video/mp4';
+}
+// Fallback whitelist
+elseif (in_array($mime_type, ['image/jpeg', 'image/png', 'image/webp', 'image/avif', 'image/x-webp', 'image/x-avif', 'video/mp4'])) {
+    $isValidMime = true;
+}
+
+if (!$isValidMime) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Tipo MIME inválido. Formato detectado: ' . $mime_type]);
+    echo json_encode(['success' => false, 'message' => 'Tipo MIME inválido. Formato detectado: ' . $mime_type . ' (extensão: ' . $extension . ')']);
     exit;
 }
 
@@ -62,7 +119,7 @@ if (!in_array($mime_type, $allowed_mimes)) {
 $max_image_size = 15 * 1024 * 1024; // 15MB
 $max_video_size = 60 * 1024 * 1024; // 60MB
 
-$is_video = strpos($mime_type, 'video/') === 0;
+$is_video = ($extension === 'mp4' || $mime_type === 'video/mp4');
 $max_allowed_size = $is_video ? $max_video_size : $max_image_size;
 
 if ($file['size'] > $max_allowed_size) {
