@@ -21,7 +21,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.3.7">
+    <link rel="stylesheet" href="style.css?v=1.3.8">
 </head>
 <body>
     <div class="app-container">
@@ -323,7 +323,7 @@
 
                 <!-- Marca d'água promocional para plano Grátis -->
                 <div id="promotional-watermark" class="promotional-watermark" style="display: none;">
-                    <a href="https://tour360.hubdigital360.com/" target="_blank">
+                    <a href="home.html">
                         <i class="fa-solid fa-wand-magic-sparkles"></i> <span>Criado com 360° Studio</span>
                     </a>
                 </div>
@@ -333,20 +333,29 @@
                     <img id="client-logo-img" src="" alt="Logo">
                 </div>
 
-                <!-- Container do Google Adsense (Placeholder de Anúncios no Plano Grátis) -->
-                <div id="google-ads-container" class="google-ads-container" style="display: none;">
-                    <div class="ads-header">
-                        <span>Anúncio</span>
-                        <div class="ads-close-wrapper">
-                            <span id="ads-countdown" class="ads-countdown">10s</span>
-                            <button id="close-ads-btn" class="close-ads-btn" onclick="document.getElementById('google-ads-container').style.display='none'">&times;</button>
+                <!-- Overlay de Publicidades (Plano Grátis) -->
+                <div id="google-ads-overlay" class="google-ads-overlay" style="display: none;">
+                    <div id="google-ads-container" class="google-ads-container">
+                        <div class="ads-header">
+                            <span>Anúncio Patrocinado</span>
+                            <div class="ads-close-wrapper">
+                                <span id="ads-countdown" class="ads-countdown">10s</span>
+                                <button id="close-ads-btn" class="close-ads-btn" onclick="document.getElementById('google-ads-overlay').style.display='none'">&times;</button>
+                            </div>
                         </div>
-                    </div>
-                    <div class="ads-body">
-                        <div class="ads-placeholder-box">
-                            <i class="fa-solid fa-rectangle-ad"></i>
-                            <span class="ads-title">Google Ads</span>
-                            <span class="ads-subtitle">Seu anúncio aparecerá aqui no plano Grátis</span>
+                        <!-- Barra de Progresso de Tempo -->
+                        <div class="ads-progress-container">
+                            <div id="ads-progress-bar" class="ads-progress-bar"></div>
+                        </div>
+                        <div class="ads-body">
+                            <div class="ads-placeholder-box">
+                                <i class="fa-solid fa-rectangle-ad ads-icon"></i>
+                                <span class="ads-title">Google Ads</span>
+                                <span class="ads-subtitle">Este é um anúncio patrocinado exibido no plano Grátis. Para remover os anúncios e desbloquear todos os recursos premium do 360° Studio, faça o upgrade da sua assinatura.</span>
+                                <a href="plans.html" class="ads-upgrade-link">
+                                    <i class="fa-solid fa-crown"></i> Remover Anúncios e Fazer Upgrade
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -553,6 +562,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.3.7"></script>
+    <script src="app.js?v=1.3.8"></script>
 </body>
 </html>

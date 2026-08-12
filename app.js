@@ -225,14 +225,14 @@ async function loadTourFromServer(tourId, startMode = null) {
 
             // Exibir/ocultar anúncios e marca d'água promocional do plano Grátis
             const watermark = document.getElementById("promotional-watermark");
-            const adsContainer = document.getElementById("google-ads-container");
+            const adsOverlay = document.getElementById("google-ads-overlay");
             if (state.showAds) {
                 if (watermark) watermark.style.display = "block";
-                if (adsContainer) adsContainer.style.display = "block";
+                if (adsOverlay) adsOverlay.style.display = "flex";
                 startAdsTimer();
             } else {
                 if (watermark) watermark.style.display = "none";
-                if (adsContainer) adsContainer.style.display = "none";
+                if (adsOverlay) adsOverlay.style.display = "none";
             }
             
             // Definir cena inicial
@@ -645,6 +645,18 @@ function goToPrevScene() {
     });
 }
 
+// --- ROLAGEM DO CARROSSEL DE CENAS ---
+function scrollCarousel(direction) {
+    const track = document.getElementById("scenes-carousel-track");
+    if (!track) return;
+    const scrollAmount = 200;
+    if (direction === "next") {
+        track.scrollBy({ left: scrollAmount, behavior: "smooth" });
+    } else {
+        track.scrollBy({ left: -scrollAmount, behavior: "smooth" });
+    }
+}
+
 function renderScenesCarousel() {
     const track = document.getElementById("scenes-carousel-track");
     const bar = document.getElementById("scenes-navigation-bar");
@@ -657,6 +669,8 @@ function renderScenesCarousel() {
 
     bar.style.display = "flex";
     track.innerHTML = "";
+
+    let activeThumbEl = null;
 
     state.tour.scenes.forEach((scene, index) => {
         const locked = isSceneLocked(index);
@@ -691,8 +705,19 @@ function renderScenesCarousel() {
             }
         };
 
+        if (scene.id === state.activeSceneId) {
+            activeThumbEl = thumb;
+        }
+
         track.appendChild(thumb);
     });
+
+    // Centraliza o thumbnail ativo no carrossel
+    if (activeThumbEl) {
+        setTimeout(() => {
+            activeThumbEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+        }, 100);
+    }
 }
 
 // --- EVENTOS DO DOM & INTERFACE ---
@@ -758,8 +783,8 @@ function initDOMEvents() {
     const btnNextScene = document.getElementById("btn-next-scene");
     const btnToggleSceneStrip = document.getElementById("btn-toggle-scene-strip");
 
-    if (btnPrevScene) btnPrevScene.addEventListener("click", goToPrevScene);
-    if (btnNextScene) btnNextScene.addEventListener("click", goToNextScene);
+    if (btnPrevScene) btnPrevScene.addEventListener("click", () => scrollCarousel("prev"));
+    if (btnNextScene) btnNextScene.addEventListener("click", () => scrollCarousel("next"));
     if (btnToggleSceneStrip) {
         btnToggleSceneStrip.addEventListener("click", () => {
             const bar = document.getElementById("scenes-navigation-bar");
@@ -909,14 +934,14 @@ function initDOMEvents() {
                     
                     // Exibir/ocultar anúncios e watermark
                     const watermark = document.getElementById("promotional-watermark");
-                    const adsContainer = document.getElementById("google-ads-container");
+                    const adsOverlay = document.getElementById("google-ads-overlay");
                     if (state.showAds) {
                         if (watermark) watermark.style.display = "block";
-                        if (adsContainer) adsContainer.style.display = "block";
+                        if (adsOverlay) adsOverlay.style.display = "flex";
                         startAdsTimer();
                     } else {
                         if (watermark) watermark.style.display = "none";
-                        if (adsContainer) adsContainer.style.display = "none";
+                        if (adsOverlay) adsOverlay.style.display = "none";
                     }
                     
                     // Definir cena inicial
@@ -1919,11 +1944,12 @@ function showToast(message, type = "info") {
 
 // --- TIMER DE ANÚNCIOS OBRIGATÓRIO (PLANO GRÁTIS) ---
 function startAdsTimer() {
-    const adsContainer = document.getElementById("google-ads-container");
+    const adsOverlay = document.getElementById("google-ads-overlay");
     const countdownEl = document.getElementById("ads-countdown");
     const closeBtn = document.getElementById("close-ads-btn");
+    const progressBar = document.getElementById("ads-progress-bar");
     
-    if (!adsContainer || adsContainer.style.display === "none") return;
+    if (!adsOverlay || adsOverlay.style.display === "none") return;
     
     // Configuração inicial: exibe o contador e esconde o botão de fechar
     if (countdownEl) {
@@ -1932,6 +1958,16 @@ function startAdsTimer() {
     }
     if (closeBtn) {
         closeBtn.style.display = "none";
+    }
+    
+    // Configura a barra de progresso para diminuir suavemente de 100% a 0%
+    if (progressBar) {
+        progressBar.style.transition = "none";
+        progressBar.style.width = "100%";
+        // Forçar reflow do navegador
+        progressBar.offsetHeight;
+        progressBar.style.transition = "width 10s linear";
+        progressBar.style.width = "0%";
     }
     
     let secondsLeft = 10;
@@ -1954,7 +1990,7 @@ function startAdsTimer() {
                 countdownEl.style.display = "none";
             }
             if (closeBtn) {
-                closeBtn.style.display = "block";
+                closeBtn.style.display = "flex";
             }
         }
     }, 1000);
