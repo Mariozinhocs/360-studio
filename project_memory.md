@@ -87,6 +87,15 @@
     *   **Hard Limit de Tours com Modal CTA no Dashboard:** O usuário é impedido de ultrapassar a quantidade de tours ativos do seu plano (ex: 5 no Grátis), mas ao clicar no botão "Novo Tour" quando cheio, abre um modal de Upgrade CTA exclusivo.
     *   **Purga Automática de Mídias Órfãs:** Criado [api/clean_orphans.php](file:///g:/Meu%20Drive/Dev's/360/360/api/clean_orphans.php) integrado ao painel admin e rotinas de manutenção para apagar automaticamente arquivos abandonados na pasta `/uploads/`.
 
+13. **Interação Avançada de Hotspots, Enquadramento Suave e Reposicionamento (CONCLUÍDO):**
+    *   **Renderização 3D de Alta Definição:** Correção dos hotspots pretos/retangulares através de texturas SVG base64 de alta resolução (`HOTSPOT_ICON_FREE`, `HOTSPOT_ICON_PREMIUM`, `HOTSPOT_ICON_SELECTED`), fontes A-Frame padrão (`roboto`), pill translúcida e anéis pulsantes em neon (`a-ring`).
+    *   **Enquadramento Automático da Câmera (`lookAtHotspot`):** Ao clicar em qualquer portal na lista do menu lateral, a câmera 360° gira suavemente (interpolação esférica `smoothRotateCamera` com easing cúbico) e aponta diretamente para o hotspot na tela.
+    *   **Seleção e Reposicionamento Dinâmico na Cena:** Ao selecionar um hotspot, o card fica ativo com visual destacado e botões dedicados:
+        *   **Reposicionar / Mover:** Ativa o modo de reposicionamento com retículo e pulso visual. O usuário clica em qualquer ponto da foto 360° para mover o portal imediatamente, com salvamento instantâneo.
+        *   **Editar:** Abre o modal pré-preenchido para alterar descrição do balão ou trocar a cena de destino.
+        *   **Excluir:** Remove o portal da cena e atualiza o banco/local.
+    *   **Cache-Busters:** Bump para `v=1.3.9` no `style.css` e `app.js` em `index.html`.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados

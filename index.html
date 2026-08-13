@@ -24,7 +24,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.3.8">
+    <link rel="stylesheet" href="style.css?v=1.3.9">
 </head>
 <body>
     <div class="app-container">
@@ -481,10 +481,11 @@
     <div class="modal-overlay" id="hotspot-modal">
         <div class="modal-card glassmorphism">
             <div class="modal-header">
-                <h2><i class="fa-solid fa-location-dot"></i> Configurar Hotspot / Portal</h2>
+                <h2 id="hotspot-modal-title"><i class="fa-solid fa-location-dot"></i> Configurar Hotspot / Portal</h2>
                 <button class="close-btn" id="btn-close-modal">&times;</button>
             </div>
             <div class="modal-body">
+                <input type="hidden" id="editing-hotspot-id" value="">
                 <div class="form-group">
                     <label for="hotspot-label">Texto do Balão (Tooltip)</label>
                     <input type="text" id="hotspot-label" placeholder="Ex: Ir para o Quarto Principal">
@@ -497,7 +498,7 @@
                 </div>
                 <div class="modal-actions">
                     <button class="btn btn-secondary" id="btn-cancel-hotspot">Cancelar</button>
-                    <button class="btn btn-primary" id="btn-save-hotspot">Criar Portal</button>
+                    <button class="btn btn-primary" id="btn-save-hotspot">Salvar Portal</button>
                 </div>
             </div>
         </div>
@@ -580,6 +581,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.3.8"></script>
+    <script src="app.js?v=1.3.9"></script>
 </body>
 </html>

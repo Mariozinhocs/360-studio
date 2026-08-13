@@ -14,6 +14,10 @@ const state = {
     pendingHotspotPos: null,
     videoUpdateInterval: null,
     
+    // Gerenciamento e Interação de Hotspots
+    selectedHotspotId: null,
+    isRepositioningHotspot: false,
+    
     // Planta Baixa
     floorplanSelectedSceneId: null,
     activeYawAngle: 0,
@@ -39,10 +43,54 @@ function debounce(func, wait) {
     };
 }
 
-// --- CONFIGURAÇÃO E CONSTANTES ---
-const HOTSPOT_ICON_FREE = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' fill='rgba(0,0,0,0.4)' stroke='%23ffffff' stroke-width='6'/><circle cx='50' cy='50' r='25' fill='none' stroke='%23ffffff' stroke-width='3' opacity='0.7'/></svg>";
+// --- CONFIGURAÇÃO E CONSTANTES (ÍCONES SVG DE ALTA RESOLUÇÃO BASE64) ---
+const HOTSPOT_ICON_FREE = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="freeGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="0.95"/>
+      <stop offset="65%" stop-color="#0284c7" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#0b111e" stop-opacity="0.9"/>
+    </radialGradient>
+    <filter id="fGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <circle cx="64" cy="64" r="56" fill="url(#freeGlow)" stroke="#ffffff" stroke-width="4" filter="url(#fGlow)"/>
+  <circle cx="64" cy="64" r="42" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,4" opacity="0.85"/>
+  <path d="M64 34 L88 64 L74 64 L74 94 L54 94 L54 64 L40 64 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+</svg>`);
 
-const HOTSPOT_ICON_PREMIUM = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='g' cx='50%' cy='50%' r='50%'><stop offset='0%' stop-color='%231a1b24' stop-opacity='0.95'/><stop offset='100%' stop-color='%230e0f14' stop-opacity='0.85'/></radialGradient></defs><circle cx='50' cy='50' r='44' fill='url(%23g)' stroke='%23ffffff' stroke-width='5'/><circle cx='50' cy='50' r='36' fill='none' stroke='%23ff6a00' stroke-width='2' stroke-dasharray='4,3' opacity='0.6'/><path d='M52 16 L32 50 L46 50 L38 84 L68 46 L50 46 Z' fill='%23ff6a00' filter='drop-shadow(0px 0px 5px rgba(255,106,0,0.5))'/></svg>";
+const HOTSPOT_ICON_PREMIUM = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="premGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ffb703" stop-opacity="0.95"/>
+      <stop offset="65%" stop-color="#fb8500" stop-opacity="0.85"/>
+      <stop offset="100%" stop-color="#190e03" stop-opacity="0.9"/>
+    </radialGradient>
+    <filter id="pGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+  </defs>
+  <circle cx="64" cy="64" r="56" fill="url(#premGlow)" stroke="#ffffff" stroke-width="4" filter="url(#pGlow)"/>
+  <circle cx="64" cy="64" r="42" fill="none" stroke="#ffffff" stroke-width="2" stroke-dasharray="5,4" opacity="0.85"/>
+  <path d="M64 32 L88 62 L74 62 L74 94 L54 94 L54 62 L40 62 Z" fill="#ffffff" filter="drop-shadow(0 2px 4px rgba(0,0,0,0.5))"/>
+</svg>`);
+
+const HOTSPOT_ICON_SELECTED = "data:image/svg+xml;base64," + btoa(`<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <defs>
+    <radialGradient id="selGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#00f2fe" stop-opacity="1"/>
+      <stop offset="70%" stop-color="#8b5cf6" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#0b0f19" stop-opacity="0.98"/>
+    </radialGradient>
+  </defs>
+  <circle cx="64" cy="64" r="58" fill="url(#selGlow)" stroke="#00f2fe" stroke-width="6"/>
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#ffffff" stroke-width="3" stroke-dasharray="4,4"/>
+  <circle cx="64" cy="64" r="14" fill="#ffffff"/>
+  <path d="M64 22 L64 42 M64 86 L64 106 M22 64 L42 64 M86 64 L106 64" stroke="#ffffff" stroke-width="4" stroke-linecap="round"/>
+</svg>`);
 
 const DEMO_SCENES = [
     {
@@ -84,8 +132,8 @@ const DEMO_SCENES = [
 AFRAME.registerComponent('click-listener', {
     init: function () {
         this.el.addEventListener('click', function (evt) {
-            // Apenas reage se estivermos no modo criador E no estado de adicionar hotspot
-            if (!state.isEditMode || !state.isAddingHotspot) return;
+            // Apenas reage se estivermos no modo editor
+            if (!state.isEditMode) return;
 
             let point = evt.detail && evt.detail.intersection ? evt.detail.intersection.point : null;
             
@@ -98,17 +146,36 @@ AFRAME.registerComponent('click-listener', {
                 }
             }
 
-            if (point) {
-                const targetDistance = 5;
-                const distance = Math.sqrt(point.x * point.x + point.y * point.y + point.z * point.z) || 1;
-                
-                state.pendingHotspotPos = {
-                    x: (point.x / distance) * targetDistance,
-                    y: (point.y / distance) * targetDistance,
-                    z: (point.z / distance) * targetDistance
-                };
+            if (!point) return;
 
-                // Abrir o modal de configuração
+            const targetDistance = 5;
+            const distance = Math.sqrt(point.x * point.x + point.y * point.y + point.z * point.z) || 1;
+            const newPos = {
+                x: parseFloat(((point.x / distance) * targetDistance).toFixed(3)),
+                y: parseFloat(((point.y / distance) * targetDistance).toFixed(3)),
+                z: parseFloat(((point.z / distance) * targetDistance).toFixed(3))
+            };
+
+            // 1. Modo de Reposicionamento de Hotspot Ativo
+            if (state.isRepositioningHotspot && state.selectedHotspotId) {
+                const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+                if (currentScene && currentScene.hotspots) {
+                    const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
+                    if (hotspot) {
+                        hotspot.position = newPos;
+                        state.isRepositioningHotspot = false;
+                        saveTourToStorage();
+                        renderHotspots(currentScene.hotspots);
+                        renderHotspotsList();
+                        showToast(`Portal "${hotspot.label}" reposicionado com sucesso!`, "success");
+                        return;
+                    }
+                }
+            }
+
+            // 2. Modo de Adição de Novo Hotspot
+            if (state.isAddingHotspot) {
+                state.pendingHotspotPos = newPos;
                 openHotspotModal();
             }
         });
@@ -539,10 +606,13 @@ function renderHotspots(hotspotsList) {
     if (!hotspotsList || !Array.isArray(hotspotsList)) return;
 
     const isGratis = !!state.showAds;
-    const activeIconUrl = isGratis ? HOTSPOT_ICON_FREE : HOTSPOT_ICON_PREMIUM;
+    const defaultIconUrl = isGratis ? HOTSPOT_ICON_FREE : HOTSPOT_ICON_PREMIUM;
 
     hotspotsList.forEach(hotspot => {
         if (!hotspot || !hotspot.position) return;
+
+        const isSelected = state.isEditMode && (state.selectedHotspotId === hotspot.id);
+        const activeIconUrl = isSelected ? HOTSPOT_ICON_SELECTED : defaultIconUrl;
 
         const targetIndex = state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === hotspot.targetSceneId) : -1;
         const isTargetLocked = targetIndex !== -1 && isSceneLocked(targetIndex);
@@ -551,51 +621,81 @@ function renderHotspots(hotspotsList) {
         const entity = document.createElement("a-entity");
         entity.setAttribute("position", `${hotspot.position.x} ${hotspot.position.y} ${hotspot.position.z}`);
         entity.setAttribute("look-at", "#camera");
+        entity.setAttribute("data-hotspot-id", hotspot.id);
         
-        // Pulsação suave contínua no elemento pai (Apenas escala)
-        entity.setAttribute("animation__pulse", "property: scale; from: 1 1 1; to: 1.08 1.08 1.08; dir: alternate; loop: true; dur: 900; easing: easeInOutQuad");
+        // Pulsação suave contínua
+        const pulseScale = isSelected ? "1.15 1.15 1.15" : "1.06 1.06 1.06";
+        const pulseDur = isSelected ? "700" : "1000";
+        entity.setAttribute("animation__pulse", `property: scale; from: 1 1 1; to: ${pulseScale}; dir: alternate; loop: true; dur: ${pulseDur}; easing: easeInOutQuad`);
         
-        // Elemento visual do hotspot (Plane circular com ícone)
+        // Anel externo pulsante (A-Ring) para visual moderno neon 3D
+        const ring = document.createElement("a-ring");
+        ring.setAttribute("class", "hotspot-element");
+        ring.setAttribute("radius-inner", "0.46");
+        ring.setAttribute("radius-outer", "0.52");
+        ring.setAttribute("material", isSelected
+            ? "color: #00f2fe; shader: flat; opacity: 0.95; transparent: true; depthTest: false"
+            : (isTargetLocked
+                ? "color: #ff4444; shader: flat; opacity: 0.75; transparent: true; depthTest: false"
+                : (isGratis 
+                    ? "color: #00f2fe; shader: flat; opacity: 0.7; transparent: true; depthTest: false"
+                    : "color: #ffb703; shader: flat; opacity: 0.75; transparent: true; depthTest: false")));
+        
+        // Elemento visual do ícone principal (Plano circular)
         const icon = document.createElement("a-plane");
         icon.setAttribute("class", "hotspot-element");
         icon.setAttribute("src", activeIconUrl);
-        icon.setAttribute("width", "0.85");
-        icon.setAttribute("height", "0.85");
+        icon.setAttribute("width", "0.92");
+        icon.setAttribute("height", "0.92");
         icon.setAttribute("transparent", "true");
         icon.setAttribute("material", isTargetLocked 
-            ? "shader: flat; depthTest: false; transparent: true; color: #ff4444" 
+            ? "shader: flat; depthTest: false; transparent: true; color: #ff6b6b" 
             : "shader: flat; depthTest: false; transparent: true");
         
         // Animação Hover no A-Frame
-        icon.setAttribute("animation__mouseenter", "property: scale; to: 1.25 1.25 1.25; dur: 200; startEvents: mouseenter");
-        icon.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 200; startEvents: mouseleave");
+        icon.setAttribute("animation__mouseenter", "property: scale; to: 1.2 1.2 1.2; dur: 180; startEvents: mouseenter");
+        icon.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 180; startEvents: mouseleave");
 
         const baseTitle = hotspot.label || getSceneTitle(hotspot.targetSceneId);
-        const targetTitle = (isTargetLocked ? "🔒 " : "") + baseTitle + (isTargetLocked ? " (Bloqueada)" : "");
+        const targetTitle = (isTargetLocked ? "🔒 " : (isSelected ? "🎯 " : "")) + baseTitle + (isTargetLocked ? " (Bloqueada)" : "");
 
-        // Elemento de texto flutuante (Tooltip)
+        // Elemento de texto flutuante (Tooltip com fonte padrão legível)
         const text = document.createElement("a-text");
         text.setAttribute("value", targetTitle);
         text.setAttribute("align", "center");
-        text.setAttribute("position", "0 0.7 0");
-        text.setAttribute("width", "4.5");
-        text.setAttribute("color", isTargetLocked ? "#ff6b6b" : "#ffffff");
-        text.setAttribute("font", "koku");
+        text.setAttribute("position", "0 0.72 0.02");
+        text.setAttribute("width", "3.8");
+        text.setAttribute("color", isSelected ? "#00f2fe" : (isTargetLocked ? "#ff6b6b" : "#ffffff"));
+        text.setAttribute("font", "roboto");
+        text.setAttribute("material", "depthTest: false; shader: flat");
         
-        // Fundo do texto para melhor leitura
+        // Fundo translúcido arredondado do texto (Pill)
+        const textLength = targetTitle.length;
+        const textWidth = Math.max(1.8, (textLength * 0.11) + 0.5);
         const textBg = document.createElement("a-plane");
         textBg.setAttribute("class", "hotspot-element");
-        textBg.setAttribute("color", isTargetLocked ? "#20080d" : "#0a0b0e");
-        textBg.setAttribute("width", (targetTitle.length * 0.12) + 0.5);
-        textBg.setAttribute("height", "0.38");
-        textBg.setAttribute("position", "0 0.7 -0.01");
-        textBg.setAttribute("opacity", "0.92");
+        textBg.setAttribute("color", isSelected ? "#091a2e" : (isTargetLocked ? "#20080d" : "#0d111a"));
+        textBg.setAttribute("width", textWidth);
+        textBg.setAttribute("height", "0.36");
+        textBg.setAttribute("position", "0 0.72 0.01");
+        textBg.setAttribute("opacity", isSelected ? "0.95" : "0.85");
         textBg.setAttribute("transparent", "true");
         textBg.setAttribute("material", "shader: flat; depthTest: false");
 
-        // Evento de clique para transição com feedback visual rápido
+        // Evento de clique
         const handlePortalClick = (evt) => {
             if (evt) evt.stopPropagation();
+
+            // Se estiver no modo de edição: seleciona, enquadra e foca no menu lateral
+            if (state.isEditMode) {
+                selectHotspot(hotspot.id);
+                lookAtHotspot(hotspot.id);
+                openToolTab('hotspots');
+                showToast(`Portal "${hotspot.label}" selecionado para edição.`, "info");
+                return;
+            }
+
+            // Modo visualização / navegação
             if (isTargetLocked) {
                 const targetScene = state.tour.scenes[targetIndex];
                 openSceneLockedModal(targetScene, targetIndex);
@@ -616,14 +716,100 @@ function renderHotspots(hotspotsList) {
 
         icon.addEventListener("click", handlePortalClick);
         textBg.addEventListener("click", handlePortalClick);
+        text.addEventListener("click", handlePortalClick);
+        ring.addEventListener("click", handlePortalClick);
 
         // Monta a estrutura da entidade
+        entity.appendChild(ring);
         entity.appendChild(icon);
-        entity.appendChild(text);
         entity.appendChild(textBg);
+        entity.appendChild(text);
         
         container.appendChild(entity);
     });
+}
+
+// --- FUNÇÃO DE ENQUADRAMENTO / ROTAÇÃO SUAVE DA CÂMERA (LOOK-AT HOTSPOT) ---
+function smoothRotateCamera(targetYaw, targetPitch, duration = 400) {
+    const camera = document.getElementById("camera");
+    if (!camera || !camera.components['look-controls']) return;
+    
+    const lc = camera.components['look-controls'];
+    if (!lc.yawObject || !lc.pitchObject) return;
+
+    const startYaw = lc.yawObject.rotation.y;
+    const startPitch = lc.pitchObject.rotation.x;
+    
+    // Normalizar a menor diferença angular para Yaw
+    let diffYaw = (targetYaw - startYaw) % (Math.PI * 2);
+    if (diffYaw > Math.PI) diffYaw -= Math.PI * 2;
+    if (diffYaw < -Math.PI) diffYaw += Math.PI * 2;
+    
+    const diffPitch = targetPitch - startPitch;
+    const startTime = performance.now();
+    
+    function animate(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(1, elapsed / duration);
+        // Easing suave (easeInOutCubic)
+        const ease = progress < 0.5 
+            ? 4 * progress * progress * progress 
+            : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+            
+        lc.yawObject.rotation.y = startYaw + diffYaw * ease;
+        lc.pitchObject.rotation.x = startPitch + diffPitch * ease;
+        
+        if (progress < 1) {
+            requestAnimationFrame(animate);
+        }
+    }
+    requestAnimationFrame(animate);
+}
+
+function lookAtHotspot(hotspotId) {
+    const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+    if (!currentScene || !currentScene.hotspots) return;
+
+    const hotspot = currentScene.hotspots.find(h => h.id === hotspotId);
+    if (!hotspot || !hotspot.position) return;
+
+    const { x, y, z } = hotspot.position;
+    const distXZ = Math.sqrt(x * x + z * z);
+    
+    // Cálculo dos ângulos esféricos para a orientação da câmera A-Frame
+    const targetYaw = Math.atan2(-x, -z);
+    const targetPitch = Math.atan2(y, distXZ);
+
+    smoothRotateCamera(targetYaw, targetPitch, 450);
+}
+
+// --- FUNÇÃO DE SELEÇÃO E CONTROLE DE HOTSPOTS ---
+function selectHotspot(hotspotId) {
+    state.selectedHotspotId = hotspotId;
+    state.isRepositioningHotspot = false;
+    
+    const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+    if (currentScene) {
+        renderHotspots(currentScene.hotspots);
+        renderHotspotsList();
+    }
+}
+
+function toggleRepositionHotspot(hotspotId) {
+    if (state.selectedHotspotId !== hotspotId) {
+        selectHotspot(hotspotId);
+    }
+    
+    state.isRepositioningHotspot = !state.isRepositioningHotspot;
+    
+    renderHotspotsList();
+    
+    if (state.isRepositioningHotspot) {
+        lookAtHotspot(hotspotId);
+        showToast("Modo Mover Ativo: Clique no novo ponto na foto 360° para reposicionar o portal.", "info");
+    } else {
+        showToast("Modo de reposicionamento cancelado.", "info");
+    }
 }
 
 function getSceneTitle(id) {
@@ -1771,7 +1957,7 @@ function setMode(isEdit) {
     renderActiveSceneSettingsUI(activeScene);
 }
 
-// --- FLUXO DE ADICIONAR HOTSPOT (PORTAL) ---
+// --- FLUXO DE ADICIONAR E EDITAR HOTSPOT (PORTAL) ---
 function startAddingHotspot() {
     if (state.tour.scenes.length < 2) {
         showToast("Você precisa ter pelo menos 2 cenas carregadas para criar portais de passeio!", "error");
@@ -1779,25 +1965,37 @@ function startAddingHotspot() {
     }
 
     state.isAddingHotspot = true;
+    state.isRepositioningHotspot = false;
     const btn = document.getElementById("btn-add-hotspot");
-    btn.classList.add("active");
-    btn.innerHTML = `<i class="fa-solid fa-times-circle"></i> <span>Cancelar</span>`;
+    if (btn) {
+        btn.classList.add("active");
+        btn.innerHTML = `<i class="fa-solid fa-times-circle"></i> <span>Cancelar</span>`;
+    }
     
     showToast("Clique em qualquer lugar na cena 360° para fixar o portal.", "info");
 }
 
 function cancelAddingHotspot() {
     state.isAddingHotspot = false;
+    state.isRepositioningHotspot = false;
     state.pendingHotspotPos = null;
     const btn = document.getElementById("btn-add-hotspot");
-    btn.classList.remove("active");
-    btn.innerHTML = `<i class="fa-solid fa-plus-circle animate-pulse"></i> <span>Adicionar Hotspot</span>`;
+    if (btn) {
+        btn.classList.remove("active");
+        btn.innerHTML = `<i class="fa-solid fa-plus-circle animate-pulse"></i> <span>Adicionar Hotspot</span>`;
+    }
 }
 
-function openHotspotModal() {
+function openHotspotModal(editingHotspotId = null) {
     const modal = document.getElementById("hotspot-modal");
     const select = document.getElementById("hotspot-target");
+    const labelInput = document.getElementById("hotspot-label");
+    const editingInput = document.getElementById("editing-hotspot-id");
+    const titleEl = document.getElementById("hotspot-modal-title");
+    const saveBtn = document.getElementById("btn-save-hotspot");
     
+    if (!modal || !select || !labelInput) return;
+
     // Limpa e popula o select com as outras cenas
     select.innerHTML = "";
     state.tour.scenes.forEach(scene => {
@@ -1809,49 +2007,89 @@ function openHotspotModal() {
         }
     });
 
-    document.getElementById("hotspot-label").value = "";
+    if (editingHotspotId) {
+        // Modo Edição
+        const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+        const hotspot = currentScene ? currentScene.hotspots.find(h => h.id === editingHotspotId) : null;
+        
+        if (editingInput) editingInput.value = editingHotspotId;
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar Portal de Navegação`;
+        if (saveBtn) saveBtn.textContent = "Salvar Alterações";
+        
+        if (hotspot) {
+            labelInput.value = hotspot.label || "";
+            select.value = hotspot.targetSceneId || "";
+        }
+    } else {
+        // Modo Criação
+        if (editingInput) editingInput.value = "";
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> Configurar Hotspot / Portal`;
+        if (saveBtn) saveBtn.textContent = "Criar Portal";
+        labelInput.value = "";
+    }
+
     modal.classList.add("active");
 }
 
 function closeHotspotModal() {
-    document.getElementById("hotspot-modal").classList.remove("active");
+    const modal = document.getElementById("hotspot-modal");
+    if (modal) modal.classList.remove("active");
+    const editingInput = document.getElementById("editing-hotspot-id");
+    if (editingInput) editingInput.value = "";
     cancelAddingHotspot();
 }
 
 function saveHotspot() {
     const label = document.getElementById("hotspot-label").value.trim();
     const targetSceneId = document.getElementById("hotspot-target").value;
+    const editingHotspotId = document.getElementById("editing-hotspot-id") ? document.getElementById("editing-hotspot-id").value : "";
 
     if (!label) {
-        alert("Por favor, digite uma descrição para o portal.");
+        showToast("Por favor, digite uma descrição para o portal.", "warning");
         return;
     }
 
     if (!targetSceneId) {
-        alert("Nenhuma cena selecionada para o destino.");
+        showToast("Nenhuma cena selecionada para o destino.", "warning");
         return;
     }
 
-    // Cria o hotspot no estado global
     const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
-    if (currentScene) {
-        const newHotspot = {
-            id: "hotspot-" + Date.now(),
-            type: "portal",
-            targetSceneId: targetSceneId,
-            position: state.pendingHotspotPos,
-            label: label
-        };
+    if (!currentScene) return;
+    if (!currentScene.hotspots) currentScene.hotspots = [];
 
-        if (!currentScene.hotspots) currentScene.hotspots = [];
-        currentScene.hotspots.push(newHotspot);
-        
-        saveTourToStorage();
-        renderHotspots(currentScene.hotspots);
-        renderHotspotsList();
-        closeHotspotModal();
-        showToast("Hotspot criado com sucesso!", "success");
+    if (editingHotspotId) {
+        // Atualizar Hotspot Existente
+        const hotspot = currentScene.hotspots.find(h => h.id === editingHotspotId);
+        if (hotspot) {
+            hotspot.label = label;
+            hotspot.targetSceneId = targetSceneId;
+            saveTourToStorage();
+            renderHotspots(currentScene.hotspots);
+            renderHotspotsList();
+            closeHotspotModal();
+            showToast("Portal atualizado com sucesso!", "success");
+            return;
+        }
     }
+
+    // Criar Novo Hotspot
+    const newHotspot = {
+        id: "hotspot-" + Date.now(),
+        type: "portal",
+        targetSceneId: targetSceneId,
+        position: state.pendingHotspotPos || { x: 0, y: 0, z: -5 },
+        label: label
+    };
+
+    currentScene.hotspots.push(newHotspot);
+    state.selectedHotspotId = newHotspot.id;
+    
+    saveTourToStorage();
+    renderHotspots(currentScene.hotspots);
+    renderHotspotsList();
+    closeHotspotModal();
+    showToast("Portal criado com sucesso!", "success");
 }
 
 // --- CUSTOM CONTROLES DE VÍDEO 360° ---
@@ -2133,27 +2371,76 @@ function renderHotspotsList() {
 
     list.innerHTML = "";
     hotspots.forEach(hotspot => {
+        const isSelected = state.selectedHotspotId === hotspot.id;
+        const isRepositioning = isSelected && state.isRepositioningHotspot;
         const card = document.createElement("div");
-        card.className = "hotspot-card";
+        card.className = `hotspot-card ${isSelected ? 'active' : ''}`;
+        card.dataset.id = hotspot.id;
 
         const targetTitle = getSceneTitle(hotspot.targetSceneId);
 
         card.innerHTML = `
-            <div class="hotspot-card-info">
-                <span class="hotspot-card-label" title="${hotspot.label}">${hotspot.label}</span>
-                <span class="hotspot-card-target" title="Destino: ${targetTitle}">
-                    <i class="fa-solid fa-arrow-right"></i> ${targetTitle}
-                </span>
+            <div class="hotspot-card-main">
+                <div class="hotspot-card-info">
+                    <div class="hotspot-card-header-row">
+                        <i class="fa-solid fa-location-dot hotspot-card-icon"></i>
+                        <span class="hotspot-card-label" title="${hotspot.label}">${hotspot.label}</span>
+                        ${isSelected ? '<span class="hotspot-card-badge-active">Ativo</span>' : ''}
+                    </div>
+                    <span class="hotspot-card-target" title="Destino: ${targetTitle}">
+                        <i class="fa-solid fa-arrow-right"></i> ${targetTitle}
+                    </span>
+                </div>
             </div>
             <div class="hotspot-card-actions">
-                <button class="btn-delete-hotspot" title="Excluir Portal"><i class="fa-solid fa-trash"></i></button>
+                <button class="btn-hotspot-action btn-reposition ${isRepositioning ? 'repositioning-active' : ''}" title="Reposicionar / Mover no Espaço 360°">
+                    <i class="fa-solid fa-crosshairs ${isRepositioning ? 'fa-spin' : ''}"></i>
+                    <span>${isRepositioning ? 'Clique na Tela' : 'Reposicionar'}</span>
+                </button>
+                <button class="btn-hotspot-action btn-edit" title="Editar Nome ou Destino">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Editar</span>
+                </button>
+                <button class="btn-hotspot-action btn-delete" title="Excluir Portal">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
             </div>
         `;
 
-        card.querySelector(".btn-delete-hotspot").onclick = (e) => {
-            e.stopPropagation();
-            deleteHotspot(hotspot.id);
+        // Clique no card: Enquadra a câmera no hotspot e seleciona
+        card.onclick = () => {
+            selectHotspot(hotspot.id);
+            lookAtHotspot(hotspot.id);
         };
+
+        // Botão Reposicionar
+        const btnReposition = card.querySelector(".btn-reposition");
+        if (btnReposition) {
+            btnReposition.onclick = (e) => {
+                e.stopPropagation();
+                toggleRepositionHotspot(hotspot.id);
+            };
+        }
+
+        // Botão Editar
+        const btnEdit = card.querySelector(".btn-edit");
+        if (btnEdit) {
+            btnEdit.onclick = (e) => {
+                e.stopPropagation();
+                selectHotspot(hotspot.id);
+                lookAtHotspot(hotspot.id);
+                openHotspotModal(hotspot.id);
+            };
+        }
+
+        // Botão Excluir
+        const btnDelete = card.querySelector(".btn-delete");
+        if (btnDelete) {
+            btnDelete.onclick = (e) => {
+                e.stopPropagation();
+                deleteHotspot(hotspot.id);
+            };
+        }
 
         list.appendChild(card);
     });
@@ -2166,6 +2453,11 @@ function deleteHotspot(hotspotId) {
         const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
         if (currentScene && currentScene.hotspots) {
             currentScene.hotspots = currentScene.hotspots.filter(h => h.id !== hotspotId);
+
+            if (state.selectedHotspotId === hotspotId) {
+                state.selectedHotspotId = null;
+                state.isRepositioningHotspot = false;
+            }
 
             // Salvar no storage/banco
             saveTourToStorage();
