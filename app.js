@@ -605,15 +605,13 @@ function renderHotspots(hotspotsList) {
 
     if (!hotspotsList || !Array.isArray(hotspotsList)) return;
 
-    const isGratis = !!state.showAds;
-    const defaultIconUrl = isGratis ? HOTSPOT_ICON_FREE : HOTSPOT_ICON_PREMIUM;
+    // Planos Pagos têm acesso a personalização de ícones/cores
+    const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
 
     hotspotsList.forEach(hotspot => {
         if (!hotspot || !hotspot.position) return;
 
         const isSelected = state.isEditMode && (state.selectedHotspotId === hotspot.id);
-        const activeIconUrl = isSelected ? HOTSPOT_ICON_SELECTED : defaultIconUrl;
-
         const targetIndex = state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === hotspot.targetSceneId) : -1;
         const isTargetLocked = targetIndex !== -1 && isSceneLocked(targetIndex);
 
@@ -624,69 +622,68 @@ function renderHotspots(hotspotsList) {
         entity.setAttribute("data-hotspot-id", hotspot.id);
         
         // Pulsação suave contínua
-        const pulseScale = isSelected ? "1.15 1.15 1.15" : "1.06 1.06 1.06";
-        const pulseDur = isSelected ? "700" : "1000";
+        const pulseScale = isSelected ? "1.18 1.18 1.18" : "1.08 1.08 1.08";
+        const pulseDur = isSelected ? "700" : "1100";
         entity.setAttribute("animation__pulse", `property: scale; from: 1 1 1; to: ${pulseScale}; dir: alternate; loop: true; dur: ${pulseDur}; easing: easeInOutQuad`);
-        
-        // Anel externo pulsante (A-Ring) para visual moderno neon 3D
+
+        // Cor do anel grosso:
+        // No padrão/plano Grátis: linha branca grossa vazada (sem preenchimento ou ícone)
+        let ringColor = "#ffffff";
+        if (isSelected) {
+            ringColor = "#00f2fe"; // Destaque ciano neon quando em edição
+        } else if (isTargetLocked) {
+            ringColor = "#ff4444";
+        } else if (isPaid && hotspot.customColor) {
+            ringColor = hotspot.customColor;
+        }
+
+        // Círculo vazado com contorno grosso (linha grossa e sem preenchimento interno)
         const ring = document.createElement("a-ring");
         ring.setAttribute("class", "hotspot-element");
-        ring.setAttribute("radius-inner", "0.46");
-        ring.setAttribute("radius-outer", "0.52");
-        ring.setAttribute("material", isSelected
-            ? "color: #00f2fe; shader: flat; opacity: 0.95; transparent: true; depthTest: false"
-            : (isTargetLocked
-                ? "color: #ff4444; shader: flat; opacity: 0.75; transparent: true; depthTest: false"
-                : (isGratis 
-                    ? "color: #00f2fe; shader: flat; opacity: 0.7; transparent: true; depthTest: false"
-                    : "color: #ffb703; shader: flat; opacity: 0.75; transparent: true; depthTest: false")));
-        
-        // Elemento visual do ícone principal (Plano circular)
-        const icon = document.createElement("a-plane");
-        icon.setAttribute("class", "hotspot-element");
-        icon.setAttribute("src", activeIconUrl);
-        icon.setAttribute("width", "0.92");
-        icon.setAttribute("height", "0.92");
-        icon.setAttribute("transparent", "true");
-        icon.setAttribute("material", isTargetLocked 
-            ? "shader: flat; depthTest: false; transparent: true; color: #ff6b6b" 
-            : "shader: flat; depthTest: false; transparent: true");
-        
+        ring.setAttribute("radius-inner", "0.34");
+        ring.setAttribute("radius-outer", "0.48");
+        ring.setAttribute("material", `shader: flat; color: ${ringColor}; opacity: 0.95; transparent: true; depthTest: false`);
+
+        // Área transparente interna para permitir clique em todo o diâmetro do círculo
+        const hitArea = document.createElement("a-circle");
+        hitArea.setAttribute("class", "hotspot-element");
+        hitArea.setAttribute("radius", "0.48");
+        hitArea.setAttribute("material", "shader: flat; opacity: 0.001; transparent: true; depthTest: false");
+
         // Animação Hover no A-Frame
-        icon.setAttribute("animation__mouseenter", "property: scale; to: 1.2 1.2 1.2; dur: 180; startEvents: mouseenter");
-        icon.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 180; startEvents: mouseleave");
+        ring.setAttribute("animation__mouseenter", "property: scale; to: 1.15 1.15 1.15; dur: 150; startEvents: mouseenter");
+        ring.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 150; startEvents: mouseleave");
 
         const baseTitle = hotspot.label || getSceneTitle(hotspot.targetSceneId);
         const targetTitle = (isTargetLocked ? "🔒 " : (isSelected ? "🎯 " : "")) + baseTitle + (isTargetLocked ? " (Bloqueada)" : "");
 
-        // Elemento de texto flutuante (Tooltip com fonte padrão legível)
+        // Elemento de texto flutuante (Tooltip)
         const text = document.createElement("a-text");
         text.setAttribute("value", targetTitle);
         text.setAttribute("align", "center");
-        text.setAttribute("position", "0 0.72 0.02");
-        text.setAttribute("width", "3.8");
+        text.setAttribute("position", "0 0.65 0.02");
+        text.setAttribute("width", "3.4");
         text.setAttribute("color", isSelected ? "#00f2fe" : (isTargetLocked ? "#ff6b6b" : "#ffffff"));
         text.setAttribute("font", "roboto");
         text.setAttribute("material", "depthTest: false; shader: flat");
         
-        // Fundo translúcido arredondado do texto (Pill)
+        // Fundo translúcido sutil do texto (HUD)
         const textLength = targetTitle.length;
-        const textWidth = Math.max(1.8, (textLength * 0.11) + 0.5);
+        const textWidth = Math.max(1.4, (textLength * 0.10) + 0.35);
         const textBg = document.createElement("a-plane");
         textBg.setAttribute("class", "hotspot-element");
-        textBg.setAttribute("color", isSelected ? "#091a2e" : (isTargetLocked ? "#20080d" : "#0d111a"));
+        textBg.setAttribute("color", isSelected ? "#061320" : "#000000");
         textBg.setAttribute("width", textWidth);
-        textBg.setAttribute("height", "0.36");
-        textBg.setAttribute("position", "0 0.72 0.01");
-        textBg.setAttribute("opacity", isSelected ? "0.95" : "0.85");
+        textBg.setAttribute("height", "0.30");
+        textBg.setAttribute("position", "0 0.65 0.01");
+        textBg.setAttribute("opacity", isSelected ? "0.85" : "0.55");
         textBg.setAttribute("transparent", "true");
         textBg.setAttribute("material", "shader: flat; depthTest: false");
 
-        // Evento de clique
+        // Evento de clique para navegação / seleção
         const handlePortalClick = (evt) => {
             if (evt) evt.stopPropagation();
 
-            // Se estiver no modo de edição: seleciona, enquadra e foca no menu lateral
             if (state.isEditMode) {
                 selectHotspot(hotspot.id);
                 lookAtHotspot(hotspot.id);
@@ -695,18 +692,15 @@ function renderHotspots(hotspotsList) {
                 return;
             }
 
-            // Modo visualização / navegação
             if (isTargetLocked) {
                 const targetScene = state.tour.scenes[targetIndex];
                 openSceneLockedModal(targetScene, targetIndex);
                 return;
             }
             
-            // Feedback de clique: encolhe temporariamente
-            icon.setAttribute("scale", "0.75 0.75 0.75");
-            
+            ring.setAttribute("scale", "0.8 0.8 0.8");
             setTimeout(() => {
-                icon.setAttribute("scale", "1 1 1");
+                ring.setAttribute("scale", "1 1 1");
                 triggerSceneTransition(() => {
                     setActiveScene(hotspot.targetSceneId);
                     showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
@@ -714,14 +708,27 @@ function renderHotspots(hotspotsList) {
             }, 120);
         };
 
-        icon.addEventListener("click", handlePortalClick);
+        ring.addEventListener("click", handlePortalClick);
+        hitArea.addEventListener("click", handlePortalClick);
         textBg.addEventListener("click", handlePortalClick);
         text.addEventListener("click", handlePortalClick);
-        ring.addEventListener("click", handlePortalClick);
 
-        // Monta a estrutura da entidade
+        entity.appendChild(hitArea);
         entity.appendChild(ring);
-        entity.appendChild(icon);
+
+        // Se for um plano pago com personalização ativa e ícone customizado cadastrado:
+        if (isPaid && hotspot.customIcon) {
+            const customIconPlane = document.createElement("a-plane");
+            customIconPlane.setAttribute("class", "hotspot-element");
+            customIconPlane.setAttribute("src", hotspot.customIcon);
+            customIconPlane.setAttribute("width", "0.5");
+            customIconPlane.setAttribute("height", "0.5");
+            customIconPlane.setAttribute("transparent", "true");
+            customIconPlane.setAttribute("material", "shader: flat; depthTest: false; transparent: true");
+            customIconPlane.addEventListener("click", handlePortalClick);
+            entity.appendChild(customIconPlane);
+        }
+
         entity.appendChild(textBg);
         entity.appendChild(text);
         

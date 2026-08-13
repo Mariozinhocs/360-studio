@@ -88,13 +88,14 @@
     *   **Purga Automática de Mídias Órfãs:** Criado [api/clean_orphans.php](file:///g:/Meu%20Drive/Dev's/360/360/api/clean_orphans.php) integrado ao painel admin e rotinas de manutenção para apagar automaticamente arquivos abandonados na pasta `/uploads/`.
 
 13. **Interação Avançada de Hotspots, Enquadramento Suave e Reposicionamento (CONCLUÍDO):**
-    *   **Renderização 3D de Alta Definição:** Correção dos hotspots pretos/retangulares através de texturas SVG base64 de alta resolução (`HOTSPOT_ICON_FREE`, `HOTSPOT_ICON_PREMIUM`, `HOTSPOT_ICON_SELECTED`), fontes A-Frame padrão (`roboto`), pill translúcida e anéis pulsantes em neon (`a-ring`).
+    *   **Hotspot Minimalista no Plano Grátis:** Conforme especificação, o hotspot padrão no plano Grátis consiste estritamente no **contorno de um círculo com linha grossa vazado** (`a-ring` com espessura reforçada e sem preenchimento ou ícone central). A personalização gráfica com ícones, cores e imagens é exclusiva dos planos pagos.
+    *   **Layout Fluido do Drawer Lateral:** O menu lateral expansível agora ocupa naturalmente toda a altura vertical da página sem rolagem prematura, ativando a barra de rolagem unificada apenas quando a quantidade de cards ultrapassar o espaço útil da janela.
     *   **Enquadramento Automático da Câmera (`lookAtHotspot`):** Ao clicar em qualquer portal na lista do menu lateral, a câmera 360° gira suavemente (interpolação esférica `smoothRotateCamera` com easing cúbico) e aponta diretamente para o hotspot na tela.
     *   **Seleção e Reposicionamento Dinâmico na Cena:** Ao selecionar um hotspot, o card fica ativo com visual destacado e botões dedicados:
         *   **Reposicionar / Mover:** Ativa o modo de reposicionamento com retículo e pulso visual. O usuário clica em qualquer ponto da foto 360° para mover o portal imediatamente, com salvamento instantâneo.
         *   **Editar:** Abre o modal pré-preenchido para alterar descrição do balão ou trocar a cena de destino.
         *   **Excluir:** Remove o portal da cena e atualiza o banco/local.
-    *   **Cache-Busters:** Bump para `v=1.3.9` no `style.css` e `app.js` em `index.html`.
+    *   **Cache-Busters:** Bump para `v=1.4.0` no `style.css` e `app.js` em `index.html`.
 
 ---
 
