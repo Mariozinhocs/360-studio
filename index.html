@@ -24,7 +24,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.4.0">
+    <link rel="stylesheet" href="style.css?v=1.4.3">
 </head>
 <body>
     <div class="app-container">
@@ -135,12 +135,18 @@
 
                     <!-- PAINEL: PORTAIS / HOTSPOTS -->
                     <div class="drawer-pane" id="pane-hotspots" style="display: none;">
-                        <div class="hotspots-section" id="hotspots-sidebar-section" style="padding: 16px 20px;">
+                        <div class="tour-meta-card">
+                            <div class="meta-field">
+                                <label for="hotspots-active-scene-name">Cena Atual</label>
+                                <input type="text" id="hotspots-active-scene-name" readonly value="Carregando..." style="cursor: default;">
+                            </div>
+                        </div>
+                        <div class="scenes-section" style="padding: 16px 20px;">
                             <div class="section-title-row">
-                                <h3>Portais desta Cena</h3>
+                                <h3>Lista de Portais</h3>
                                 <span class="badge" id="hotspots-count">0</span>
                             </div>
-                            <div class="hotspots-list" id="hotspots-list" style="margin-top: 10px;">
+                            <div class="scenes-list" id="hotspots-list" style="margin-top: 10px;">
                                 <!-- Gerado dinamicamente -->
                             </div>
                         </div>
@@ -315,12 +321,12 @@
                     <a-entity id="rig" position="0 0 0">
                         <a-camera id="camera" look-controls="pointerLockEnabled: false; reverseMouseDrag: true" wasd-controls="enabled: false" rotation-listener>
                             <!-- Cursor visual de mira no modo edição -->
-                            <a-cursor id="scene-cursor" 
+                            <a-entity id="scene-cursor" 
                                       position="0 0 -1" 
                                       geometry="primitive: ring; radiusInner: 0.01; radiusOuter: 0.015" 
                                       material="color: #00f2fe; shader: flat; opacity: 0.8"
                                       visible="false">
-                            </a-cursor>
+                            </a-entity>
                         </a-camera>
                     </a-entity>
 
@@ -581,6 +587,6 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="app.js?v=1.4.0"></script>
+    <script src="app.js?v=1.4.3"></script>
 </body>
 </html>

@@ -483,7 +483,7 @@ function setActiveScene(sceneId) {
     renderHotspotsList();
 
     // Destacar item selecionado na barra lateral
-    document.querySelectorAll(".scene-card").forEach(card => {
+    document.querySelectorAll("#scenes-list .scene-card").forEach(card => {
         if (card.dataset.id === sceneId) {
             card.classList.add("active");
         } else {
@@ -999,13 +999,15 @@ function initDOMEvents() {
     btnModeView.addEventListener("click", () => setMode(false));
 
     // Botão Adicionar Hotspot
-    btnAddHotspot.addEventListener("click", () => {
-        if (state.isAddingHotspot) {
-            cancelAddingHotspot();
-        } else {
-            startAddingHotspot();
-        }
-    });
+    if (btnAddHotspot) {
+        btnAddHotspot.addEventListener("click", () => {
+            if (state.isAddingHotspot) {
+                cancelAddingHotspot();
+            } else {
+                startAddingHotspot();
+            }
+        });
+    }
 
     // Controles de Visualização 360° (Zoom, Reset, Fullscreen)
     document.getElementById("btn-zoom-in").addEventListener("click", () => adjustZoom(-8));
@@ -1534,6 +1536,13 @@ function openToolTab(tabName) {
 
     localStorage.setItem("editor_active_tab", tabName);
     localStorage.setItem("editor_drawer_open", "true");
+
+    // Sincroniza renderização ao abrir a aba
+    if (tabName === 'hotspots') {
+        renderHotspotsList();
+    } else if (tabName === 'scenes') {
+        renderScenesList();
+    }
 
     // Redimensionamento suave do A-Frame Three.js
     setTimeout(() => {
@@ -2349,30 +2358,36 @@ function updateUI() {
 
 // --- GERENCIADOR DE HOTSPOTS NA BARRA LATERAL ---
 function renderHotspotsList() {
-    const hotspotsSection = document.getElementById("hotspots-sidebar-section");
     const list = document.getElementById("hotspots-list");
     const countBadge = document.getElementById("hotspots-count");
+    const activeSceneNameInput = document.getElementById("hotspots-active-scene-name");
 
-    if (!hotspotsSection || !list || !countBadge) return;
+    if (!list || !countBadge) return;
 
-    // Apenas exibe no modo edição e se houver cena ativa
-    if (!state.isEditMode || !state.activeSceneId) {
-        hotspotsSection.style.display = "none";
+    if (!state.activeSceneId) {
+        if (activeSceneNameInput) activeSceneNameInput.value = "Nenhuma cena selecionada";
+        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 12px; padding: 24px 10px;">Nenhuma cena selecionada.</div>`;
+        countBadge.textContent = "0";
         return;
     }
 
     const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
     if (!currentScene) {
-        hotspotsSection.style.display = "none";
+        if (activeSceneNameInput) activeSceneNameInput.value = "Cena não encontrada";
+        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 12px; padding: 24px 10px;">Cena não encontrada.</div>`;
+        countBadge.textContent = "0";
         return;
+    }
+
+    if (activeSceneNameInput) {
+        activeSceneNameInput.value = `${currentScene.title} (${currentScene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
     }
 
     const hotspots = currentScene.hotspots || [];
     countBadge.textContent = hotspots.length;
 
     if (hotspots.length === 0) {
-        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 11px; padding: 12px 0;">Nenhum portal criado nesta cena.</div>`;
-        hotspotsSection.style.display = "flex";
+        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 12px; padding: 24px 10px;">Nenhum portal criado nesta cena.</div>`;
         return;
     }
 
@@ -2380,79 +2395,92 @@ function renderHotspotsList() {
     hotspots.forEach(hotspot => {
         const isSelected = state.selectedHotspotId === hotspot.id;
         const isRepositioning = isSelected && state.isRepositioningHotspot;
+        const targetScene = state.tour.scenes.find(s => s.id === hotspot.targetSceneId);
+        const targetTitle = targetScene ? targetScene.title : "Cena Desconhecida";
+
         const card = document.createElement("div");
-        card.className = `hotspot-card ${isSelected ? 'active' : ''}`;
+        card.className = `scene-card hotspot-card ${isSelected ? 'active' : ''}`;
         card.dataset.id = hotspot.id;
 
-        const targetTitle = getSceneTitle(hotspot.targetSceneId);
+        // Miniatura da cena de destino (ou ícone padrão)
+        let thumbContent = "";
+        if (targetScene && targetScene.type === "image" && targetScene.sourceUrl) {
+            thumbContent = `<img src="${targetScene.sourceUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`;
+        }
+
+        const activeBadge = isSelected ? `<span class="badge-start-scene" style="background: var(--color-accent); color: #000;">${isRepositioning ? 'Movendo' : 'Ativo'}</span>` : '';
 
         card.innerHTML = `
-            <div class="hotspot-card-main">
-                <div class="hotspot-card-info">
-                    <div class="hotspot-card-header-row">
-                        <i class="fa-solid fa-location-dot hotspot-card-icon"></i>
-                        <span class="hotspot-card-label" title="${hotspot.label}">${hotspot.label}</span>
-                        ${isSelected ? '<span class="hotspot-card-badge-active">Ativo</span>' : ''}
-                    </div>
-                    <span class="hotspot-card-target" title="Destino: ${targetTitle}">
-                        <i class="fa-solid fa-arrow-right"></i> ${targetTitle}
-                    </span>
+            <div class="scene-thumb hotspot-thumb">
+                ${thumbContent}
+                <i class="fa-solid fa-location-dot" style="${targetScene && targetScene.type === 'image' && targetScene.sourceUrl ? 'display: none;' : ''}"></i>
+            </div>
+            <div class="scene-info">
+                <h4 class="scene-title" title="${hotspot.label || targetTitle}">${hotspot.label || targetTitle}</h4>
+                <div class="scene-meta">
+                    <i class="fa-solid fa-arrow-right" style="color: var(--color-accent); font-size: 10px;"></i>
+                    <span title="Destino: ${targetTitle}">${targetTitle}</span>
                 </div>
             </div>
-            <div class="hotspot-card-actions">
-                <button class="btn-hotspot-action btn-reposition ${isRepositioning ? 'repositioning-active' : ''}" title="Reposicionar / Mover no Espaço 360°">
-                    <i class="fa-solid fa-crosshairs ${isRepositioning ? 'fa-spin' : ''}"></i>
-                    <span>${isRepositioning ? 'Clique na Tela' : 'Reposicionar'}</span>
-                </button>
-                <button class="btn-hotspot-action btn-edit" title="Editar Nome ou Destino">
-                    <i class="fa-solid fa-pen-to-square"></i>
-                    <span>Editar</span>
-                </button>
-                <button class="btn-hotspot-action btn-delete" title="Excluir Portal">
-                    <i class="fa-solid fa-trash"></i>
-                </button>
-            </div>
+            ${activeBadge}
+            ${state.isEditMode ? `
+                <div class="scene-actions hotspot-card-actions-row">
+                    <button class="action-icon-btn btn-reposition ${isRepositioning ? 'repositioning-active' : ''}" title="Reposicionar / Mover no Espaço 360°" style="${isRepositioning ? 'color: var(--color-accent); background: rgba(0,242,254,0.25);' : ''}">
+                        <i class="fa-solid fa-crosshairs ${isRepositioning ? 'fa-spin' : ''}"></i>
+                    </button>
+                    <button class="action-icon-btn btn-edit" title="Editar Nome ou Destino">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                    <button class="action-icon-btn btn-delete" title="Excluir Portal">
+                        <i class="fa-solid fa-trash"></i>
+                    </button>
+                </div>
+            ` : ''}
         `;
 
-        // Clique no card: Enquadra a câmera no hotspot e seleciona
-        card.onclick = () => {
+        // Evento de clique no Card: Seleciona e gira a câmera para o hotspot
+        card.addEventListener("click", (e) => {
+            if (e.target.closest(".scene-actions")) return;
+            
             selectHotspot(hotspot.id);
             lookAtHotspot(hotspot.id);
-        };
 
-        // Botão Reposicionar
-        const btnReposition = card.querySelector(".btn-reposition");
-        if (btnReposition) {
-            btnReposition.onclick = (e) => {
-                e.stopPropagation();
-                toggleRepositionHotspot(hotspot.id);
-            };
-        }
+            if (!state.isEditMode) {
+                showToast(`Portal apontado para: ${targetTitle}`, "info");
+            }
+        });
 
-        // Botão Editar
-        const btnEdit = card.querySelector(".btn-edit");
-        if (btnEdit) {
-            btnEdit.onclick = (e) => {
-                e.stopPropagation();
-                selectHotspot(hotspot.id);
-                lookAtHotspot(hotspot.id);
-                openHotspotModal(hotspot.id);
-            };
-        }
+        // Ações do Card no Modo Edição
+        if (state.isEditMode) {
+            const btnReposition = card.querySelector(".btn-reposition");
+            if (btnReposition) {
+                btnReposition.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    toggleRepositionHotspot(hotspot.id);
+                });
+            }
 
-        // Botão Excluir
-        const btnDelete = card.querySelector(".btn-delete");
-        if (btnDelete) {
-            btnDelete.onclick = (e) => {
-                e.stopPropagation();
-                deleteHotspot(hotspot.id);
-            };
+            const btnEdit = card.querySelector(".btn-edit");
+            if (btnEdit) {
+                btnEdit.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    selectHotspot(hotspot.id);
+                    lookAtHotspot(hotspot.id);
+                    openHotspotModal(hotspot.id);
+                });
+            }
+
+            const btnDelete = card.querySelector(".btn-delete");
+            if (btnDelete) {
+                btnDelete.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    deleteHotspot(hotspot.id);
+                });
+            }
         }
 
         list.appendChild(card);
     });
-
-    hotspotsSection.style.display = "flex";
 }
 
 function deleteHotspot(hotspotId) {

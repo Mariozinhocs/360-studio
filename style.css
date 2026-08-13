@@ -1163,86 +1163,6 @@ a-scene {
     transition: width 0.1s ease-out;
 }
 
-/* --- HOTSPOTS SIDEBAR SECTION --- */
-.hotspots-section {
-    padding: 20px 24px;
-    border-bottom: 1px solid var(--border-glass);
-    display: flex;
-    flex-direction: column;
-}
-
-.hotspots-list {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    max-height: 160px;
-    overflow-y: auto;
-    padding-right: 4px;
-}
-
-.hotspot-card {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px solid var(--border-glass);
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 12px;
-    transition: var(--transition-smooth);
-}
-
-.hotspot-card:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.12);
-}
-
-.hotspot-card-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    min-width: 0;
-}
-
-.hotspot-card-label {
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.hotspot-card-target {
-    font-size: 10px;
-    color: var(--color-accent);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.hotspot-card-actions {
-    display: flex;
-    align-items: center;
-}
-
-.hotspot-card .btn-delete-hotspot {
-    background: transparent;
-    border: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    width: 24px;
-    height: 24px;
-    border-radius: 4px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: var(--transition-smooth);
-}
-
-.hotspot-card .btn-delete-hotspot:hover {
-    color: var(--color-pink);
-    background: rgba(255, 51, 102, 0.1);
-}
 
 /* --- RESPONSIVIDADE --- */
 @media (max-width: 900px) {
@@ -2274,57 +2194,63 @@ a-scene {
 }
 
 .hotspot-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border-glass);
     border-radius: 10px;
-    padding: 12px 14px;
+    padding: 10px;
     cursor: pointer;
     transition: var(--transition-smooth);
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
     position: relative;
+    overflow: hidden;
 }
 
 .hotspot-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(0, 242, 254, 0.3);
-    transform: translateY(-1px);
+    transform: translateX(2px);
 }
 
 .hotspot-card.active {
-    background: linear-gradient(135deg, rgba(0, 242, 254, 0.08), rgba(155, 81, 224, 0.08));
+    background: rgba(0, 242, 254, 0.06);
     border-color: var(--color-accent);
-    box-shadow: 0 0 16px rgba(0, 242, 254, 0.2);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.1);
 }
 
-.hotspot-card-main {
+.hotspot-thumb {
+    width: 50px;
+    height: 50px;
+    border-radius: 6px;
+    background: #1a1c24;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 10px;
+    justify-content: center;
+    color: var(--text-secondary);
+    border: 1px solid var(--border-glass);
+    flex-shrink: 0;
+    overflow: hidden;
+    position: relative;
 }
 
-.hotspot-card-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
-    flex-grow: 1;
+.hotspot-thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.hotspot-card-header-row {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.hotspot-card-icon {
+.hotspot-card.active .hotspot-thumb {
+    border-color: var(--color-accent);
     color: var(--color-accent);
-    font-size: 13px;
 }
 
-.hotspot-card-label {
+.hotspot-card .scene-info {
+    flex-grow: 1;
+    min-width: 0;
+}
+
+.hotspot-card .scene-title {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-primary);
@@ -2333,114 +2259,61 @@ a-scene {
     text-overflow: ellipsis;
 }
 
-.hotspot-card.active .hotspot-card-label {
+.hotspot-card.active .scene-title {
     color: var(--color-accent);
 }
 
-.hotspot-card-target {
-    font-size: 11px;
+.hotspot-card .scene-meta {
+    font-size: 10px;
     color: var(--text-secondary);
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 6px;
+    margin-top: 4px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
-.hotspot-card-target i {
-    color: #4facfe;
-    font-size: 10px;
+.hotspot-card .scene-meta span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.hotspot-card-badge-active {
-    font-size: 9px;
-    background: var(--color-accent);
-    color: #06070a;
-    font-weight: 700;
-    padding: 2px 6px;
-    border-radius: 4px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-/* Barra de Ações do Hotspot */
-.hotspot-card-actions {
+.hotspot-card .scene-actions {
     display: flex;
-    align-items: center;
-    gap: 6px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.btn-hotspot-action {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--text-primary);
-    font-size: 11px;
-    padding: 6px 10px;
-    border-radius: 6px;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-family: var(--font-main);
+    gap: 4px;
+    opacity: 0;
     transition: var(--transition-smooth);
 }
 
-.btn-hotspot-action:hover {
-    background: rgba(255, 255, 255, 0.12);
-    border-color: rgba(255, 255, 255, 0.2);
+.hotspot-card:hover .scene-actions {
+    opacity: 1;
 }
 
-.btn-hotspot-action.btn-reposition {
+.action-icon-btn.btn-reposition:hover,
+.action-icon-btn.btn-reposition.repositioning-active {
     color: var(--color-accent);
-    background: rgba(0, 242, 254, 0.08);
-    border-color: rgba(0, 242, 254, 0.25);
+    background: rgba(0, 242, 254, 0.2);
 }
 
-.btn-hotspot-action.btn-reposition:hover,
-.btn-hotspot-action.btn-reposition.repositioning-active {
-    background: var(--color-accent);
-    color: #06070a;
-    border-color: var(--color-accent);
-    box-shadow: 0 0 12px rgba(0, 242, 254, 0.4);
-}
-
-.btn-hotspot-action.btn-reposition.repositioning-active {
+.action-icon-btn.btn-reposition.repositioning-active {
     animation: pulseGlow 1.2s infinite alternate ease-in-out;
 }
 
 @keyframes pulseGlow {
     from {
-        box-shadow: 0 0 8px rgba(0, 242, 254, 0.4);
+        box-shadow: 0 0 6px rgba(0, 242, 254, 0.4);
     }
     to {
-        box-shadow: 0 0 18px rgba(0, 242, 254, 0.8);
+        box-shadow: 0 0 14px rgba(0, 242, 254, 0.8);
     }
 }
 
-.btn-hotspot-action.btn-edit {
+.action-icon-btn.btn-edit:hover {
     color: #ffd166;
-    background: rgba(255, 209, 102, 0.08);
-    border-color: rgba(255, 209, 102, 0.25);
-}
-
-.btn-hotspot-action.btn-edit:hover {
-    background: #ffd166;
-    color: #06070a;
-}
-
-.btn-hotspot-action.btn-delete {
-    color: var(--color-pink);
-    background: rgba(255, 51, 102, 0.08);
-    border-color: rgba(255, 51, 102, 0.25);
-    margin-left: auto;
-}
-
-.btn-hotspot-action.btn-delete:hover {
-    background: var(--color-pink);
-    color: #fff;
+    background: rgba(255, 209, 102, 0.2);
 }
 
 

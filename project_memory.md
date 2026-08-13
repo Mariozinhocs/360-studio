@@ -95,7 +95,12 @@
         *   **Reposicionar / Mover:** Ativa o modo de reposicionamento com retículo e pulso visual. O usuário clica em qualquer ponto da foto 360° para mover o portal imediatamente, com salvamento instantâneo.
         *   **Editar:** Abre o modal pré-preenchido para alterar descrição do balão ou trocar a cena de destino.
         *   **Excluir:** Remove o portal da cena e atualiza o banco/local.
-    *   **Cache-Busters:** Bump para `v=1.4.0` no `style.css` e `app.js` em `index.html`.
+14. **Padronização da Aba Portais com Comportamento Idêntico à Aba Cenas (CONCLUÍDO):**
+    *   **Estrutura e Identidade Visual Unificada:** A aba "Portais" (`#pane-hotspots`) agora adota rigorosamente o mesmo design system, layout compacto e fluxo interativo da aba "Cenas".
+    *   **Botão de Ação Rápida:** Adicionado card superior com o botão `#btn-sidebar-add-portal` ("Adicionar Portal" / "Cancelar Inserção") sincronizado com os controles 3D.
+    *   **Cards de Portais Compactos com Hover Actions:** Cada portal é renderizado como um card padronizado (`.scene-card.hotspot-card`), contendo miniatura da cena de destino, rótulo do portal, metadado de destino e botões de ação em hover (`.action-icon-btn` para reposicionar, editar e excluir).
+    *   **Sincronização de Câmera e Seleção:** Clicar em qualquer card de portal seleciona o item, exibe a badge "Ativo" e gira suavemente a câmera 360° para enquadrar o portal na cena.
+    *   **Cache-Busters:** Bump para `v=1.4.1` no `style.css` e `app.js` em `index.html`.
 
 ---
 
