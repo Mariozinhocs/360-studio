@@ -148,6 +148,15 @@
     *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect, bloqueio de autofill por divs, gravação de session_active no sessionStorage, link Esqueci minha senha e cards de recuperação/redefinição [CONCLUÍDO])
     *   [plans.js](file:///g:/Meu%20Drive/Dev's/360/360/plans.js) (Validação checkAuth de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
     *   [home.js](file:///g:/Meu%20Drive/Dev's/360/360/home.js) (Validação checkUserSession de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
+*   **Novas Páginas e Gestão do Blog:**
+    *   [tutoriais.html](file:///g:/Meu%20Drive/Dev's/360/360/tutoriais.html) (Página de Central de Ajuda com guias passo a passo do editor, hotspots e radares [CONCLUÍDO])
+    *   [blog.html](file:///g:/Meu%20Drive/Dev's/360/360/blog.html) (Indexador de matérias do blog carregados dinamicamente via JSON database [CONCLUÍDO])
+    *   [post.html](file:///g:/Meu%20Drive/Dev's/360/360/post.html) (Visualizador dinâmico de artigos individuais filtrados por slug query string [CONCLUÍDO])
+    *   [admin_blog.html](file:///g:/Meu%20Drive/Dev's/360/360/admin_blog.html) (Painel administrativo visual para cadastrar, editar e remover posts [CONCLUÍDO])
+    *   [admin_blog.js](file:///g:/Meu%20Drive/Dev's/360/360/admin_blog.js) (Controlador AJAX de CRUD do Blog com validação de privilégios [CONCLUÍDO])
+    *   [blog_posts.json](file:///g:/Meu%20Drive/Dev's/360/360/api/blog_posts.json) (Base de dados JSON para alimentação autônoma de conteúdo do blog [CONCLUÍDO])
+    *   [save_post.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/save_post.php) (Endpoint de backend de persistência e atualização segura de artigos do blog [CONCLUÍDO])
+    *   [delete_post.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/delete_post.php) (Endpoint de backend para remoção segura de artigos do blog [CONCLUÍDO])
 
 ---
 
