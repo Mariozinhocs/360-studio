@@ -72,7 +72,13 @@
         *   **Iniciante:** Limite aumentado para 10 tours (liberando a criação do 6º tour).
         *   **Básico:** Logotipo customizado (1 logo) ativado e anúncios removidos.
         *   **Profissional:** Planta Baixa Interativa com radar direcional desbloqueada (lock overlay removido) e limite ilimitado.
-    *   **Contas de Teste no HML:** Criadas 6 contas de teste (`gratis_tester`, `iniciante_tester`, `basico_tester`, `pessoal_tester`, `profissional_tester`, `admin_tester`) com a senha padrão `senha360` via script `create_test_profiles.php` para simplificar homologação e auditorias de recursos.
+    *   **Contas de Teste no HML:** Criadas 6 contas de teste com a senha padrão `senha360` via script `create_test_profiles.php`. Status de validação:
+        *   `[x]` **`gratis_tester` (Plano Grátis) - VALIDADO:** Limite de 5 tours, soft-lock após a 10ª cena, exibição de anúncios e bloqueios de planta baixa, logo e rotação inicial (PRO).
+        *   `[/]` **`iniciante_tester` (Plano Iniciante) - PRÓXIMO:** Validar limite de 10 tours, limite de 10 cenas, sem anúncios.
+        *   `[ ]` **`basico_tester` (Plano Básico):** Validar logo customizada (1 unidade), sem anúncios, limite de 10 tours.
+        *   `[ ]` **`pessoal_tester` (Plano Pessoal / Individual):** Validar limites intermediários.
+        *   `[ ]` **`profissional_tester` (Plano Profissional):** Validar planta baixa interativa com radar ativado e sem anúncios.
+        *   `[ ]` **`admin_tester` (Super Admin):** Validar acesso de governança geral.
 
 11. **Barra de Navegação de Cenas e Otimização de Hotspots 3D (CONCLUÍDO):**
     *   **Barra Inferior de Miniaturas (Strip / Carousel):** Adicionada barra flutuante em vidro escuro no rodapé com rolagem horizontal de todas as cenas e atalhos de teclado (Setas Esquerda e Direita). As setas laterais de navegação da interface (#btn-prev-scene e #btn-next-scene) realizam a rolagem lateral suave da barra em 200px para revelar miniaturas ocultas em vez de mudar bruscamente de cena. Além disso, ao trocar de cena (seja via teclado, hotspots ou sidebar), a miniatura correspondente é centralizada automaticamente e de forma suave na barra inferior (`scrollIntoView` alinhado ao centro visual).
