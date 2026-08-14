@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciar Blog - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="admin.css?v=1.0.2">
+    <style>
+        .post-list-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-glass);
+            gap: 15px;
+        }
+        .post-list-item:last-child {
+            border-bottom: none;
+        }
+        .post-item-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            min-width: 0;
+            flex: 1;
+        }
+        .post-item-thumb {
+            width: 60px;
+            height: 45px;
+            border-radius: 6px;
+            background: #151722;
+            overflow: hidden;
+            border: 1px solid var(--border-glass);
+            flex-shrink: 0;
+        }
+        .post-item-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .post-item-details {
+            min-width: 0;
+        }
+        .post-item-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .post-item-meta {
+            font-size: 11px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 10px;
+        }
+        .post-item-actions {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body class="admin-page">
+    <div class="app-container admin-layout">
+        
+        <!-- HEADER -->
+        <header class="admin-header glassmorphism">
+            <div class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
+                <span class="logo-text">360°<span class="highlight">Studio</span> <span class="badge-admin">Admin</span></span>
+            </div>
+            
+            <div class="nav-actions">
+                <a href="admin.html" class="btn btn-secondary btn-sm" style="border-color: var(--color-purple); color: #b16ef2; background: rgba(155, 81, 224, 0.08); text-decoration: none;">
+                    <i class="fa-solid fa-users-gear"></i> Clientes
+                </a>
+                <a href="dashboard.html" class="btn btn-secondary btn-sm">
+                    <i class="fa-solid fa-house"></i> Painel do Usuário
+                </a>
+                <button id="btn-logout" class="btn btn-danger btn-sm" title="Sair da Conta">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i> Sair
+                </button>
+            </div>
+        </header>
+
+        <!-- CONTAINER DA TABELA E FILTROS -->
+        <main class="admin-main-content glassmorphism" style="margin-top: 30px; min-height: 500px;">
+            
+            <div class="table-header" style="border-bottom: 1px solid var(--border-glass); padding-bottom: 20px;">
+                <h2>Gerenciador de Artigos do Blog</h2>
+                <button class="btn btn-accent btn-sm" id="btn-new-post" style="width: auto; padding: 10px 20px;">
+                    <i class="fa-solid fa-plus-circle"></i> Novo Artigo
+                </button>
+            </div>
+
+            <!-- Lista de Posts do Blog -->
+            <div id="posts-list-container" style="display: flex; flex-direction: column;">
+                <div class="table-loading" style="text-align: center; padding: 60px 0; color: var(--text-secondary);">
+                    <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando feed de notícias...
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- MODAL EDITAR / CRIAR POST -->
+    <div class="modal-overlay" id="post-editor-modal">
+        <div class="modal-card glassmorphism" style="max-width: 750px; width: 95%;">
+            <div class="modal-header">
+                <h2 id="modal-title"><i class="fa-regular fa-pen-to-square"></i> Criar Artigo</h2>
+                <button class="close-btn" id="btn-close-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+                <form id="form-blog-post">
+                    <input type="hidden" id="post-id">
+                    
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="post-title">Título do Post *</label>
+                        <input type="text" id="post-title" placeholder="Ex: Dicas para fotografar imóveis" required>
+                    </div>
+
+                    <div class="form-row" style="display: flex; gap: 15px; margin-bottom: 15px;">
+                        <div class="form-group" style="flex: 1;">
+                            <label for="post-author">Autor *</label>
+                            <input type="text" id="post-author" value="Mario Henrique" required>
+                        </div>
+                        <div class="form-group" style="flex: 1;">
+                            <label for="post-readtime">Tempo de Leitura</label>
+                            <input type="text" id="post-readtime" value="5 min de leitura">
+                        </div>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="post-cover">URL da Imagem de Capa</label>
+                        <input type="url" id="post-cover" placeholder="Link de imagem (Ex do Unsplash)">
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="post-excerpt">Resumo da Notícia (Exibido no card) *</label>
+                        <textarea id="post-excerpt" placeholder="Escreva uma breve introdução com até 3 linhas..." required style="width: 100%; height: 60px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 8px; color: #fff; padding: 10px; font-family: inherit; font-size: 13px; outline: none; resize: vertical;"></textarea>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label for="post-content">Conteúdo do Artigo (HTML suportado) *</label>
+                        <textarea id="post-content" placeholder="Escreva seu artigo aqui. Você pode usar tags HTML para formatar (como <p>, <h3>, <strong>, <ul>, <li>)" required style="width: 100%; height: 250px; background: rgba(255,255,255,0.04); border: 1px solid var(--border-glass); border-radius: 8px; color: #fff; padding: 12px; font-family: inherit; font-size: 13px; outline: none; resize: vertical;"></textarea>
+                    </div>
+
+                    <div class="modal-actions" style="margin-top: 20px;">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-post">Cancelar</button>
+                        <button type="submit" class="btn btn-accent" style="width: auto; padding: 12px 24px;">Salvar Artigo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Script JS -->
+    <script src="admin_blog.js"></script>
+</body>
+</html>
