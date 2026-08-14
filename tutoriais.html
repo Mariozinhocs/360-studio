@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Central de Ajuda & Tutoriais - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0b0e;
+            --bg-card: rgba(16, 18, 26, 0.65);
+            --border-glass: rgba(255, 255, 255, 0.07);
+            --text-primary: #f5f6f9;
+            --text-secondary: #8f9cae;
+            --color-accent: #00f2fe;
+            --color-accent-hover: #4facfe;
+            --color-purple: #9b51e0;
+            --color-blue: #0284c7;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(155, 81, 224, 0.04) 0%, transparent 40%);
+        }
+
+        .decor-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: filter(blur(80px));
+            filter: blur(80px);
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .glow-1 { top: 10%; left: -5%; background: var(--color-accent); }
+        .glow-2 { bottom: 20%; right: -5%; background: var(--color-purple); }
+
+        header {
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(10, 11, 14, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+        }
+
+        .logo i {
+            color: var(--color-accent);
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+        }
+
+        .logo .highlight {
+            background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 600;
+            transition: all 0.3s;
+            padding: 8px 16px;
+            border: 1px solid var(--border-glass);
+            border-radius: 8px;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .back-btn:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        main {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .tutorials-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .tutorial-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 30px;
+            backdrop-filter: blur(16px);
+            display: grid;
+            grid-template-columns: 60px 1fr;
+            gap: 24px;
+            transition: all 0.3s;
+        }
+
+        .tutorial-card:hover {
+            border-color: rgba(0, 242, 254, 0.25);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), 0 0 20px rgba(0, 242, 254, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .tutorial-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: rgba(0, 242, 254, 0.08);
+            border: 1px solid rgba(0, 242, 254, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: var(--color-accent);
+        }
+
+        .tutorial-card.purple .tutorial-icon {
+            background: rgba(155, 81, 224, 0.08);
+            border-color: rgba(155, 81, 224, 0.2);
+            color: var(--color-purple);
+        }
+
+        .tutorial-card.blue .tutorial-icon {
+            background: rgba(2, 132, 199, 0.08);
+            border-color: rgba(2, 132, 199, 0.2);
+            color: #38bdf8;
+        }
+
+        .tutorial-content h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .tutorial-content p {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+            line-height: 1.6;
+        }
+
+        .steps-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .steps-list li {
+            font-size: 13px;
+            position: relative;
+            padding-left: 24px;
+            color: var(--text-primary);
+        }
+
+        .steps-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--color-accent);
+            font-weight: bold;
+        }
+
+        .tutorial-card.purple .steps-list li::before {
+            color: var(--color-purple);
+        }
+
+        .tutorial-card.blue .steps-list li::before {
+            color: #38bdf8;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 24px;
+            border-top: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 60px;
+            background: rgba(10, 11, 14, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="decor-glow glow-1"></div>
+    <div class="decor-glow glow-2"></div>
+
+    <header>
+        <div class="nav-container">
+            <a href="home.html" class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 360°<span class="highlight">Studio</span>
+            </a>
+            <a href="dashboard.html" class="back-btn">
+                <i class="fa-solid fa-arrow-left"></i> Voltar ao Painel
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Central de Ajuda &amp; Tutoriais</h1>
+            <p>Aprenda a criar, configurar e compartilhar seus passeios virtuais de forma profissional no 360° Studio.</p>
+        </section>
+
+        <section class="tutorials-grid">
+            <!-- TUTORIAL 1 -->
+            <div class="tutorial-card">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Como Iniciar seu Primeiro Tour 360°</h2>
+                    <p>Veja como é simples iniciar a criação e estruturação de um novo projeto virtual para seus clientes.</p>
+                    <ul class="steps-list">
+                        <li>Clique em <strong>"Criar Novo Tour"</strong> no painel de controle (Dashboard).</li>
+                        <li>Dê um nome intuitivo ao seu tour (ex: "Casa Jardim Botânico") e confirme.</li>
+                        <li>Você será redirecionado para o Editor Interativo 3D.</li>
+                        <li>Seu projeto virá inicialmente vazio, pronto para receber os uploads de fotos ou vídeos esféricos.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TUTORIAL 2 -->
+            <div class="tutorial-card purple">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-cloud-arrow-up"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Upload de Mídias 360° (Equiretangulares)</h2>
+                    <p>Como carregar suas mídias corretamente no editor garantindo total compatibilidade tridimensional.</p>
+                    <ul class="steps-list">
+                        <li>Abra a aba **"Upload"** na barra lateral esquerda.</li>
+                        <li>Arraste seus arquivos para a área pontilhada ou clique para selecionar.</li>
+                        <li>Aguarde a barra de progresso horizontal carregar 100% no servidor.</li>
+                        <li><strong>Requisitos:</strong> Imagens em JPG/PNG/WEBP/AVIF de até 15MB e vídeos MP4 de até 60MB.</li>
+                        <li>Para fotos de alta fidelidade, imagens panorâmicas de até 8192px (8K) são perfeitamente suportadas.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TUTORIAL 3 -->
+            <div class="tutorial-card blue">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-camera-rotate"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Definição do Ângulo Inicial de Visualização</h2>
+                    <p>Garanta que o visitante comece olhando para o atrativo principal do cômodo quando a cena for aberta.</p>
+                    <ul class="steps-list">
+                        <li>No modo <strong>Editor</strong>, clique e arraste a imagem 360° para ajustar o ângulo desejado de início.</li>
+                        <li>Abra a aba <strong>"Mídia"</strong> (ícone de rolo de filme) na barra lateral.</li>
+                        <li>Localize o campo **"Ângulo Inicial de Visualização"** e clique em **"Definir Visão Atual"**.</li>
+                        <li>O sistema salvará a orientação horizontal da câmera no banco de dados.</li>
+                        <li>Qualquer pessoa acessando o tour (seja por miniaturas ou por portais) entrará na cena por essa direção.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TUTORIAL 4 -->
+            <div class="tutorial-card">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Criar e Reposicionar Portais (Hotspots)</h2>
+                    <p>Interligue as salas do seu passeio virtual para que o visitante navegue de um cômodo para o outro.</p>
+                    <ul class="steps-list">
+                        <li>Clique no botão flutuante **"+ Adicionar Hotspot"** no canto inferior direito da tela.</li>
+                        <li>Dê um clique na imagem 360° no ponto exato onde a porta ou passagem está localizada.</li>
+                        <li>No modal de configuração, digite o texto do balão (ex: "Ir para Cozinha") e selecione a cena de destino.</li>
+                        <li><strong>Mover:</strong> Selecione o portal, clique em "Mover" no menu de portais e clique no novo ponto da tela para reposicioná-lo.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- TUTORIAL 5 -->
+            <div class="tutorial-card purple">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-map-location-dot"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Planta Baixa Interativa com Radar</h2>
+                    <p>Mostre o mapa do imóvel no canto da tela e atualize um cone luminoso de radar sincronizado com a visão da câmera.</p>
+                    <ul class="steps-list">
+                        <li>Abra a aba <strong>"Planta"</strong> na barra lateral do editor.</li>
+                        <li>Carregue a imagem da planta baixa (JPG/PNG).</li>
+                        <li>Clique em **"Ajustar Radares"** para abrir o modal de mapa interativo.</li>
+                        <li>Selecione uma cena no menu esquerdo e clique na planta baixa para marcar a localização dela.</li>
+                        <li>Ajuste a direção padrão no controle deslizante inferior para sincronizar o radar com o fuso visual da foto.</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 360° Studio. Todos os direitos reservados.</p>
+    </footer>
+</body>
+</html>

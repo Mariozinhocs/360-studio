@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blog & Marketing Digital - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-primary: #0a0b0e;
+            --bg-card: rgba(16, 18, 26, 0.65);
+            --border-glass: rgba(255, 255, 255, 0.07);
+            --text-primary: #f5f6f9;
+            --text-secondary: #8f9cae;
+            --color-accent: #00f2fe;
+            --color-accent-hover: #4facfe;
+            --color-purple: #9b51e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(155, 81, 224, 0.04) 0%, transparent 40%);
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-glass);
+            background: rgba(10, 11, 14, 0.8);
+            backdrop-filter: blur(12px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 15px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            color: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 22px;
+        }
+
+        .logo i {
+            color: var(--color-accent);
+            text-shadow: 0 0 10px rgba(0, 242, 254, 0.4);
+        }
+
+        .logo .highlight {
+            background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-link:hover {
+            color: #fff;
+        }
+
+        .cta-btn {
+            text-decoration: none;
+            color: #000;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--color-accent), var(--color-accent-hover));
+            box-shadow: 0 0 15px rgba(0, 242, 254, 0.3);
+            transition: all 0.3s;
+        }
+
+        .cta-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.5);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .hero h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .hero p {
+            font-size: 16px;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .blog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+            gap: 30px;
+            margin-top: 40px;
+        }
+
+        .blog-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            backdrop-filter: blur(12px);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .blog-card:hover {
+            border-color: rgba(0, 242, 254, 0.3);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 242, 254, 0.08);
+            transform: translateY(-4px);
+        }
+
+        .card-cover {
+            height: 220px;
+            position: relative;
+            background: #111;
+            overflow: hidden;
+        }
+
+        .card-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .blog-card:hover .card-cover img {
+            transform: scale(1.04);
+        }
+
+        .card-body {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            flex-grow: 1;
+        }
+
+        .card-meta {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+            font-weight: 500;
+        }
+
+        .card-meta span {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .card-body h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.4;
+            margin-bottom: 10px;
+            transition: color 0.3s;
+        }
+
+        .blog-card:hover .card-body h2 {
+            color: var(--color-accent);
+        }
+
+        .card-excerpt {
+            font-size: 13.5px;
+            color: var(--text-secondary);
+            line-height: 1.6;
+            margin-bottom: 20px;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .card-footer {
+            margin-top: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .read-more-link {
+            color: var(--color-accent);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .loading-box {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 80px 0;
+            color: var(--text-secondary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .loading-box i {
+            font-size: 32px;
+            color: var(--color-accent);
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 24px;
+            border-top: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 80px;
+            background: rgba(10, 11, 14, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="nav-container">
+            <a href="home.html" class="logo">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> 360°<span class="highlight">Studio</span>
+            </a>
+            <div class="nav-links">
+                <a href="home.html#features" class="nav-link">Funcionalidades</a>
+                <a href="home.html#pricing" class="nav-link">Planos</a>
+                <a href="tutoriais.html" class="nav-link">Tutoriais</a>
+                <a href="login.html" class="cta-btn">Começar Grátis</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section class="hero">
+            <h1>Blog &amp; Novidades Imobiliárias</h1>
+            <p>Dicas estratégicas de fotografia 360°, marketing imobiliário digital e novidades sobre o 360° Studio.</p>
+        </section>
+
+        <section class="blog-grid" id="blog-grid">
+            <div class="loading-box" id="loading-box">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <span>Buscando novidades...</span>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 360° Studio. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const grid = document.getElementById("blog-grid");
+            const loader = document.getElementById("loading-box");
+
+            try {
+                const res = await fetch("api/blog_posts.json");
+                if (!res.ok) throw new Error("Erro ao carregar os posts.");
+                const posts = await res.json();
+
+                loader.remove();
+
+                if (!posts || posts.length === 0) {
+                    grid.innerHTML = `<div class="loading-box"><i class="fa-regular fa-folder-open"></i><span>Nenhum post publicado ainda. Volte em breve!</span></div>`;
+                    return;
+                }
+
+                posts.forEach(post => {
+                    const card = document.createElement("a");
+                    card.href = `post.html?id=${post.id}`;
+                    card.className = "blog-card";
+                    card.innerHTML = `
+                        <div class="card-cover">
+                            <img src="${post.cover}" alt="${post.title}" loading="lazy">
+                        </div>
+                        <div class="card-body">
+                            <div class="card-meta">
+                                <span><i class="fa-regular fa-calendar"></i> ${post.date}</span>
+                                <span><i class="fa-regular fa-clock"></i> ${post.readTime}</span>
+                            </div>
+                            <h2>${post.title}</h2>
+                            <p class="card-excerpt">${post.excerpt}</p>
+                            <div class="card-footer">
+                                <span>Por <strong>${post.author}</strong></span>
+                                <span class="read-more-link">Ler Post <i class="fa-solid fa-arrow-right"></i></span>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error(err);
+                grid.innerHTML = `<div class="loading-box"><i class="fa-solid fa-circle-exclamation" style="color: #ff3366;"></i><span>Erro ao carregar o feed de posts. Tente recarregar a página.</span></div>`;
+            }
+        });
+    </script>
+</body>
+</html>
