@@ -6,7 +6,13 @@ const state = {
         scenes: [],
         floorPlan: null,
         logoUrl: null,
-        privacySettings: null
+        privacySettings: null,
+        nadirSettings: {
+            enabled: false,
+            useLogo: true,
+            image: null,
+            radius: 0.8
+        }
     },
     activeSceneId: null,
     isEditMode: true,
@@ -280,6 +286,18 @@ async function loadTourFromServer(tourId, startMode = null) {
                 
                 const modeSelector = document.querySelector(".mode-selector");
                 if (modeSelector) modeSelector.style.display = "none";
+
+                // Ocultar botão painel e mudar para "Ir para o Início"
+                const btnDashboard = document.getElementById("btn-dashboard");
+                if (btnDashboard) {
+                    btnDashboard.innerHTML = '<i class="fa-solid fa-house"></i> Ir para o Início';
+                    btnDashboard.href = 'home.html';
+                }
+
+                const logoLink = document.getElementById("viewer-logo-link");
+                if (logoLink) {
+                    logoLink.href = 'home.html';
+                }
                 
                 // Forçar modo visualização
                 setMode(false);
@@ -304,6 +322,11 @@ async function loadTourFromServer(tourId, startMode = null) {
                 if (adsOverlay) adsOverlay.style.display = "none";
             }
             
+            // Inicializar nadirSettings se não vier do servidor
+            if (!state.tour.nadirSettings) {
+                state.tour.nadirSettings = { enabled: false, useLogo: true, image: null, radius: 0.8 };
+            }
+            
             // Definir cena inicial
             if (state.tour.scenes && state.tour.scenes.length > 0) {
                 setActiveScene(state.tour.scenes[0].id);
@@ -315,6 +338,7 @@ async function loadTourFromServer(tourId, startMode = null) {
             renderFloorplanSidebar();
             renderVisitorFloorplanWidget();
             updateSettingsSidebarUI();
+            renderNadirPatch();
             updateUI();
             showToast("Tour carregado com sucesso do servidor!", "success");
         } else {
@@ -348,7 +372,8 @@ async function saveTourToStorage() {
                     scenes: state.tour.scenes,
                     floorPlan: state.tour.floorPlan,
                     logoUrl: state.tour.logoUrl,
-                    privacySettings: state.tour.privacySettings
+                    privacySettings: state.tour.privacySettings,
+                    nadirSettings: state.tour.nadirSettings
                 })
             });
             const data = await res.json();
@@ -374,6 +399,9 @@ function loadTourFromStorage() {
                 state.tour = parsed;
                 if (!state.tour.logoUrl) state.tour.logoUrl = null;
                 if (!state.tour.privacySettings) state.tour.privacySettings = null;
+                if (!state.tour.nadirSettings) {
+                    state.tour.nadirSettings = { enabled: false, useLogo: true, image: null, radius: 0.8 };
+                }
                 state.isOwner = true; // Local é sempre dono
                 // Filtrar mídias locais expiradas (Object URLs expiram ao recarregar a página)
                 state.tour.scenes = state.tour.scenes.map(scene => {
@@ -551,6 +579,9 @@ function setActiveScene(sceneId) {
     
     // Atualizar carrossel de navegação inferior
     renderScenesCarousel();
+
+    // Renderizar Tampa de Tripé (Nadir) se ativo
+    renderNadirPatch();
 }
 
 // --- FUNÇÕES DE CONTROLE DE BLOQUEIO DE CENA (SOFT LIMIT) ---
@@ -612,8 +643,9 @@ function renderHotspots(hotspotsList) {
         if (!hotspot || !hotspot.position) return;
 
         const isSelected = state.isEditMode && (state.selectedHotspotId === hotspot.id);
-        const targetIndex = state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === hotspot.targetSceneId) : -1;
-        const isTargetLocked = targetIndex !== -1 && isSceneLocked(targetIndex);
+        const isPortal = (hotspot.type || "portal") === "portal";
+        const targetIndex = isPortal ? (state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === hotspot.targetSceneId) : -1) : -1;
+        const isTargetLocked = isPortal && targetIndex !== -1 && isSceneLocked(targetIndex);
 
         // Entidade A-Frame para o hotspot
         const entity = document.createElement("a-entity");
@@ -633,6 +665,8 @@ function renderHotspots(hotspotsList) {
             ringColor = "#00f2fe"; // Destaque ciano neon quando em edição
         } else if (isTargetLocked) {
             ringColor = "#ff4444";
+        } else if (!isPortal) {
+            ringColor = "#9b51e0"; // Violeta para hotspot de informação
         } else if (isPaid && hotspot.customColor) {
             ringColor = hotspot.customColor;
         }
@@ -654,7 +688,7 @@ function renderHotspots(hotspotsList) {
         ring.setAttribute("animation__mouseenter", "property: scale; to: 1.15 1.15 1.15; dur: 150; startEvents: mouseenter");
         ring.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 150; startEvents: mouseleave");
 
-        const baseTitle = hotspot.label || getSceneTitle(hotspot.targetSceneId);
+        const baseTitle = hotspot.label || (isPortal ? getSceneTitle(hotspot.targetSceneId) : hotspot.infoTitle);
         const targetTitle = (isTargetLocked ? "🔒 " : (isSelected ? "🎯 " : "")) + baseTitle + (isTargetLocked ? " (Bloqueada)" : "");
 
         // Elemento de texto flutuante (Tooltip)
@@ -663,7 +697,7 @@ function renderHotspots(hotspotsList) {
         text.setAttribute("align", "center");
         text.setAttribute("position", "0 0.65 0.02");
         text.setAttribute("width", "3.4");
-        text.setAttribute("color", isSelected ? "#00f2fe" : (isTargetLocked ? "#ff6b6b" : "#ffffff"));
+        text.setAttribute("color", isSelected ? "#00f2fe" : (isTargetLocked ? "#ff6b6b" : (!isPortal ? "#d1a3ff" : "#ffffff")));
         text.setAttribute("font", "roboto");
         text.setAttribute("material", "depthTest: false; shader: flat");
         
@@ -692,20 +726,24 @@ function renderHotspots(hotspotsList) {
                 return;
             }
 
-            if (isTargetLocked) {
-                const targetScene = state.tour.scenes[targetIndex];
-                openSceneLockedModal(targetScene, targetIndex);
-                return;
+            if (isPortal) {
+                if (isTargetLocked) {
+                    const targetScene = state.tour.scenes[targetIndex];
+                    openSceneLockedModal(targetScene, targetIndex);
+                    return;
+                }
+                
+                ring.setAttribute("scale", "0.8 0.8 0.8");
+                setTimeout(() => {
+                    ring.setAttribute("scale", "1 1 1");
+                    triggerSceneTransition(() => {
+                        setActiveScene(hotspot.targetSceneId);
+                        showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
+                    });
+                }, 120);
+            } else {
+                openInfoHotspotModal(hotspot);
             }
-            
-            ring.setAttribute("scale", "0.8 0.8 0.8");
-            setTimeout(() => {
-                ring.setAttribute("scale", "1 1 1");
-                triggerSceneTransition(() => {
-                    setActiveScene(hotspot.targetSceneId);
-                    showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
-                });
-            }, 120);
         };
 
         ring.addEventListener("click", handlePortalClick);
@@ -716,8 +754,22 @@ function renderHotspots(hotspotsList) {
         entity.appendChild(hitArea);
         entity.appendChild(ring);
 
+        // Se for um hotspot de informação, adiciona a letra "i" no meio
+        if (!isPortal && !isSelected) {
+            const iText = document.createElement("a-text");
+            iText.setAttribute("value", "i");
+            iText.setAttribute("align", "center");
+            iText.setAttribute("position", "0 0 0.01");
+            iText.setAttribute("width", "4.0");
+            iText.setAttribute("color", "#ffffff");
+            iText.setAttribute("font", "roboto");
+            iText.setAttribute("material", "depthTest: false; shader: flat");
+            iText.addEventListener("click", handlePortalClick);
+            entity.appendChild(iText);
+        }
+
         // Se for um plano pago com personalização ativa e ícone customizado cadastrado:
-        if (isPaid && hotspot.customIcon) {
+        if (isPaid && hotspot.customIcon && isPortal) {
             const customIconPlane = document.createElement("a-plane");
             customIconPlane.setAttribute("class", "hotspot-element");
             customIconPlane.setAttribute("src", hotspot.customIcon);
@@ -998,6 +1050,17 @@ function initDOMEvents() {
     btnModeEdit.addEventListener("click", () => setMode(true));
     btnModeView.addEventListener("click", () => setMode(false));
 
+    // Botão Modo VR
+    const btnEnterVr = document.getElementById("btn-enter-vr");
+    if (btnEnterVr) {
+        btnEnterVr.addEventListener("click", () => {
+            const scene = document.querySelector("a-scene");
+            if (scene) {
+                scene.enterVR();
+            }
+        });
+    }
+
     // Botão Adicionar Hotspot
     if (btnAddHotspot) {
         btnAddHotspot.addEventListener("click", () => {
@@ -1081,6 +1144,7 @@ function initDOMEvents() {
         logoUploadZone.addEventListener("click", () => logoFileInput.click());
         logoFileInput.addEventListener("change", async (e) => {
             if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
                 const allowedLogoTypes = ["image/png", "image/webp", "image/avif", "image/jpeg"];
                 if (!allowedLogoTypes.includes(file.type)) {
                     showToast("Por favor, selecione imagens em formato PNG, WEBP, AVIF ou JPG.", "error");
@@ -1134,6 +1198,159 @@ function initDOMEvents() {
             showToast("Privacidade atualizada!", "success");
         });
     }
+
+    // --- Tampa de Tripé (Nadir Settings) ---
+    const checkboxNadirEnabled = document.getElementById("checkbox-nadir-enabled");
+    const nadirSubSettings = document.getElementById("nadir-sub-settings");
+    const checkboxNadirUseLogo = document.getElementById("checkbox-nadir-use-logo");
+    const nadirCustomUpload = document.getElementById("nadir-custom-upload");
+    const nadirFileInput = document.getElementById("nadir-file-input");
+    const nadirUploadZone = document.getElementById("nadir-upload-zone");
+    const btnDeleteNadirImg = document.getElementById("btn-delete-nadir-img");
+    const sliderNadirRadius = document.getElementById("slider-nadir-radius");
+    const nadirRadiusValue = document.getElementById("nadir-radius-value");
+
+    if (checkboxNadirEnabled) {
+        checkboxNadirEnabled.addEventListener("change", (e) => {
+            const hasNadir = state.features ? (state.features.nadir_patch ?? false) : false;
+            if (!hasNadir) {
+                checkboxNadirEnabled.checked = false;
+                openUpgradeModal("<i class='fa-solid fa-crown' style='color:#ffaa00;'></i> Recurso Premium PRO", "A <strong>Tampa de Tripé (Nadir)</strong> é um recurso premium disponível a partir do plano Básico. Faça o upgrade agora para remover os tripés e personalizar os rodapés de seus passeios virtuais!");
+                return;
+            }
+            state.tour.nadirSettings.enabled = e.target.checked;
+            if (nadirSubSettings) nadirSubSettings.style.display = e.target.checked ? "flex" : "none";
+            saveTourToStorage();
+            renderNadirPatch();
+        });
+    }
+
+    if (checkboxNadirUseLogo) {
+        checkboxNadirUseLogo.addEventListener("change", (e) => {
+            state.tour.nadirSettings.useLogo = e.target.checked;
+            if (nadirCustomUpload) nadirCustomUpload.style.display = e.target.checked ? "none" : "flex";
+            saveTourToStorage();
+            renderNadirPatch();
+        });
+    }
+
+    if (nadirUploadZone && nadirFileInput) {
+        nadirUploadZone.addEventListener("click", () => nadirFileInput.click());
+        nadirFileInput.addEventListener("change", async (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
+                showToast("Fazendo upload da imagem do Nadir...", "info");
+                const url = await uploadFileToServer(file, `nadir_${Date.now()}_${file.name}`);
+                if (url) {
+                    state.tour.nadirSettings.image = url;
+                    updateSettingsSidebarUI();
+                    saveTourToStorage();
+                    renderNadirPatch();
+                    showToast("Imagem do Nadir salva!", "success");
+                } else {
+                    showToast("Erro ao fazer upload da imagem.", "error");
+                }
+            }
+        });
+    }
+
+    if (btnDeleteNadirImg) {
+        btnDeleteNadirImg.addEventListener("click", () => {
+            state.tour.nadirSettings.image = null;
+            updateSettingsSidebarUI();
+            saveTourToStorage();
+            renderNadirPatch();
+            showToast("Imagem do Nadir removida.", "info");
+        });
+    }
+
+    if (sliderNadirRadius) {
+        sliderNadirRadius.addEventListener("input", (e) => {
+            const val = parseFloat(e.target.value);
+            state.tour.nadirSettings.radius = val;
+            if (nadirRadiusValue) nadirRadiusValue.textContent = `${val}m`;
+            renderNadirPatch();
+        });
+        sliderNadirRadius.addEventListener("change", () => {
+            saveTourToStorage();
+        });
+    }
+
+    // --- Hotspots de Informações (Rich Media Editor Bindings) ---
+    const typeSelect = document.getElementById("hotspot-type-select");
+    const targetGroup = document.getElementById("hotspot-target-group");
+    const infoGroup = document.getElementById("hotspot-info-group");
+    if (typeSelect && targetGroup && infoGroup) {
+        typeSelect.addEventListener("change", (e) => {
+            const val = e.target.value;
+            if (val === "portal") {
+                targetGroup.style.display = "block";
+                infoGroup.style.display = "none";
+            } else {
+                targetGroup.style.display = "none";
+                infoGroup.style.display = "flex";
+                
+                // Exibir badge PRO dependendo do plano
+                const hasMedia = state.features ? (state.features.image_gallery ?? false) : false;
+                const badgeHotspotMedia = document.getElementById("badge-hotspot-media-pro");
+                const uploadZone = document.getElementById("hotspot-media-upload-zone");
+                if (badgeHotspotMedia && uploadZone) {
+                    if (!hasMedia) {
+                        badgeHotspotMedia.style.display = "inline-block";
+                        uploadZone.style.opacity = "0.5";
+                        uploadZone.style.pointerEvents = "none";
+                    } else {
+                        badgeHotspotMedia.style.display = "none";
+                        uploadZone.style.opacity = "1";
+                        uploadZone.style.pointerEvents = "auto";
+                    }
+                }
+            }
+        });
+    }
+
+    // Upload de Imagem do Hotspot Info
+    const mediaUploadZone = document.getElementById("hotspot-media-upload-zone");
+    const mediaFileInput = document.getElementById("hotspot-media-file-input");
+    const btnDeleteMedia = document.getElementById("btn-delete-hotspot-media");
+    const mediaPreviewContainer = document.getElementById("hotspot-media-preview-container");
+    const mediaPreviewImg = document.getElementById("hotspot-media-preview-img");
+
+    if (mediaUploadZone && mediaFileInput) {
+        mediaUploadZone.addEventListener("click", () => mediaFileInput.click());
+        mediaFileInput.addEventListener("change", async (e) => {
+            if (e.target.files && e.target.files.length > 0) {
+                const file = e.target.files[0];
+                showToast("Carregando imagem...", "info");
+                const url = await uploadFileToServer(file, `hotspot_${Date.now()}_${file.name}`);
+                if (url) {
+                    window.pendingHotspotMediaUrl = url;
+                    if (mediaPreviewImg) mediaPreviewImg.src = url;
+                    if (mediaPreviewContainer) mediaPreviewContainer.style.display = "flex";
+                    if (mediaUploadZone) mediaUploadZone.style.display = "none";
+                    showToast("Imagem carregada com sucesso!", "success");
+                } else {
+                    showToast("Erro ao carregar imagem.", "error");
+                }
+            }
+        });
+    }
+
+    if (btnDeleteMedia) {
+        btnDeleteMedia.addEventListener("click", () => {
+            window.pendingHotspotMediaUrl = null;
+            if (mediaPreviewImg) mediaPreviewImg.src = "";
+            if (mediaPreviewContainer) mediaPreviewContainer.style.display = "none";
+            if (mediaUploadZone) mediaUploadZone.style.display = "block";
+            showToast("Imagem removida.", "info");
+        });
+    }
+
+    // Fechar Modal de Informações
+    const btnCloseInfo = document.getElementById("btn-close-info-hotspot");
+    const btnCloseInfoOk = document.getElementById("btn-close-info-hotspot-ok");
+    if (btnCloseInfo) btnCloseInfo.addEventListener("click", closeInfoHotspotModal);
+    if (btnCloseInfoOk) btnCloseInfoOk.addEventListener("click", closeInfoHotspotModal);
 
     // --- Ações da Tela de Bloqueio ---
     const btnUnlockTour = document.getElementById("btn-unlock-tour");
@@ -1975,8 +2192,8 @@ function setMode(isEdit) {
 
 // --- FLUXO DE ADICIONAR E EDITAR HOTSPOT (PORTAL) ---
 function startAddingHotspot() {
-    if (state.tour.scenes.length < 2) {
-        showToast("Você precisa ter pelo menos 2 cenas carregadas para criar portais de passeio!", "error");
+    if (state.tour.scenes.length < 1) {
+        showToast("Você precisa ter pelo menos 1 cena carregada para criar hotspots!", "error");
         return;
     }
 
@@ -1988,7 +2205,7 @@ function startAddingHotspot() {
         btn.innerHTML = `<i class="fa-solid fa-times-circle"></i> <span>Cancelar</span>`;
     }
     
-    showToast("Clique em qualquer lugar na cena 360° para fixar o portal.", "info");
+    showToast("Clique em qualquer lugar na cena 360° para fixar o hotspot.", "info");
 }
 
 function cancelAddingHotspot() {
@@ -2010,7 +2227,24 @@ function openHotspotModal(editingHotspotId = null) {
     const titleEl = document.getElementById("hotspot-modal-title");
     const saveBtn = document.getElementById("btn-save-hotspot");
     
+    const typeSelect = document.getElementById("hotspot-type-select");
+    const targetGroup = document.getElementById("hotspot-target-group");
+    const infoGroup = document.getElementById("hotspot-info-group");
+    const infoTitle = document.getElementById("hotspot-info-title");
+    const infoDesc = document.getElementById("hotspot-info-desc");
+    const mediaUploadZone = document.getElementById("hotspot-media-upload-zone");
+    const mediaPreviewContainer = document.getElementById("hotspot-media-preview-container");
+    const mediaPreviewImg = document.getElementById("hotspot-media-preview-img");
+
     if (!modal || !select || !labelInput) return;
+
+    // Resetar campos de informações
+    window.pendingHotspotMediaUrl = null;
+    if (infoTitle) infoTitle.value = "";
+    if (infoDesc) infoDesc.value = "";
+    if (mediaPreviewImg) mediaPreviewImg.src = "";
+    if (mediaPreviewContainer) mediaPreviewContainer.style.display = "none";
+    if (mediaUploadZone) mediaUploadZone.style.display = "block";
 
     // Limpa e popula o select com as outras cenas
     select.innerHTML = "";
@@ -2029,19 +2263,57 @@ function openHotspotModal(editingHotspotId = null) {
         const hotspot = currentScene ? currentScene.hotspots.find(h => h.id === editingHotspotId) : null;
         
         if (editingInput) editingInput.value = editingHotspotId;
-        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar Portal de Navegação`;
+        if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Configurar Hotspot / Portal`;
         if (saveBtn) saveBtn.textContent = "Salvar Alterações";
         
         if (hotspot) {
             labelInput.value = hotspot.label || "";
-            select.value = hotspot.targetSceneId || "";
+            const hType = hotspot.type || "portal";
+            if (typeSelect) typeSelect.value = hType;
+            
+            if (hType === "portal") {
+                if (targetGroup) targetGroup.style.display = "block";
+                if (infoGroup) infoGroup.style.display = "none";
+                select.value = hotspot.targetSceneId || "";
+            } else {
+                if (targetGroup) targetGroup.style.display = "none";
+                if (infoGroup) infoGroup.style.display = "flex";
+                if (infoTitle) infoTitle.value = hotspot.infoTitle || "";
+                if (infoDesc) infoDesc.value = hotspot.infoDesc || "";
+                
+                if (hotspot.infoMediaUrl) {
+                    window.pendingHotspotMediaUrl = hotspot.infoMediaUrl;
+                    if (mediaPreviewImg) mediaPreviewImg.src = hotspot.infoMediaUrl;
+                    if (mediaPreviewContainer) mediaPreviewContainer.style.display = "flex";
+                    if (mediaUploadZone) mediaUploadZone.style.display = "none";
+                }
+                
+                // Exibir badge PRO dependendo do plano
+                const hasMedia = state.features ? (state.features.image_gallery ?? false) : false;
+                const badgeHotspotMedia = document.getElementById("badge-hotspot-media-pro");
+                const uploadZone = document.getElementById("hotspot-media-upload-zone");
+                if (badgeHotspotMedia && uploadZone) {
+                    if (!hasMedia) {
+                        badgeHotspotMedia.style.display = "inline-block";
+                        uploadZone.style.opacity = "0.5";
+                        uploadZone.style.pointerEvents = "none";
+                    } else {
+                        badgeHotspotMedia.style.display = "none";
+                        uploadZone.style.opacity = "1";
+                        uploadZone.style.pointerEvents = "auto";
+                    }
+                }
+            }
         }
     } else {
         // Modo Criação
         if (editingInput) editingInput.value = "";
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> Configurar Hotspot / Portal`;
-        if (saveBtn) saveBtn.textContent = "Criar Portal";
+        if (saveBtn) saveBtn.textContent = "Criar Hotspot";
         labelInput.value = "";
+        if (typeSelect) typeSelect.value = "portal";
+        if (targetGroup) targetGroup.style.display = "block";
+        if (infoGroup) infoGroup.style.display = "none";
     }
 
     modal.classList.add("active");
@@ -2057,16 +2329,25 @@ function closeHotspotModal() {
 
 function saveHotspot() {
     const label = document.getElementById("hotspot-label").value.trim();
+    const type = document.getElementById("hotspot-type-select") ? document.getElementById("hotspot-type-select").value : "portal";
     const targetSceneId = document.getElementById("hotspot-target").value;
+    const infoTitle = document.getElementById("hotspot-info-title") ? document.getElementById("hotspot-info-title").value.trim() : "";
+    const infoDesc = document.getElementById("hotspot-info-desc") ? document.getElementById("hotspot-info-desc").value.trim() : "";
+    const mediaUrl = window.pendingHotspotMediaUrl || null;
     const editingHotspotId = document.getElementById("editing-hotspot-id") ? document.getElementById("editing-hotspot-id").value : "";
 
     if (!label) {
-        showToast("Por favor, digite uma descrição para o portal.", "warning");
+        showToast("Por favor, digite uma descrição do Tooltip.", "warning");
         return;
     }
 
-    if (!targetSceneId) {
+    if (type === "portal" && !targetSceneId) {
         showToast("Nenhuma cena selecionada para o destino.", "warning");
+        return;
+    }
+    
+    if (type === "info" && !infoTitle) {
+        showToast("Por favor, digite um título para a informação.", "warning");
         return;
     }
 
@@ -2079,12 +2360,23 @@ function saveHotspot() {
         const hotspot = currentScene.hotspots.find(h => h.id === editingHotspotId);
         if (hotspot) {
             hotspot.label = label;
-            hotspot.targetSceneId = targetSceneId;
+            hotspot.type = type;
+            if (type === "portal") {
+                hotspot.targetSceneId = targetSceneId;
+                delete hotspot.infoTitle;
+                delete hotspot.infoDesc;
+                delete hotspot.infoMediaUrl;
+            } else {
+                hotspot.infoTitle = infoTitle;
+                hotspot.infoDesc = infoDesc;
+                hotspot.infoMediaUrl = mediaUrl;
+                delete hotspot.targetSceneId;
+            }
             saveTourToStorage();
             renderHotspots(currentScene.hotspots);
             renderHotspotsList();
             closeHotspotModal();
-            showToast("Portal atualizado com sucesso!", "success");
+            showToast("Hotspot atualizado com sucesso!", "success");
             return;
         }
     }
@@ -2092,11 +2384,18 @@ function saveHotspot() {
     // Criar Novo Hotspot
     const newHotspot = {
         id: "hotspot-" + Date.now(),
-        type: "portal",
-        targetSceneId: targetSceneId,
+        type: type,
         position: state.pendingHotspotPos || { x: 0, y: 0, z: -5 },
         label: label
     };
+    
+    if (type === "portal") {
+        newHotspot.targetSceneId = targetSceneId;
+    } else {
+        newHotspot.infoTitle = infoTitle;
+        newHotspot.infoDesc = infoDesc;
+        newHotspot.infoMediaUrl = mediaUrl;
+    }
 
     currentScene.hotspots.push(newHotspot);
     state.selectedHotspotId = newHotspot.id;
@@ -2105,7 +2404,7 @@ function saveHotspot() {
     renderHotspots(currentScene.hotspots);
     renderHotspotsList();
     closeHotspotModal();
-    showToast("Portal criado com sucesso!", "success");
+    showToast("Hotspot criado com sucesso!", "success");
 }
 
 // --- CUSTOM CONTROLES DE VÍDEO 360° ---
@@ -2387,7 +2686,7 @@ function renderHotspotsList() {
     countBadge.textContent = hotspots.length;
 
     if (hotspots.length === 0) {
-        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 12px; padding: 24px 10px;">Nenhum portal criado nesta cena.</div>`;
+        list.innerHTML = `<div style="text-align: center; color: var(--text-secondary); font-size: 12px; padding: 24px 10px;">Nenhum hotspot criado nesta cena.</div>`;
         return;
     }
 
@@ -2395,31 +2694,39 @@ function renderHotspotsList() {
     hotspots.forEach(hotspot => {
         const isSelected = state.selectedHotspotId === hotspot.id;
         const isRepositioning = isSelected && state.isRepositioningHotspot;
-        const targetScene = state.tour.scenes.find(s => s.id === hotspot.targetSceneId);
-        const targetTitle = targetScene ? targetScene.title : "Cena Desconhecida";
+        const isPortal = (hotspot.type || "portal") === "portal";
+        const targetScene = isPortal ? state.tour.scenes.find(s => s.id === hotspot.targetSceneId) : null;
+        const targetTitle = isPortal ? (targetScene ? targetScene.title : "Cena Desconhecida") : "Ponto de Informação";
 
         const card = document.createElement("div");
         card.className = `scene-card hotspot-card ${isSelected ? 'active' : ''}`;
         card.dataset.id = hotspot.id;
 
-        // Miniatura da cena de destino (ou ícone padrão)
+        // Miniatura da cena de destino (ou imagem do hotspot, ou ícone padrão)
         let thumbContent = "";
-        if (targetScene && targetScene.type === "image" && targetScene.sourceUrl) {
+        if (isPortal && targetScene && targetScene.type === "image" && targetScene.sourceUrl) {
             thumbContent = `<img src="${targetScene.sourceUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`;
+        } else if (!isPortal && hotspot.infoMediaUrl) {
+            thumbContent = `<img src="${hotspot.infoMediaUrl}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">`;
         }
 
         const activeBadge = isSelected ? `<span class="badge-start-scene" style="background: var(--color-accent); color: #000;">${isRepositioning ? 'Movendo' : 'Ativo'}</span>` : '';
 
+        const displayLabel = hotspot.label || (isPortal ? targetTitle : hotspot.infoTitle);
+        const metaIcon = isPortal ? "fa-arrow-right" : "fa-info";
+        const metaText = isPortal ? `Destino: ${targetTitle}` : `Informação: ${hotspot.infoTitle}`;
+        const typeIcon = isPortal ? "fa-location-dot" : "fa-circle-info";
+
         card.innerHTML = `
             <div class="scene-thumb hotspot-thumb">
                 ${thumbContent}
-                <i class="fa-solid fa-location-dot" style="${targetScene && targetScene.type === 'image' && targetScene.sourceUrl ? 'display: none;' : ''}"></i>
+                <i class="fa-solid ${typeIcon}" style="${(isPortal && targetScene && targetScene.type === 'image' && targetScene.sourceUrl) || (!isPortal && hotspot.infoMediaUrl) ? 'display: none;' : ''}"></i>
             </div>
             <div class="scene-info">
-                <h4 class="scene-title" title="${hotspot.label || targetTitle}">${hotspot.label || targetTitle}</h4>
+                <h4 class="scene-title" title="${displayLabel}">${displayLabel}</h4>
                 <div class="scene-meta">
-                    <i class="fa-solid fa-arrow-right" style="color: var(--color-accent); font-size: 10px;"></i>
-                    <span title="Destino: ${targetTitle}">${targetTitle}</span>
+                    <i class="fa-solid ${metaIcon}" style="color: var(--color-accent); font-size: 10px;"></i>
+                    <span title="${metaText}">${metaText}</span>
                 </div>
             </div>
             ${activeBadge}
@@ -2428,10 +2735,10 @@ function renderHotspotsList() {
                     <button class="action-icon-btn btn-reposition ${isRepositioning ? 'repositioning-active' : ''}" title="Reposicionar / Mover no Espaço 360°" style="${isRepositioning ? 'color: var(--color-accent); background: rgba(0,242,254,0.25);' : ''}">
                         <i class="fa-solid fa-crosshairs ${isRepositioning ? 'fa-spin' : ''}"></i>
                     </button>
-                    <button class="action-icon-btn btn-edit" title="Editar Nome ou Destino">
+                    <button class="action-icon-btn btn-edit" title="Editar Propriedades">
                         <i class="fa-solid fa-pen-to-square"></i>
                     </button>
-                    <button class="action-icon-btn btn-delete" title="Excluir Portal">
+                    <button class="action-icon-btn btn-delete" title="Excluir Hotspot">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -2446,7 +2753,11 @@ function renderHotspotsList() {
             lookAtHotspot(hotspot.id);
 
             if (!state.isEditMode) {
-                showToast(`Portal apontado para: ${targetTitle}`, "info");
+                if (isPortal) {
+                    showToast(`Portal apontado para: ${targetTitle}`, "info");
+                } else {
+                    showToast(`Informação: ${hotspot.infoTitle}`, "info");
+                }
             }
         });
 
@@ -2484,7 +2795,7 @@ function renderHotspotsList() {
 }
 
 function deleteHotspot(hotspotId) {
-    if (confirm("Deseja realmente excluir este portal?")) {
+    if (confirm("Deseja realmente excluir este hotspot?")) {
         const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
         if (currentScene && currentScene.hotspots) {
             currentScene.hotspots = currentScene.hotspots.filter(h => h.id !== hotspotId);
@@ -2501,7 +2812,7 @@ function deleteHotspot(hotspotId) {
             renderHotspots(currentScene.hotspots);
             renderHotspotsList();
 
-            showToast("Portal removido com sucesso.", "success");
+            showToast("Hotspot removido com sucesso.", "success");
         }
     }
 }
@@ -3008,6 +3319,64 @@ function updateSettingsSidebarUI() {
             }
         }
     }
+
+    // 3. Atualizar UI da Tampa de Tripé (Nadir)
+    const nadirSettingsItem = document.getElementById("nadir-settings-item");
+    const checkboxNadirEnabled = document.getElementById("checkbox-nadir-enabled");
+    const nadirSubSettings = document.getElementById("nadir-sub-settings");
+    const checkboxNadirUseLogo = document.getElementById("checkbox-nadir-use-logo");
+    const nadirCustomUpload = document.getElementById("nadir-custom-upload");
+    const nadirPreviewContainer = document.getElementById("nadir-preview-container");
+    const nadirPreviewImg = document.getElementById("nadir-preview-img");
+    const sliderNadirRadius = document.getElementById("slider-nadir-radius");
+    const nadirRadiusValue = document.getElementById("nadir-radius-value");
+    const badgeNadirPro = document.getElementById("badge-nadir-pro");
+
+    const hasNadir = state.features ? (state.features.nadir_patch ?? false) : false;
+
+    if (nadirSettingsItem) {
+        if (!state.isOwner) {
+            nadirSettingsItem.style.display = "none";
+        } else {
+            nadirSettingsItem.style.display = "block";
+            if (!hasNadir) {
+                if (badgeNadirPro) badgeNadirPro.style.display = "inline-block";
+                if (checkboxNadirEnabled) {
+                    checkboxNadirEnabled.disabled = true;
+                    checkboxNadirEnabled.checked = false;
+                }
+                if (nadirSubSettings) nadirSubSettings.style.display = "none";
+            } else {
+                if (badgeNadirPro) badgeNadirPro.style.display = "none";
+                if (checkboxNadirEnabled) {
+                    checkboxNadirEnabled.disabled = false;
+                }
+                
+                const nConf = state.tour.nadirSettings || { enabled: false, useLogo: true, image: null, radius: 0.8 };
+                state.tour.nadirSettings = nConf; // Garante inicialização
+                
+                if (checkboxNadirEnabled) checkboxNadirEnabled.checked = nConf.enabled;
+                if (nadirSubSettings) nadirSubSettings.style.display = nConf.enabled ? "flex" : "none";
+                if (checkboxNadirUseLogo) checkboxNadirUseLogo.checked = nConf.useLogo;
+                if (nadirCustomUpload) nadirCustomUpload.style.display = nConf.useLogo ? "none" : "flex";
+                
+                if (nConf.image) {
+                    if (nadirPreviewContainer) nadirPreviewContainer.style.display = "flex";
+                    if (nadirPreviewImg) nadirPreviewImg.src = nConf.image;
+                    const nadirUploadZone = document.getElementById("nadir-upload-zone");
+                    if (nadirUploadZone) nadirUploadZone.style.display = "none";
+                } else {
+                    if (nadirPreviewContainer) nadirPreviewContainer.style.display = "none";
+                    if (nadirPreviewImg) nadirPreviewImg.src = "";
+                    const nadirUploadZone = document.getElementById("nadir-upload-zone");
+                    if (nadirUploadZone) nadirUploadZone.style.display = "block";
+                }
+                
+                if (sliderNadirRadius) sliderNadirRadius.value = nConf.radius || 0.8;
+                if (nadirRadiusValue) nadirRadiusValue.textContent = `${nConf.radius || 0.8}m`;
+            }
+        }
+    }
 }
 
 // --- CONFIGURAÇÕES DE CENA ATIVA (SOM & GALERIA) ---
@@ -3136,4 +3505,73 @@ function renderActiveSceneSettingsUI(scene) {
             }
         }
     }
+}
+
+// --- FUNCIONALIDADES EXCLUSIVAS: TAMPA DE TRIPÉ (NADIR) & INFO HOTSPOT ---
+
+function renderNadirPatch() {
+    const existingNadir = document.getElementById("nadir-patch-element");
+    if (existingNadir) existingNadir.remove();
+    
+    if (!state.tour || !state.tour.nadirSettings || !state.tour.nadirSettings.enabled) return;
+    
+    const nadirConf = state.tour.nadirSettings;
+    const radius = nadirConf.radius || 0.8;
+    let src = "";
+    
+    if (nadirConf.useLogo) {
+        src = state.tour.logoUrl || "";
+    } else {
+        src = nadirConf.image || "";
+    }
+    
+    const sceneEl = document.querySelector("a-scene");
+    if (!sceneEl) return;
+    
+    const circlePatch = document.createElement("a-circle");
+    circlePatch.id = "nadir-patch-element";
+    circlePatch.setAttribute("position", "0 -4.95 0");
+    circlePatch.setAttribute("rotation", "-90 0 0");
+    circlePatch.setAttribute("radius", radius);
+    
+    if (src) {
+        circlePatch.setAttribute("src", src);
+        circlePatch.setAttribute("material", "shader: flat; transparent: true; opacity: 0.95; depthTest: false; side: double");
+    } else {
+        circlePatch.setAttribute("color", "#161822");
+        circlePatch.setAttribute("material", "shader: flat; opacity: 0.85; depthTest: false; side: double");
+    }
+    
+    sceneEl.appendChild(circlePatch);
+}
+
+function openInfoHotspotModal(hotspot) {
+    const modal = document.getElementById("info-hotspot-modal");
+    const titleEl = document.getElementById("info-hotspot-title");
+    const descEl = document.getElementById("info-hotspot-desc");
+    const mediaContainer = document.getElementById("info-hotspot-media-container");
+    const imgEl = document.getElementById("info-hotspot-img");
+    
+    if (!modal) return;
+    
+    if (titleEl) {
+        titleEl.innerHTML = `<i class="fa-solid fa-circle-info" style="color: var(--color-accent);"></i> <span>${hotspot.infoTitle || 'Informação'}</span>`;
+    }
+    if (descEl) {
+        descEl.textContent = hotspot.infoDesc || "";
+    }
+    
+    if (hotspot.infoMediaUrl && mediaContainer && imgEl) {
+        imgEl.src = hotspot.infoMediaUrl;
+        mediaContainer.style.display = "block";
+    } else if (mediaContainer) {
+        mediaContainer.style.display = "none";
+    }
+    
+    modal.classList.add("active");
+}
+
+function closeInfoHotspotModal() {
+    const modal = document.getElementById("info-hotspot-modal");
+    if (modal) modal.classList.remove("active");
 }

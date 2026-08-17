@@ -208,11 +208,14 @@ function renderTours() {
                 <h3 class="project-title" title="${tour.title}">${tour.title}</h3>
                 <span class="project-date">Atualizado em: ${formatDate(tour.updated_at)}</span>
                 
-                <div class="project-actions">
-                    <a href="index.html?id=${tour.id}&v=1.3.8" class="btn btn-primary btn-sm btn-flex">
+                <div class="project-actions" style="display: flex; gap: 6px; width: 100%;">
+                    <a href="index.html?id=${tour.id}&v=1.3.8" class="btn btn-primary btn-sm btn-flex" style="flex: 1; justify-content: center;">
                         <i class="fa-solid fa-edit"></i> Editar
                     </a>
-                    <button class="btn btn-secondary btn-sm btn-delete-project" data-id="${tour.id}">
+                    <a href="api/export_tour.php?id=${tour.id}" class="btn btn-secondary btn-sm btn-flex" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.08); display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 10px;" title="Exportar para Execução Offline">
+                        <i class="fa-solid fa-download"></i> Offline
+                    </a>
+                    <button class="btn btn-secondary btn-sm btn-delete-project" data-id="${tour.id}" style="padding: 0 10px; display: inline-flex; align-items: center; justify-content: center;">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>

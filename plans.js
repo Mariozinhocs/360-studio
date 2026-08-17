@@ -11,15 +11,23 @@ let userEmail = "";
 let pollingInterval = null;
 
 document.addEventListener("DOMContentLoaded", async () => {
-    // 1. Verificar Autenticação
-    await checkAuth();
+    // 1. Inicializar interface e preços imediatamente para renderização instantânea
+    updatePricingUI();
+    initPlansSlider();
 
-    // 2. Carregar configuração de pagamento do Mercado Pago (Public Key)
-    if (currentUser) {
-        await loadPaymentConfig();
-    }
+    // Adicionar listener de rolagem para o encolhimento da barra de menu (sticky shrink)
+    window.addEventListener("scroll", () => {
+        const navbar = document.querySelector(".navbar");
+        if (navbar) {
+            if (window.scrollY > 50) {
+                navbar.classList.add("shrunk");
+            } else {
+                navbar.classList.remove("shrunk");
+            }
+        }
+    });
 
-    // 3. Ouvir mudanças no Billing Toggle Switch
+    // 2. Ouvir mudanças no Billing Toggle Switch
     const checkbox = document.getElementById("billing-checkbox");
     const labelMonthly = document.getElementById("billing-monthly");
     const labelYearly = document.getElementById("billing-yearly");
@@ -36,7 +44,19 @@ document.addEventListener("DOMContentLoaded", async () => {
                 if (labelYearly) labelYearly.classList.remove("active");
             }
             updatePricingUI();
+            // Re-init slider because height or sizing of prices might slightly shift cards
+            initPlansSlider();
         });
+    }
+
+    // 3. Verificar Autenticação e carregar SDK de pagamento em background
+    try {
+        await checkAuth();
+        if (currentUser) {
+            await loadPaymentConfig();
+        }
+    } catch (e) {
+        console.error("Erro no fluxo secundário de autenticação/pagamento:", e);
     }
 });
 
@@ -417,3 +437,112 @@ function showToast(message, type = "info") {
         setTimeout(() => toast.remove(), 300);
     }, 3000);
 }
+
+// --- PLANS SLIDER LOGIC ---
+let plansCurrentIndex = 0;
+
+window.movePlansSlider = function(direction) {
+    const cards = document.querySelectorAll(".plans-slider-track .plan-card");
+    if (cards.length === 0) return;
+    
+    let visibleCards = getVisibleCardsCount();
+    let maxIndex = cards.length - visibleCards;
+    if (maxIndex < 0) maxIndex = 0;
+    
+    plansCurrentIndex += direction;
+    if (plansCurrentIndex < 0) plansCurrentIndex = 0;
+    if (plansCurrentIndex > maxIndex) plansCurrentIndex = maxIndex;
+    
+    updateSliderState();
+};
+
+window.jumpToPlan = function(index) {
+    plansCurrentIndex = index;
+    updateSliderState();
+};
+
+function initPlansSlider() {
+    const track = document.querySelector(".plans-slider-track");
+    const cards = document.querySelectorAll(".plans-slider-track .plan-card");
+    const dotsContainer = document.getElementById("plans-slider-dots");
+    
+    if (!track || cards.length === 0) return;
+    
+    // Create dots
+    if (dotsContainer) {
+        dotsContainer.innerHTML = "";
+        let visibleCards = getVisibleCardsCount();
+        let dotsCount = cards.length - visibleCards + 1;
+        if (dotsCount < 1) dotsCount = 1;
+        
+        for (let i = 0; i < dotsCount; i++) {
+            const dot = document.createElement("div");
+            dot.className = `dot ${i === plansCurrentIndex ? 'active' : ''}`;
+            dot.setAttribute("onclick", `jumpToPlan(${i})`);
+            dotsContainer.appendChild(dot);
+        }
+    }
+    
+    updateSliderState();
+}
+
+function getVisibleCardsCount() {
+    if (window.innerWidth <= 768) return 1;
+    if (window.innerWidth <= 1024) return 2;
+    return 3;
+}
+
+function updateSliderState() {
+    const track = document.querySelector(".plans-slider-track");
+    const cards = document.querySelectorAll(".plans-slider-track .plan-card");
+    if (!track || cards.length === 0) return;
+    
+    let visibleCards = getVisibleCardsCount();
+    let maxIndex = cards.length - visibleCards;
+    if (maxIndex < 0) maxIndex = 0;
+    
+    // Safety check on index bounds
+    if (plansCurrentIndex > maxIndex) plansCurrentIndex = maxIndex;
+    
+    const cardWidth = cards[0].offsetWidth;
+    const gap = 24; // matches gap in CSS
+    const offset = plansCurrentIndex * (cardWidth + gap);
+    
+    track.style.transform = `translateX(-${offset}px)`;
+    
+    // Update dots
+    const dots = document.querySelectorAll(".plans-slider-dots .dot");
+    dots.forEach((dot, i) => {
+        if (i === plansCurrentIndex) dot.classList.add("active");
+        else dot.classList.remove("active");
+    });
+    
+    // Disable arrows if boundary reached
+    const prevBtn = document.getElementById("btn-plans-prev");
+    const nextBtn = document.getElementById("btn-plans-next");
+    
+    if (prevBtn) {
+        if (plansCurrentIndex === 0) {
+            prevBtn.style.opacity = "0.3";
+            prevBtn.style.pointerEvents = "none";
+        } else {
+            prevBtn.style.opacity = "1";
+            prevBtn.style.pointerEvents = "auto";
+        }
+    }
+    
+    if (nextBtn) {
+        if (plansCurrentIndex === maxIndex) {
+            nextBtn.style.opacity = "0.3";
+            nextBtn.style.pointerEvents = "none";
+        } else {
+            nextBtn.style.opacity = "1";
+            nextBtn.style.pointerEvents = "auto";
+        }
+    }
+}
+
+// Re-init slider on window resize to adjust layout bounds
+window.addEventListener("resize", () => {
+    initPlansSlider();
+});

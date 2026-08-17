@@ -29,6 +29,7 @@ $scenes = $data['scenes'] ?? null;
 $floorPlan = $data['floorPlan'] ?? null;
 $logoUrl = isset($data['logoUrl']) ? trim($data['logoUrl']) : null;
 $privacySettings = isset($data['privacySettings']) ? trim($data['privacySettings']) : null;
+$nadirSettings = $data['nadirSettings'] ?? null;
 
 if (empty($tourId) || empty($title) || $scenes === null) {
     http_response_code(400);
@@ -55,9 +56,14 @@ if (!hasFeature($user, 'privacy_control')) {
     $privacySettings = null;
 }
 
+// Desabilitar nadir se o plano não permitir
+if (!hasFeature($user, 'nadir_patch')) {
+    $nadirSettings = null;
+}
+
 try {
     // Verificar se o tour existe e pertence ao usuário, e obter as cenas atuais
-    $stmt = $pdo->prepare("SELECT scenes_json, floor_plan_json, logo_url, privacy_settings FROM " . TABLE_PREFIX . "tours WHERE id = ? AND user_id = ?");
+    $stmt = $pdo->prepare("SELECT scenes_json, floor_plan_json, logo_url, privacy_settings, nadir_json FROM " . TABLE_PREFIX . "tours WHERE id = ? AND user_id = ?");
     $stmt->execute([$tourId, $_SESSION['user_id']]);
     $existingTour = $stmt->fetch();
 
@@ -131,12 +137,29 @@ try {
         }
     }
 
+    // Limpeza física de imagem de nadir antiga se foi substituída ou removida
+    $old_nadir = json_decode($existingTour['nadir_json'] ?? '', true);
+    $old_nadir_image = $old_nadir['image'] ?? '';
+    $new_nadir_image = $nadirSettings['image'] ?? '';
+    if (!empty($old_nadir_image) && $old_nadir_image !== $new_nadir_image) {
+        if (strpos($old_nadir_image, 'uploads/') === 0) {
+            $file_path = dirname(__DIR__) . '/' . $old_nadir_image;
+            $real_path = realpath($file_path);
+            $uploads_dir = realpath(dirname(__DIR__) . '/uploads');
+            
+            if ($real_path && strpos($real_path, $uploads_dir) === 0 && file_exists($real_path)) {
+                unlink($real_path);
+            }
+        }
+    }
+
     $scenes_json = json_encode($scenes);
     $floor_plan_json = $floorPlan !== null ? json_encode($floorPlan) : null;
+    $nadir_json = $nadirSettings !== null ? json_encode($nadirSettings) : null;
 
     // Atualizar no banco com as novas colunas
-    $update = $pdo->prepare("UPDATE " . TABLE_PREFIX . "tours SET title = ?, scenes_json = ?, floor_plan_json = ?, logo_url = ?, privacy_settings = ? WHERE id = ? AND user_id = ?");
-    $update->execute([$title, $scenes_json, $floor_plan_json, $logoUrl, $privacySettings, $tourId, $_SESSION['user_id']]);
+    $update = $pdo->prepare("UPDATE " . TABLE_PREFIX . "tours SET title = ?, scenes_json = ?, floor_plan_json = ?, logo_url = ?, privacy_settings = ?, nadir_json = ? WHERE id = ? AND user_id = ?");
+    $update->execute([$title, $scenes_json, $floor_plan_json, $logoUrl, $privacySettings, $nadir_json, $tourId, $_SESSION['user_id']]);
 
     echo json_encode([
         'success' => true,

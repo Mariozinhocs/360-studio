@@ -639,6 +639,16 @@ function initUIEvents() {
     document.getElementById("btn-submit-pwd-reset").onclick = submitPasswordReset;
     document.getElementById("btn-generate-password").onclick = generateRandomPassword;
 
+    // Modal Planos
+    document.getElementById("btn-close-plan-modal").onclick = closeEditPlanModal;
+    document.getElementById("btn-cancel-plan-edit").onclick = closeEditPlanModal;
+    document.getElementById("btn-save-plan-settings").onclick = savePlanSettings;
+    
+    const btnCreatePlan = document.getElementById("btn-create-plan");
+    if (btnCreatePlan) {
+        btnCreatePlan.onclick = () => openCreatePlanModal();
+    }
+
     // --- EVENTOS DE LOTE (NOVO) ---
     // Checkbox Mestre
     const masterCheckbox = document.getElementById("select-all-users");
@@ -745,6 +755,8 @@ function initUIEvents() {
                         btn = document.getElementById("btn-submit-pwd-reset");
                     } else if (modal.id === "batch-edit-modal") {
                         btn = document.getElementById("btn-save-batch-settings");
+                    } else if (modal.id === "edit-plan-modal") {
+                        btn = document.getElementById("btn-save-plan-settings");
                     }
                     if (btn) btn.click();
                 }
@@ -968,4 +980,321 @@ function showToast(message, type = "info") {
         toast.classList.remove("show");
         setTimeout(() => toast.remove(), 400);
     }, 4000);
+}
+
+// --- GERENCIAMENTO DE ABAS ADMIN ---
+function switchAdminTab(tab) {
+    const usersSection = document.getElementById("admin-users-section");
+    const plansSection = document.getElementById("admin-plans-section");
+    const landingSection = document.getElementById("admin-landing-section");
+    const tabUsersBtn = document.getElementById("tab-users-nav");
+    const tabPlansBtn = document.getElementById("tab-plans-nav");
+    const tabLandingBtn = document.getElementById("tab-landing-nav");
+
+    // Ocultar tudo
+    usersSection.style.display = 'none';
+    plansSection.style.display = 'none';
+    landingSection.style.display = 'none';
+    tabUsersBtn.classList.remove('active');
+    tabPlansBtn.classList.remove('active');
+    if (tabLandingBtn) tabLandingBtn.classList.remove('active');
+
+    if (tab === 'users') {
+        usersSection.style.display = 'block';
+        tabUsersBtn.classList.add('active');
+    } else if (tab === 'plans') {
+        plansSection.style.display = 'block';
+        tabPlansBtn.classList.add('active');
+        loadPlans();
+    } else if (tab === 'landing') {
+        if (landingSection) landingSection.style.display = 'block';
+        if (tabLandingBtn) tabLandingBtn.classList.add('active');
+        loadHomeCMS();
+    }
+}
+
+// --- CARREGAR PLANOS DA MATRIZ ---
+let systemPlans = [];
+async function loadPlans() {
+    const tableBody = document.getElementById("plans-table-body");
+    tableBody.innerHTML = `
+        <tr>
+            <td colspan="6" class="table-loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando planos...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const res = await fetch("api/admin/list_plans.php");
+        const data = await res.json();
+        if (res.ok && data.success) {
+            systemPlans = data.plans;
+            renderPlansTable(systemPlans);
+        } else {
+            showToast(data.message || "Erro ao carregar planos.", "error");
+        }
+    } catch (err) {
+        console.error(err);
+        showToast("Erro ao carregar lista de planos.", "error");
+    }
+}
+
+// --- RENDERIZAR TABELA DE PLANOS ---
+function renderPlansTable(plans) {
+    const tableBody = document.getElementById("plans-table-body");
+    tableBody.innerHTML = "";
+
+    if (plans.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                    Nenhum plano cadastrado.
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    plans.forEach(plan => {
+        const row = document.createElement("tr");
+
+        // Formatar limites numéricos
+        const toursLimit = parseInt(plan.max_tours) > 90000 ? "Ilimitados" : plan.max_tours;
+        const scenesLimit = parseInt(plan.max_scenes) > 90000 ? "Ilimitadas" : plan.max_scenes;
+        const logosLimit = parseInt(plan.max_logos) > 90000 ? "Ilimitados" : plan.max_logos;
+        const limitsStr = `Tours: ${toursLimit} / Cenas: ${scenesLimit} / Logos: ${logosLimit}`;
+
+        // Recursos ativos
+        const features = [];
+        if (parseInt(plan.navigation_arrows)) features.push("Setas");
+        if (parseInt(plan.no_ads)) features.push("Sem Ads");
+        if (parseInt(plan.privacy_control)) features.push("Senha");
+        if (parseInt(plan.offline_access)) features.push("Offline");
+        if (parseInt(plan.ambient_sound)) features.push("Som MP3");
+        if (parseInt(plan.image_gallery)) features.push("Galeria");
+        if (parseInt(plan.floor_plans)) features.push("Planta Baixa");
+        if (parseInt(plan.text_markers)) features.push("Text Markers");
+        if (parseInt(plan.nadir_patch)) features.push("Nadir");
+        if (parseInt(plan.rich_hotspots)) features.push("Rich Media");
+
+        const featuresStr = features.length > 0 
+            ? features.map(f => `<span class="badge-status badge-role-admin" style="margin: 2px; font-size: 11px;">${f}</span>`).join(" ")
+            : `<span style="color: var(--text-secondary); font-size: 12px;">Nenhum</span>`;
+
+        const pMonthly = parseFloat(plan.price_monthly) == 0 ? "Grátis" : formatCurrency(plan.price_monthly);
+        const pYearly = parseFloat(plan.price_yearly) == 0 ? "Grátis" : formatCurrency(plan.price_yearly);
+
+        const isSuper = parseInt(adminState.user.is_admin) === 2;
+        const actionBtn = isSuper 
+            ? `<button class="btn-action-edit btn-edit-plan-btn" data-id="${plan.id}"><i class="fa-solid fa-gem"></i> Configurar</button>`
+            : `<span class="badge-status">Apenas Leitura</span>`;
+
+        row.innerHTML = `
+            <td><strong>${escapeHTML(plan.name)}</strong> <span style="font-size: 11px; color: var(--text-secondary);">(${escapeHTML(plan.plan_key)})</span></td>
+            <td>${pMonthly}</td>
+            <td>${pYearly}</td>
+            <td>${limitsStr}</td>
+            <td><div style="max-width: 350px; display: flex; flex-wrap: wrap; gap: 4px;">${featuresStr}</div></td>
+            <td>${actionBtn}</td>
+        `;
+
+        const btn = row.querySelector(".btn-edit-plan-btn");
+        if (btn) {
+            btn.onclick = () => openEditPlanModal(plan);
+        }
+
+        tableBody.appendChild(row);
+    });
+}
+
+// --- MODAL EDITAR PLANO ---
+function openEditPlanModal(plan) {
+    document.getElementById("edit-plan-id").value = plan.id;
+    document.getElementById("edit-plan-name").value = plan.name;
+    
+    // Configurar o campo de chave como desabilitado para planos existentes
+    const keyInput = document.getElementById("edit-plan-key");
+    keyInput.value = plan.plan_key;
+    keyInput.disabled = true;
+    keyInput.style.opacity = "0.6";
+    keyInput.style.cursor = "not-allowed";
+
+    document.getElementById("edit-plan-price-monthly").value = plan.price_monthly;
+    document.getElementById("edit-plan-price-yearly").value = plan.price_yearly;
+
+    document.getElementById("edit-plan-max-tours").value = plan.max_tours;
+    document.getElementById("edit-plan-max-scenes").value = plan.max_scenes;
+    document.getElementById("edit-plan-max-logos").value = plan.max_logos;
+    document.getElementById("edit-plan-gsv-projects").value = plan.gsv_projects_per_month;
+
+    // Checkboxes
+    document.getElementById("edit-plan-navigation-arrows").checked = parseInt(plan.navigation_arrows) === 1;
+    document.getElementById("edit-plan-no-ads").checked = parseInt(plan.no_ads) === 1;
+    document.getElementById("edit-plan-privacy-control").checked = parseInt(plan.privacy_control) === 1;
+    document.getElementById("edit-plan-offline-access").checked = parseInt(plan.offline_access) === 1;
+    document.getElementById("edit-plan-ambient-sound").checked = parseInt(plan.ambient_sound) === 1;
+    document.getElementById("edit-plan-image-gallery").checked = parseInt(plan.image_gallery) === 1;
+    document.getElementById("edit-plan-floor-plans").checked = parseInt(plan.floor_plans) === 1;
+    document.getElementById("edit-plan-text-markers").checked = parseInt(plan.text_markers) === 1;
+    document.getElementById("edit-plan-nadir-patch").checked = parseInt(plan.nadir_patch) === 1;
+    document.getElementById("edit-plan-rich-hotspots").checked = parseInt(plan.rich_hotspots) === 1;
+
+    document.getElementById("edit-plan-modal").classList.add("active");
+}
+
+function openCreatePlanModal() {
+    document.getElementById("edit-plan-id").value = "0";
+    document.getElementById("edit-plan-name").value = "";
+    
+    // Configurar o campo de chave como habilitado para novo plano
+    const keyInput = document.getElementById("edit-plan-key");
+    keyInput.value = "";
+    keyInput.disabled = false;
+    keyInput.style.opacity = "1";
+    keyInput.style.cursor = "text";
+
+    document.getElementById("edit-plan-price-monthly").value = "0.00";
+    document.getElementById("edit-plan-price-yearly").value = "0.00";
+
+    document.getElementById("edit-plan-max-tours").value = "5";
+    document.getElementById("edit-plan-max-scenes").value = "10";
+    document.getElementById("edit-plan-max-logos").value = "0";
+    document.getElementById("edit-plan-gsv-projects").value = "0";
+
+    // Checkboxes
+    document.getElementById("edit-plan-navigation-arrows").checked = false;
+    document.getElementById("edit-plan-no-ads").checked = false;
+    document.getElementById("edit-plan-privacy-control").checked = false;
+    document.getElementById("edit-plan-offline-access").checked = false;
+    document.getElementById("edit-plan-ambient-sound").checked = false;
+    document.getElementById("edit-plan-image-gallery").checked = false;
+    document.getElementById("edit-plan-floor-plans").checked = false;
+    document.getElementById("edit-plan-text-markers").checked = false;
+    document.getElementById("edit-plan-nadir-patch").checked = false;
+    document.getElementById("edit-plan-rich-hotspots").checked = false;
+
+    document.getElementById("edit-plan-modal").classList.add("active");
+}
+
+function closeEditPlanModal() {
+    document.getElementById("edit-plan-modal").classList.remove("active");
+}
+
+// --- SALVAR CONFIGURAÇÕES DO PLANO ---
+async function savePlanSettings() {
+    const id = parseInt(document.getElementById("edit-plan-id").value);
+    const name = document.getElementById("edit-plan-name").value.trim();
+    const plan_key = document.getElementById("edit-plan-key").value.trim();
+    const price_monthly = parseFloat(document.getElementById("edit-plan-price-monthly").value) || 0;
+    const price_yearly = parseFloat(document.getElementById("edit-plan-price-yearly").value) || 0;
+
+    const max_tours = parseInt(document.getElementById("edit-plan-max-tours").value) || 0;
+    const max_scenes = parseInt(document.getElementById("edit-plan-max-scenes").value) || 0;
+    const max_logos = parseInt(document.getElementById("edit-plan-max-logos").value) || 0;
+    const gsv_projects_per_month = parseInt(document.getElementById("edit-plan-gsv-projects").value) || 0;
+
+    const navigation_arrows = document.getElementById("edit-plan-navigation-arrows").checked ? 1 : 0;
+    const no_ads = document.getElementById("edit-plan-no-ads").checked ? 1 : 0;
+    const privacy_control = document.getElementById("edit-plan-privacy-control").checked ? 1 : 0;
+    const offline_access = document.getElementById("edit-plan-offline-access").checked ? 1 : 0;
+    const ambient_sound = document.getElementById("edit-plan-ambient-sound").checked ? 1 : 0;
+    const image_gallery = document.getElementById("edit-plan-image-gallery").checked ? 1 : 0;
+    const floor_plans = document.getElementById("edit-plan-floor-plans").checked ? 1 : 0;
+    const text_markers = document.getElementById("edit-plan-text-markers").checked ? 1 : 0;
+    const nadir_patch = document.getElementById("edit-plan-nadir-patch").checked ? 1 : 0;
+    const rich_hotspots = document.getElementById("edit-plan-rich-hotspots").checked ? 1 : 0;
+
+    if (!name) {
+        showToast("O nome do plano é obrigatório.", "error");
+        return;
+    }
+
+    if (id === 0 && !plan_key) {
+        showToast("O identificador (chave) do plano é obrigatório para novos planos.", "error");
+        return;
+    }
+
+    showToast(id === 0 ? "Criando plano..." : "Atualizando dados do plano...", "info");
+
+    try {
+        const res = await fetch("api/admin/update_plan.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                id, name, plan_key, price_monthly, price_yearly, max_tours, max_scenes,
+                max_logos, gsv_projects_per_month, navigation_arrows, no_ads,
+                privacy_control, offline_access, ambient_sound, image_gallery,
+                floor_plans, text_markers, nadir_patch, rich_hotspots
+            })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast(id === 0 ? "Plano criado com sucesso!" : "Plano atualizado com sucesso!", "success");
+            closeEditPlanModal();
+            loadPlans();
+        } else {
+            showToast(data.message || "Erro ao salvar plano.", "error");
+        }
+    } catch (err) {
+        console.error(err);
+        showToast("Erro ao conectar com o servidor.", "error");
+    }
+}
+
+// --- CMS DE EDIÇÃO DA LANDING PAGE ---
+async function loadHomeCMS() {
+    try {
+        const res = await fetch("api/get_home_settings.php");
+        const data = await res.json();
+        if (res.ok && data.success) {
+            const s = data.settings || {};
+            document.getElementById("cms-hero-title").value = s.hero_title || "";
+            document.getElementById("cms-hero-subtitle").value = s.hero_subtitle || "";
+            document.getElementById("cms-hero-cta").value = s.hero_cta_text || "";
+            document.getElementById("cms-hero-image").value = s.hero_image_url || "";
+            document.getElementById("cms-features-title").value = s.features_title || "";
+            document.getElementById("cms-features-subtitle").value = s.features_subtitle || "";
+        } else {
+            showToast("Erro ao carregar configurações da Landing Page.", "error");
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Erro de rede ao carregar CMS.", "error");
+    }
+}
+
+async function saveHomeCMS() {
+    const btn = document.getElementById("btn-save-home-cms");
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Salvando...';
+
+    const settings = {
+        hero_title: document.getElementById("cms-hero-title").value,
+        hero_subtitle: document.getElementById("cms-hero-subtitle").value,
+        hero_cta_text: document.getElementById("cms-hero-cta").value,
+        hero_image_url: document.getElementById("cms-hero-image").value,
+        features_title: document.getElementById("cms-features-title").value,
+        features_subtitle: document.getElementById("cms-features-subtitle").value
+    };
+
+    try {
+        const res = await fetch("api/admin/update_home_settings.php", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ settings })
+        });
+        const data = await res.json();
+        if (res.ok && data.success) {
+            showToast("Landing Page salva e atualizada com sucesso!");
+        } else {
+            showToast(data.message || "Erro ao salvar configurações da Landing Page.", "error");
+        }
+    } catch (e) {
+        console.error(e);
+        showToast("Erro de rede ao salvar CMS.", "error");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Salvar Landing Page';
+    }
 }

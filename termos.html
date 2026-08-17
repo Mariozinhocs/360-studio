@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Termos de Uso & Privacidade - 360° Studio</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <style>
+        :root {
+            --bg-primary: #0a0b0e;
+            --bg-card: rgba(16, 18, 26, 0.65);
+            --border-glass: rgba(255, 255, 255, 0.07);
+            --text-primary: #f5f6f9;
+            --text-secondary: #8f9cae;
+            --color-accent: #00f2fe;
+            --color-purple: #9b51e0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.8;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.04) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(155, 81, 224, 0.04) 0%, transparent 40%);
+            padding-top: 90px;
+        }
+
+        /* Unified Navbar Styles */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 11, 14, 0.85);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-glass);
+            transition: all 0.3s ease;
+        }
+        .navbar.shrunk {
+            max-width: 90%;
+            margin: 10px auto;
+            left: 5%;
+            right: 5%;
+            border-radius: 40px;
+            padding: 8px 5%;
+            background: rgba(8, 9, 12, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 6px 0;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-purple));
+            transition: width 0.3s ease;
+        }
+        .nav-links a:hover {
+            color: #fff;
+        }
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        .navbar a img {
+            height: 85px;
+            max-height: 85px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 10px rgba(255, 230, 0, 0.25));
+        }
+        .navbar.shrunk a img {
+            height: 60px;
+            max-height: 60px;
+        }
+        .navbar a:hover img {
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 15px rgba(255, 230, 0, 0.60)) drop-shadow(0 0 30px rgba(255, 200, 0, 0.30));
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .btn-login {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            color: var(--color-accent);
+        }
+        .btn-nav-cta {
+            background: linear-gradient(135deg, var(--color-accent), var(--color-purple));
+            color: #000;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 10px 22px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-nav-cta:hover {
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+            transform: translateY(-1px);
+        }
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 60px 24px;
+        }
+
+        .terms-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .terms-header h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff, #a4b3d6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .terms-header p {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .terms-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 40px;
+            backdrop-filter: blur(12px);
+        }
+
+        .terms-section {
+            margin-bottom: 40px;
+        }
+
+        .terms-section h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 20px;
+            color: #fff;
+            margin-bottom: 16px;
+            font-weight: 700;
+        }
+
+        .terms-section p {
+            color: var(--text-secondary);
+            font-size: 14.5px;
+            margin-bottom: 16px;
+        }
+
+        .terms-section ul {
+            padding-left: 20px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+            font-size: 14.5px;
+        }
+
+        .terms-section li {
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px 24px;
+            border-top: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            font-size: 13px;
+            margin-top: 80px;
+            background: rgba(10, 11, 14, 0.4);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-actions { display: none; }
+            .terms-content { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="home.html" style="text-decoration: none; display: flex; align-items: center;">
+            <img src="assets/logo.png" alt="360° Studio" style="display: block; object-fit: contain;">
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html#features">Funcionalidades</a></li>
+            <li><a href="home.html#showcase">Demonstração</a></li>
+            <li><a href="home.html#pricing">Planos</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="tutoriais.html">Tutoriais</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-login" id="nav-btn-login">Entrar</a>
+            <a href="login.html?register=true" class="btn-nav-cta" id="nav-btn-register">Começar Grátis</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="terms-header">
+            <h1>Termos de Uso & Políticas</h1>
+            <p>Última atualização: 17 de Agosto de 2026</p>
+        </section>
+
+        <div class="terms-content">
+            <div class="terms-section">
+                <h2>1. Aceitação dos Termos</h2>
+                <p>Ao se cadastrar e utilizar a plataforma do 360° Studio, você declara ter lido, compreendido e aceitado todos os termos de serviço descritos neste documento. Caso não concorde com qualquer uma das regras dispostas, você deve abster-se imediatamente de utilizar os nossos recursos.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>2. Uso da Plataforma</h2>
+                <p>O 360° Studio é uma ferramenta SaaS (Software as a Service) voltada para a criação, edição e compartilhamento de passeios virtuais imersivos de 360°. Ao utilizar a plataforma, você concorda em:</p>
+                <ul>
+                    <li>Não enviar arquivos de mídia que infrinjam direitos autorais, leis de propriedade intelectual ou conteúdo impróprio/difamatório.</li>
+                    <li>Ser o único responsável por todos os metadados, hotspots informativos e textos cadastrados nos seus passeios virtuais.</li>
+                    <li>Não utilizar robôs, bots de rastreamento ou crawlers para extrair mídias ou dados confidenciais do servidor do 360° Studio.</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2>3. Assinaturas e Cobrança</h2>
+                <p>Nossos planos de serviço variam de acordo com os limites de tours ativos, cenas permitidas e acesso a recursos premium (como Tampa de Tripé, Radar, Som Ambiente e Hotspots de Informação):</p>
+                <ul>
+                    <li><strong>Ciclo de Cobrança:</strong> As assinaturas são processadas de forma mensal ou anual e renovadas automaticamente ao final de cada ciclo, salvo se canceladas com antecedência pelo usuário.</li>
+                    <li><strong>Cancelamento:</strong> O usuário pode solicitar o cancelamento a qualquer momento através do seu painel administrativo, mantendo o acesso aos recursos premium até o final do período faturado.</li>
+                    <li><strong>Reembolso:</strong> Por se tratar de um serviço de entrega digital imediata, os reembolsos seguem a legislação brasileira aplicável, limitados a solicitações efetuadas até 7 dias após a primeira contratação.</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h2>4. Privacidade dos Dados (LGPD)</h2>
+                <p>Em conformidade com a Lei Geral de Proteção de Dados (LGPD), o 360° Studio coleta informações essenciais de perfil (nome, email e timezone) com o único objetivo de gerenciar e manter a segurança de sua sessão.</p>
+                <p>Suas fotos panorâmicas enviadas e as configurações de hotspots dos passeios virtuais são armazenadas em servidores seguros e não são compartilhadas com terceiros sem sua expressa autorização por meio da ativação do modo de link público.</p>
+            </div>
+
+            <div class="terms-section">
+                <h2>5. Limitação de Responsabilidade</h2>
+                <p>O 360° Studio envida todos os esforços comerciais razoáveis para garantir a disponibilidade contínua dos passeios virtuais compartilhados. No entanto, não nos responsabilizamos por falhas momentâneas causadas por problemas na rede de distribuição de internet global, suspensão de serviços de provedores parceiros ou ações de força maior.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 360° Studio. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Adicionar listener de rolagem para encolhimento do menu
+            window.addEventListener("scroll", () => {
+                const navbar = document.querySelector(".navbar");
+                if (navbar) {
+                    if (window.scrollY > 50) {
+                        navbar.classList.add("shrunk");
+                    } else {
+                        navbar.classList.remove("shrunk");
+                    }
+                }
+            });
+
+            await checkUserSession();
+        });
+
+        async function checkUserSession() {
+            const isPC = !/Mobi|Android|iPhone|iPad|Windows Phone/i.test(navigator.userAgent);
+            if (isPC && !sessionStorage.getItem('session_active')) {
+                try {
+                    const res = await fetch("api/check_auth.php");
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        await fetch("api/logout.php");
+                    }
+                } catch (e) {}
+                return;
+            }
+
+            try {
+                const res = await fetch("api/check_auth.php");
+                const data = await res.json();
+                
+                const btnLogin = document.getElementById("nav-btn-login");
+                const btnRegister = document.getElementById("nav-btn-register");
+
+                if (res.ok && data.success && data.user) {
+                    if (btnLogin) {
+                        btnLogin.textContent = "Acessar Painel";
+                        btnLogin.href = "dashboard.html";
+                        btnLogin.style.color = "var(--color-accent)";
+                        btnLogin.style.fontWeight = "700";
+                    }
+                    if (btnRegister) {
+                        btnRegister.style.display = "none";
+                    }
+                }
+            } catch (err) {
+                console.error("Falha ao checar sessão ativa:", err);
+            }
+        }
+    </script>
+</body>
+</html>

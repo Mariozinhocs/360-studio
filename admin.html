@@ -13,15 +13,17 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="admin.css?v=1.0.2">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body class="admin-page">
     <div class="app-container admin-layout">
         
         <!-- HEADER -->
         <header class="admin-header glassmorphism">
-            <div class="logo">
-                <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
-                <span class="logo-text">360°<span class="highlight">Studio</span> <span class="badge-admin">Admin</span></span>
+            <div class="logo" style="display: flex; align-items: center; gap: 8px;">
+                <img src="assets/logo.png" alt="360° Studio" style="max-height: 40px; display: block; object-fit: contain;">
+                <span class="badge-admin" style="margin-left: 5px;">Admin</span>
             </div>
             
             <div class="nav-actions">
@@ -83,55 +85,161 @@
         <!-- CONTAINER DA TABELA E FILTROS -->
         <main class="admin-main-content glassmorphism">
             
-            <div class="table-header">
-                <h2>Gerenciamento de Clientes e Planos</h2>
-                
-                <div class="filters-row">
-                    <!-- Barra de pesquisa -->
-                    <div class="search-box">
-                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
-                        <input type="text" id="search-users" placeholder="Pesquisar por nome, usuário ou e-mail...">
-                    </div>
+            <div class="admin-tabs" style="display: flex; gap: 10px; margin-bottom: 24px; border-bottom: 1px solid rgba(255,255,255,0.06); padding-bottom: 14px;">
+                <button class="btn btn-secondary btn-sm active" id="tab-users-nav" onclick="switchAdminTab('users')">
+                    <i class="fa-solid fa-users"></i> Clientes e Contas
+                </button>
+                <button class="btn btn-secondary btn-sm" id="tab-plans-nav" onclick="switchAdminTab('plans')" style="border-color: var(--color-purple); color: #b16ef2; background: rgba(155, 81, 224, 0.08);">
+                    <i class="fa-solid fa-gem"></i> Matriz de Planos &amp; Recursos
+                </button>
+                <button class="btn btn-secondary btn-sm" id="tab-landing-nav" onclick="switchAdminTab('landing')" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.08);">
+                    <i class="fa-solid fa-house-chimney-user"></i> Editar Landing Page
+                </button>
+            </div>
+
+            <!-- SEÇÃO DE CLIENTES -->
+            <div id="admin-users-section">
+                <div class="table-header">
+                    <h2>Gerenciamento de Clientes e Planos</h2>
                     
-                    <!-- Filtro por Plano -->
-                    <div class="filter-select-wrapper">
-                        <select id="filter-status">
-                            <option value="">Todos os Planos</option>
-                            <option value="active">Premium Ativo</option>
-                            <option value="trial">Trial Ativo</option>
-                            <option value="expired">Expirados</option>
-                            <option value="admin">Administradores</option>
-                            <option value="deleted">Excluídos (Lixeira)</option>
-                        </select>
+                    <div class="filters-row">
+                        <!-- Barra de pesquisa -->
+                        <div class="search-box">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="search-users" placeholder="Pesquisar por nome, usuário ou e-mail...">
+                        </div>
+                        
+                        <!-- Filtro por Plano -->
+                        <div class="filter-select-wrapper">
+                            <select id="filter-status">
+                                <option value="">Todos os Planos</option>
+                                <option value="active">Premium Ativo</option>
+                                <option value="trial">Trial Ativo</option>
+                                <option value="expired">Expirados</option>
+                                <option value="admin">Administradores</option>
+                                <option value="deleted">Excluídos (Lixeira)</option>
+                            </select>
+                        </div>
                     </div>
+                </div>
+
+                <!-- Tabela de Usuários -->
+                <div class="table-responsive">
+                    <table class="admin-table" id="users-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-users"></th>
+                                <th>Usuário</th>
+                                <th>Contato</th>
+                                <th>Permissão</th>
+                                <th>Status Plano</th>
+                                <th>Validade Assinatura</th>
+                                <th>Projetos (Tours/Cenas)</th>
+                                <th>Data Cadastro</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="users-table-body">
+                            <!-- Carregado via Javascript -->
+                            <tr>
+                                <td colspan="8" class="table-loading">
+                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando usuários do sistema...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
-            <!-- Tabela de Usuários -->
-            <div class="table-responsive">
-                <table class="admin-table" id="users-table">
-                    <thead>
-                        <tr>
-                            <th style="width: 40px; text-align: center;"><input type="checkbox" id="select-all-users"></th>
-                            <th>Usuário</th>
-                            <th>Contato</th>
-                            <th>Permissão</th>
-                            <th>Status Plano</th>
-                            <th>Validade Assinatura</th>
-                            <th>Projetos (Tours/Cenas)</th>
-                            <th>Data Cadastro</th>
-                            <th>Ações</th>
-                        </tr>
-                    </thead>
-                    <tbody id="users-table-body">
-                        <!-- Carregado via Javascript -->
-                        <tr>
-                            <td colspan="8" class="table-loading">
-                                <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando usuários do sistema...
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- SEÇÃO DE PLANOS E RECURSOS -->
+            <div id="admin-plans-section" style="display: none;">
+                <div class="table-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <div>
+                        <h2>Matriz de Planos &amp; Recursos Comerciais</h2>
+                        <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Gerencie os limites numéricos, preços e permissões específicas de cada plano do sistema.</p>
+                    </div>
+                    <button class="btn btn-accent btn-sm" id="btn-create-plan" style="display: inline-flex; align-items: center; gap: 6px;">
+                        <i class="fa-solid fa-plus"></i> Criar Novo Plano
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="admin-table">
+                        <thead>
+                            <tr>
+                                <th>Plano</th>
+                                <th>Preço Mensal</th>
+                                <th>Preço Anual</th>
+                                <th>Limites (Tours/Cenas)</th>
+                                <th>Recursos Avançados</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="plans-table-body">
+                            <!-- Carregado via Javascript -->
+                            <tr>
+                                <td colspan="6" class="table-loading">
+                                    <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando matriz de planos...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SEÇÃO DE LANDING PAGE -->
+            <div id="admin-landing-section" style="display: none;">
+                <div class="table-header">
+                    <h2>Editar Conteúdo da Landing Page (Home)</h2>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin-top: 4px;">Edite dinamicamente o título principal, subtítulos e imagens exibidos na página inicial.</p>
+                </div>
+                
+                <div class="cms-form-card" style="margin-top: 20px; display: flex; flex-direction: column; gap: 20px; max-width: 800px;">
+                    <!-- Seção Hero -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 8px;">
+                        <h3 style="font-size: 15px; color: #b16ef2; margin-top: 0; margin-bottom: 16px;"><i class="fa-solid fa-bullhorn"></i> Seção de Apresentação (Hero)</h3>
+                        
+                        <div class="form-group">
+                            <label for="cms-hero-title">Título Principal (H1)</label>
+                            <input type="text" id="cms-hero-title" placeholder="Ex: Crie Passeios Virtuais 360° Impressionantes em Minutos" style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="cms-hero-subtitle">Subtítulo Descritivo</label>
+                            <textarea id="cms-hero-subtitle" rows="3" placeholder="Apresente imóveis, comércios e espaços com realismo fotográfico..." style="width: 100%; min-height: 80px;"></textarea>
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="cms-hero-cta">Texto do Botão de Ação</label>
+                            <input type="text" id="cms-hero-cta" placeholder="Ex: Criar Conta Grátis" style="width: 100%;">
+                        </div>
+
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="cms-hero-image">URL da Imagem de Destaque (ou Mockup)</label>
+                            <input type="text" id="cms-hero-image" placeholder="Ex: https://images.unsplash.com/photo-..." style="width: 100%;">
+                        </div>
+                    </div>
+
+                    <!-- Seção Recursos -->
+                    <div style="background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); padding: 24px; border-radius: 8px;">
+                        <h3 style="font-size: 15px; color: #b16ef2; margin-top: 0; margin-bottom: 16px;"><i class="fa-solid fa-list-check"></i> Seção de Vantagens e Recursos</h3>
+                        
+                        <div class="form-group">
+                            <label for="cms-features-title">Título da Seção</label>
+                            <input type="text" id="cms-features-title" placeholder="Ex: Recursos Profissionais" style="width: 100%;">
+                        </div>
+                        
+                        <div class="form-group" style="margin-top: 15px;">
+                            <label for="cms-features-subtitle">Subtítulo da Seção</label>
+                            <textarea id="cms-features-subtitle" rows="2" placeholder="Tudo o que você precisa para criar experiências virtuais imersivas..." style="width: 100%; min-height: 60px;"></textarea>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-accent" id="btn-save-home-cms" onclick="saveHomeCMS()" style="width: auto; padding: 12px 24px;">
+                            <i class="fa-solid fa-floppy-disk"></i> Salvar Landing Page
+                        </button>
+                    </div>
+                </div>
             </div>
 
         </main>
@@ -294,10 +402,123 @@
         </div>
     </div>
 
+    <!-- MODAL EDITAR PLANO E RECURSOS -->
+    <div class="modal-overlay" id="edit-plan-modal">
+        <div class="modal-card glassmorphism" style="max-width: 600px;">
+            <div class="modal-header">
+                <h2><i class="fa-solid fa-gem"></i> Editar Plano e Recursos</h2>
+                <button class="close-btn" id="btn-close-plan-modal">&times;</button>
+            </div>
+            <div class="modal-body" style="max-height: 70vh; overflow-y: auto; padding-right: 8px;">
+                <input type="hidden" id="edit-plan-id">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-name">Nome do Plano</label>
+                        <input type="text" id="edit-plan-name" placeholder="Ex: Premium">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-key">Identificador (Chave)</label>
+                        <input type="text" id="edit-plan-key" placeholder="Ex: basico" style="width: 100%;">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-price-monthly">Preço Mensal (R$)</label>
+                        <input type="number" step="0.01" id="edit-plan-price-monthly">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-price-yearly">Preço Anual (R$)</label>
+                        <input type="number" step="0.01" id="edit-plan-price-yearly">
+                    </div>
+                </div>
+
+                <h3 style="font-size: 14px; color: #b16ef2; margin: 24px 0 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;"><i class="fa-solid fa-chart-pie"></i> Limites Numéricos</h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-max-tours">Qtd. Máxima de Tours</label>
+                        <input type="number" id="edit-plan-max-tours">
+                        <span class="field-hint">Use 99999 para ilimitado.</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-max-scenes">Qtd. Máxima de Cenas por Tour</label>
+                        <input type="number" id="edit-plan-max-scenes">
+                        <span class="field-hint">Use 99999 para ilimitado.</span>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-max-logos">Qtd. Máxima de Logos</label>
+                        <input type="number" id="edit-plan-max-logos">
+                        <span class="field-hint">Use 99999 para ilimitado.</span>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="edit-plan-gsv-projects">Projetos GSV por Mês</label>
+                        <input type="number" id="edit-plan-gsv-projects">
+                        <span class="field-hint">Use 99999 para ilimitado.</span>
+                    </div>
+                </div>
+
+                <h3 style="font-size: 14px; color: #b16ef2; margin: 24px 0 12px 0; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 6px;"><i class="fa-solid fa-list-check"></i> Recursos Adicionais (Ativos/Inativos)</h3>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 24px;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-navigation-arrows" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-navigation-arrows" style="margin: 0; cursor: pointer;">Setas de Navegação</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-no-ads" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-no-ads" style="margin: 0; cursor: pointer;">Sem Anúncios</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-privacy-control" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-privacy-control" style="margin: 0; cursor: pointer;">Privacidade por Senha</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-offline-access" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-offline-access" style="margin: 0; cursor: pointer;">Acesso Offline</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-ambient-sound" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-ambient-sound" style="margin: 0; cursor: pointer;">Som Ambiente MP3</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-image-gallery" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-image-gallery" style="margin: 0; cursor: pointer;">Galeria de Fotos 2D</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-floor-plans" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-floor-plans" style="margin: 0; cursor: pointer;">Planta Baixa Interativa</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-text-markers" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-text-markers" style="margin: 0; cursor: pointer;">Text Markers</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-nadir-patch" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-nadir-patch" style="margin: 0; cursor: pointer;">Tampa de Tripé (Nadir)</label>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="edit-plan-rich-hotspots" style="width: auto; margin-top: 0;">
+                        <label for="edit-plan-rich-hotspots" style="margin: 0; cursor: pointer;">Hotspots de Informações</label>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btn-cancel-plan-edit">Cancelar</button>
+                    <button class="btn btn-accent" id="btn-save-plan-settings">Salvar Plano</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Lógica JS -->
-    <script src="admin.js?v=1.0.5"></script>
+    <script src="admin.js?v=1.1.0"></script>
 </body>
 </html>

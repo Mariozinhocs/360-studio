@@ -13,6 +13,8 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="dashboard.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body class="auth-page">
     <div class="auth-background-effects">
@@ -22,10 +24,9 @@
 
     <div class="auth-container">
         <!-- LOGO -->
-        <div class="auth-logo">
-            <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
-            <span class="logo-text">360°<span class="highlight">Studio</span></span>
-            <p class="subtitle">A-Team Tour Platform</p>
+        <div class="auth-logo" style="margin-bottom: 25px;">
+            <img src="assets/logo.png" alt="360° Studio Logo" style="max-height: 80px; display: block; margin: 0 auto 10px auto; object-fit: contain;">
+            <p class="subtitle" style="margin-top: 5px; opacity: 0.8;">O melhor e mais completo editor de tour 360°</p>
         </div>
 
         <!-- CARD LOGIN -->
@@ -431,6 +432,13 @@
             resetCard.classList.add('active');
             document.getElementById('reset-token').value = urlToken;
             showToast('Link de recuperação detectado! Defina sua nova senha.', 'info');
+        }
+
+        // Se register=true, mostrar card de cadastro automaticamente
+        const registerParam = urlParams.get('register');
+        if (registerParam === 'true') {
+            hideAllCards();
+            registerCard.classList.add('active');
         }
     </script>
 </body>

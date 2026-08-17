@@ -76,6 +76,11 @@ function loginRequired() {
 
 // Helper para verificar status da assinatura e se ela está ativa/válida
 function checkSubscription($user) {
+    // Administradores e Super Administradores sempre possuem acesso ativo
+    if (isset($user['is_admin']) && (int)$user['is_admin'] >= 1) {
+        return true;
+    }
+
     if ($user['subscription_status'] === 'expired') {
         return false;
     }
@@ -93,83 +98,124 @@ function checkSubscription($user) {
 }
 
 // Definição da matriz de recursos e limites de planos comerciais
-define('PLANS_MATRIX', [
-    'gratis' => [
-        'name' => 'Grátis',
-        'max_tours' => 5,
-        'max_scenes' => 10,
-        'gsv_projects_per_month' => 0,
-        'max_logos' => 0,
-        'navigation_arrows' => true,
-        'no_ads' => false,
-        'privacy_control' => false,
-        'offline_access' => false,
-        'ambient_sound' => false,
-        'image_gallery' => false,
-        'floor_plans' => false,
-        'text_markers' => false
-    ],
-    'iniciante' => [
-        'name' => 'Iniciante',
-        'max_tours' => 10,
-        'max_scenes' => 20,
-        'gsv_projects_per_month' => 0,
-        'max_logos' => 0,
-        'navigation_arrows' => true,
-        'no_ads' => true,
-        'privacy_control' => false,
-        'offline_access' => false,
-        'ambient_sound' => false,
-        'image_gallery' => false,
-        'floor_plans' => false,
-        'text_markers' => false
-    ],
-    'basico' => [
-        'name' => 'Básico',
-        'max_tours' => 50,
-        'max_scenes' => 20,
-        'gsv_projects_per_month' => 1,
-        'max_logos' => 1,
-        'navigation_arrows' => true,
-        'no_ads' => true,
-        'privacy_control' => false,
-        'offline_access' => false,
-        'ambient_sound' => false,
-        'image_gallery' => false,
-        'floor_plans' => false,
-        'text_markers' => true
-    ],
-    'pessoal' => [
-        'name' => 'Pessoal',
-        'max_tours' => 100,
-        'max_scenes' => 50,
-        'gsv_projects_per_month' => 3,
-        'max_logos' => 2,
-        'navigation_arrows' => true,
-        'no_ads' => true,
-        'privacy_control' => false,
-        'offline_access' => true,
-        'ambient_sound' => true,
-        'image_gallery' => false,
-        'floor_plans' => false,
-        'text_markers' => true
-    ],
-    'profissional' => [
-        'name' => 'Profissional',
-        'max_tours' => -1, // ilimitado
-        'max_scenes' => -1, // ilimitado
-        'gsv_projects_per_month' => 25,
-        'max_logos' => -1, // ilimitado
-        'navigation_arrows' => true,
-        'no_ads' => true,
-        'privacy_control' => true,
-        'offline_access' => true,
-        'ambient_sound' => true,
-        'image_gallery' => true,
-        'floor_plans' => true,
-        'text_markers' => true
-    ]
-]);
+$loaded_plans = [];
+try {
+    $stmtPlans = $pdo->query("SELECT * FROM `" . TABLE_PREFIX . "plans` ORDER BY id ASC");
+    while ($row = $stmtPlans->fetch(PDO::FETCH_ASSOC)) {
+        $loaded_plans[$row['plan_key']] = [
+            'name' => $row['name'],
+            'max_tours' => (int)$row['max_tours'] > 90000 ? -1 : (int)$row['max_tours'],
+            'max_scenes' => (int)$row['max_scenes'] > 90000 ? -1 : (int)$row['max_scenes'],
+            'gsv_projects_per_month' => (int)$row['gsv_projects_per_month'] > 9000 ? -1 : (int)$row['gsv_projects_per_month'],
+            'max_logos' => (int)$row['max_logos'] > 9000 ? -1 : (int)$row['max_logos'],
+            'navigation_arrows' => (bool)$row['navigation_arrows'],
+            'no_ads' => (bool)$row['no_ads'],
+            'privacy_control' => (bool)$row['privacy_control'],
+            'offline_access' => (bool)$row['offline_access'],
+            'ambient_sound' => (bool)$row['ambient_sound'],
+            'image_gallery' => (bool)$row['image_gallery'],
+            'floor_plans' => (bool)$row['floor_plans'],
+            'text_markers' => (bool)$row['text_markers'],
+            'nadir_patch' => (bool)$row['nadir_patch'],
+            'rich_hotspots' => (bool)$row['rich_hotspots']
+        ];
+    }
+} catch (Exception $e) {
+    // Caso de falha ou banco de dados não migrado ainda
+}
+
+// Fallback estático original para segurança
+if (empty($loaded_plans)) {
+    $loaded_plans = [
+        'gratis' => [
+            'name' => 'Grátis',
+            'max_tours' => 5,
+            'max_scenes' => 10,
+            'gsv_projects_per_month' => 0,
+            'max_logos' => 0,
+            'navigation_arrows' => true,
+            'no_ads' => false,
+            'privacy_control' => false,
+            'offline_access' => false,
+            'ambient_sound' => false,
+            'image_gallery' => false,
+            'floor_plans' => false,
+            'text_markers' => false,
+            'nadir_patch' => false,
+            'rich_hotspots' => false
+        ],
+        'iniciante' => [
+            'name' => 'Iniciante',
+            'max_tours' => 10,
+            'max_scenes' => 20,
+            'gsv_projects_per_month' => 0,
+            'max_logos' => 0,
+            'navigation_arrows' => true,
+            'no_ads' => true,
+            'privacy_control' => false,
+            'offline_access' => false,
+            'ambient_sound' => false,
+            'image_gallery' => false,
+            'floor_plans' => false,
+            'text_markers' => false,
+            'nadir_patch' => false,
+            'rich_hotspots' => false
+        ],
+        'basico' => [
+            'name' => 'Básico',
+            'max_tours' => 50,
+            'max_scenes' => 20,
+            'gsv_projects_per_month' => 1,
+            'max_logos' => 1,
+            'navigation_arrows' => true,
+            'no_ads' => true,
+            'privacy_control' => false,
+            'offline_access' => false,
+            'ambient_sound' => false,
+            'image_gallery' => false,
+            'floor_plans' => false,
+            'text_markers' => true,
+            'nadir_patch' => true,
+            'rich_hotspots' => true
+        ],
+        'pessoal' => [
+            'name' => 'Pessoal',
+            'max_tours' => 100,
+            'max_scenes' => 50,
+            'gsv_projects_per_month' => 3,
+            'max_logos' => 2,
+            'navigation_arrows' => true,
+            'no_ads' => true,
+            'privacy_control' => false,
+            'offline_access' => true,
+            'ambient_sound' => true,
+            'image_gallery' => false,
+            'floor_plans' => false,
+            'text_markers' => true,
+            'nadir_patch' => true,
+            'rich_hotspots' => true
+        ],
+        'profissional' => [
+            'name' => 'Profissional',
+            'max_tours' => -1, // ilimitado
+            'max_scenes' => -1, // ilimitado
+            'gsv_projects_per_month' => 25,
+            'max_logos' => -1, // ilimitado
+            'navigation_arrows' => true,
+            'no_ads' => true,
+            'privacy_control' => true,
+            'offline_access' => true,
+            'ambient_sound' => true,
+            'image_gallery' => true,
+            'floor_plans' => true,
+            'text_markers' => true,
+            'nadir_patch' => true,
+            'rich_hotspots' => true
+        ]
+    ];
+}
+
+define('PLANS_MATRIX', $loaded_plans);
 
 // Helper para normalizar o nome do plano (mapeia trial/active antigos para os planos corretos)
 function resolvePlanName($user) {

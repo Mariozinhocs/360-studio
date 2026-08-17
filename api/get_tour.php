@@ -155,7 +155,7 @@ if ($tourId === 'demo-showroom') {
 try {
     // Buscar o tour e juntar com os dados do usuário criador para validar status da assinatura e obter recursos adicionais
     $stmt = $pdo->prepare("
-        SELECT t.id, t.title, t.scenes_json, t.floor_plan_json, t.logo_url, t.privacy_settings, t.user_id, u.subscription_status, u.subscription_expires_at 
+        SELECT t.id, t.title, t.scenes_json, t.floor_plan_json, t.logo_url, t.privacy_settings, t.nadir_json, t.user_id, u.subscription_status, u.subscription_expires_at 
         FROM " . TABLE_PREFIX . "tours t 
         JOIN " . TABLE_PREFIX . "users u ON t.user_id = u.id 
         WHERE t.id = ?
@@ -228,6 +228,12 @@ try {
         $floorPlan = json_decode($tour['floor_plan_json'], true);
     }
 
+    // Decodifica as configurações do Nadir se houver (apenas se não estiver bloqueado por senha e o plano permitir)
+    $nadirSettings = null;
+    if (!$is_locked && !empty($tour['nadir_json']) && hasFeature($owner, 'nadir_patch')) {
+        $nadirSettings = json_decode($tour['nadir_json'], true);
+    }
+
     $show_ads = !hasFeature($owner, 'no_ads');
 
     $features = [];
@@ -243,7 +249,8 @@ try {
             'title' => $tour['title'],
             'scenes' => $scenes,
             'floorPlan' => $floorPlan,
-            'logoUrl' => $logoUrl
+            'logoUrl' => $logoUrl,
+            'nadirSettings' => $nadirSettings
         ],
         'is_owner' => $is_owner,
         'show_ads' => $show_ads,

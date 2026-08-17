@@ -139,6 +139,15 @@ try {
         } else {
             echo "Coluna 'privacy_settings' já existe na tabela de tours.\n";
         }
+
+        // Verifica se a coluna nadir_json existe na tabela de tours
+        $col_nadir = $pdo->query("SHOW COLUMNS FROM `{$tours_table}` LIKE 'nadir_json'");
+        if ($col_nadir->rowCount() === 0) {
+            $pdo->exec("ALTER TABLE `{$tours_table}` ADD COLUMN nadir_json LONGTEXT NULL DEFAULT NULL AFTER privacy_settings");
+            echo "Coluna 'nadir_json' adicionada com sucesso na tabela de tours!\n";
+        } else {
+            echo "Coluna 'nadir_json' já existe na tabela de tours.\n";
+        }
     } else {
         echo "Tabela '{$users_table}' não encontrada. Criando novas tabelas...\n";
         $sql = file_get_contents($sql_file);
@@ -147,6 +156,172 @@ try {
         $pdo->exec($sql);
         echo "Tabelas criadas com sucesso!\n";
     }
+
+    // Criar tabela de planos se ela não existir
+    $plans_table = $prefix . 'plans';
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `{$plans_table}` (
+        `id` INT AUTO_INCREMENT PRIMARY KEY,
+        `plan_key` VARCHAR(30) UNIQUE NOT NULL,
+        `name` VARCHAR(50) NOT NULL,
+        `price_monthly` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        `price_yearly` DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+        `max_tours` INT NOT NULL DEFAULT 0,
+        `max_scenes` INT NOT NULL DEFAULT 0,
+        `gsv_projects_per_month` INT NOT NULL DEFAULT 0,
+        `max_logos` INT NOT NULL DEFAULT 0,
+        `navigation_arrows` TINYINT(1) NOT NULL DEFAULT 0,
+        `no_ads` TINYINT(1) NOT NULL DEFAULT 0,
+        `privacy_control` TINYINT(1) NOT NULL DEFAULT 0,
+        `offline_access` TINYINT(1) NOT NULL DEFAULT 0,
+        `ambient_sound` TINYINT(1) NOT NULL DEFAULT 0,
+        `image_gallery` TINYINT(1) NOT NULL DEFAULT 0,
+        `floor_plans` TINYINT(1) NOT NULL DEFAULT 0,
+        `text_markers` TINYINT(1) NOT NULL DEFAULT 0,
+        `nadir_patch` TINYINT(1) NOT NULL DEFAULT 0,
+        `rich_hotspots` TINYINT(1) NOT NULL DEFAULT 0,
+        `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    echo "Tabela '{$plans_table}' garantida/criada com sucesso!\n";
+
+    // Semear/popular tabela de planos se estiver vazia
+    $countPlans = $pdo->query("SELECT COUNT(*) FROM `{$plans_table}`")->fetchColumn();
+    if ($countPlans == 0) {
+        $defaultPlans = [
+            [
+                'plan_key' => 'gratis',
+                'name' => 'Grátis',
+                'price_monthly' => 0.00,
+                'price_yearly' => 0.00,
+                'max_tours' => 5,
+                'max_scenes' => 10,
+                'gsv_projects_per_month' => 0,
+                'max_logos' => 0,
+                'navigation_arrows' => 1,
+                'no_ads' => 0,
+                'privacy_control' => 0,
+                'offline_access' => 0,
+                'ambient_sound' => 0,
+                'image_gallery' => 0,
+                'floor_plans' => 0,
+                'text_markers' => 0,
+                'nadir_patch' => 0,
+                'rich_hotspots' => 0
+            ],
+            [
+                'plan_key' => 'iniciante',
+                'name' => 'Iniciante',
+                'price_monthly' => 89.99,
+                'price_yearly' => 863.90,
+                'max_tours' => 10,
+                'max_scenes' => 20,
+                'gsv_projects_per_month' => 0,
+                'max_logos' => 0,
+                'navigation_arrows' => 1,
+                'no_ads' => 1,
+                'privacy_control' => 0,
+                'offline_access' => 0,
+                'ambient_sound' => 0,
+                'image_gallery' => 0,
+                'floor_plans' => 0,
+                'text_markers' => 0,
+                'nadir_patch' => 0,
+                'rich_hotspots' => 0
+            ],
+            [
+                'plan_key' => 'basico',
+                'name' => 'Básico',
+                'price_monthly' => 129.99,
+                'price_yearly' => 1247.90,
+                'max_tours' => 50,
+                'max_scenes' => 20,
+                'gsv_projects_per_month' => 1,
+                'max_logos' => 1,
+                'navigation_arrows' => 1,
+                'no_ads' => 1,
+                'privacy_control' => 0,
+                'offline_access' => 0,
+                'ambient_sound' => 0,
+                'image_gallery' => 0,
+                'floor_plans' => 0,
+                'text_markers' => 1,
+                'nadir_patch' => 1,
+                'rich_hotspots' => 1
+            ],
+            [
+                'plan_key' => 'pessoal',
+                'name' => 'Pessoal',
+                'price_monthly' => 199.99,
+                'price_yearly' => 1919.90,
+                'max_tours' => 100,
+                'max_scenes' => 50,
+                'gsv_projects_per_month' => 3,
+                'max_logos' => 2,
+                'navigation_arrows' => 1,
+                'no_ads' => 1,
+                'privacy_control' => 0,
+                'offline_access' => 1,
+                'ambient_sound' => 1,
+                'image_gallery' => 0,
+                'floor_plans' => 0,
+                'text_markers' => 1,
+                'nadir_patch' => 1,
+                'rich_hotspots' => 1
+            ],
+            [
+                'plan_key' => 'profissional',
+                'name' => 'Profissional',
+                'price_monthly' => 349.99,
+                'price_yearly' => 3359.90,
+                'max_tours' => 99999,
+                'max_scenes' => 99999,
+                'gsv_projects_per_month' => 9999,
+                'max_logos' => 9999,
+                'navigation_arrows' => 1,
+                'no_ads' => 1,
+                'privacy_control' => 1,
+                'offline_access' => 1,
+                'ambient_sound' => 1,
+                'image_gallery' => 1,
+                'floor_plans' => 1,
+                'text_markers' => 1,
+                'nadir_patch' => 1,
+                'rich_hotspots' => 1
+            ]
+        ];
+
+        $stmtInsert = $pdo->prepare("INSERT INTO `{$plans_table}` (
+            plan_key, name, price_monthly, price_yearly, max_tours, max_scenes, 
+            gsv_projects_per_month, max_logos, navigation_arrows, no_ads, 
+            privacy_control, offline_access, ambient_sound, image_gallery, 
+            floor_plans, text_markers, nadir_patch, rich_hotspots
+        ) VALUES (
+            ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
+        )");
+
+        foreach ($defaultPlans as $p) {
+            $stmtInsert->execute([
+                $p['plan_key'], $p['name'], $p['price_monthly'], $p['price_yearly'],
+                $p['max_tours'], $p['max_scenes'], $p['gsv_projects_per_month'],
+                $p['max_logos'], $p['navigation_arrows'], $p['no_ads'],
+                $p['privacy_control'], $p['offline_access'], $p['ambient_sound'],
+                $p['image_gallery'], $p['floor_plans'], $p['text_markers'],
+                $p['nadir_patch'], $p['rich_hotspots']
+            ]);
+        }
+        echo "Planos padrão semeados/inseridos com sucesso!\n";
+    } else {
+        echo "Tabela de planos já possui registros semeados.\n";
+    }
+
+    // Criar tabela de home_settings se ela não existir
+    $home_settings_table = $prefix . 'home_settings';
+    $pdo->exec("CREATE TABLE IF NOT EXISTS `{$home_settings_table}` (
+        `setting_key` VARCHAR(50) PRIMARY KEY,
+        `setting_value` LONGTEXT NOT NULL,
+        `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    echo "Tabela '{$home_settings_table}' garantida/criada com sucesso!\n";
 
     // Promover administradores padrão para facilidade de teste como Super Admin (nível 2)
     $stmt = $pdo->prepare("UPDATE `{$users_table}` SET is_admin = 2 WHERE username = 'mariozinhocs' OR email LIKE :mario OR id = 1");

@@ -25,6 +25,8 @@
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
     <link rel="stylesheet" href="style.css?v=1.4.3">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
     <div class="app-container">
@@ -257,7 +259,49 @@
                                     </button>
                                 </div>
                             </div>
-
+                            
+                            <!-- Tampa de Tripé (Nadir) -->
+                            <div class="setting-item" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;" id="nadir-settings-item">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                    <label style="font-size: 11px; color: var(--text-secondary); margin: 0;">Tampa de Tripé (Nadir)</label>
+                                    <span id="badge-nadir-pro" style="font-size: 9px; padding: 2px 5px; background: linear-gradient(135deg, #ffaa00, #ff6a00); color: #000; font-weight: bold; border-radius: 4px; display: none;">PRO</span>
+                                </div>
+                                <div class="nadir-controls" style="display: flex; flex-direction: column; gap: 8px;">
+                                    <label class="checkbox-container" style="font-size: 12px; display: flex; align-items: center; gap: 8px; color: #fff; cursor: pointer; margin-bottom: 0;">
+                                        <input type="checkbox" id="checkbox-nadir-enabled" style="cursor: pointer;"> Habilitar tampa no chão
+                                    </label>
+                                    
+                                    <div id="nadir-sub-settings" style="display: none; flex-direction: column; gap: 8px; margin-top: 5px;">
+                                        <label class="checkbox-container" style="font-size: 11px; display: flex; align-items: center; gap: 8px; color: var(--text-secondary); cursor: pointer; margin-bottom: 0;">
+                                            <input type="checkbox" id="checkbox-nadir-use-logo" style="cursor: pointer;" checked> Usar Logomarca do Tour
+                                        </label>
+                                        
+                                        <div id="nadir-custom-upload" style="display: none; flex-direction: column; gap: 5px;">
+                                            <div id="nadir-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 10px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
+                                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 14px; color: var(--color-accent); margin-bottom: 4px; display: block;"></i>
+                                                <span style="font-size: 10px; opacity: 0.8; display: block;">Imagem do Nadir</span>
+                                                <input type="file" id="nadir-file-input" accept="image/png,image/webp,image/avif,image/jpeg" style="display: none;">
+                                            </div>
+                                            <div id="nadir-preview-container" style="display: none; align-items: center; gap: 10px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 4px; background: rgba(255,255,255,0.03);">
+                                                <img id="nadir-preview-img" src="" alt="Nadir" style="height: 24px; width: 24px; border-radius: 50%; object-fit: cover; background: rgba(0,0,0,0.3);">
+                                                <span style="font-size: 10px; color: var(--text-secondary); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Imagem ativa</span>
+                                                <button id="btn-delete-nadir-img" class="btn btn-secondary btn-sm" title="Excluir Imagem" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 2px 6px; font-size: 10px;">
+                                                    <i class="fa-solid fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+ 
+                                        <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 5px;">
+                                            <div style="display: flex; justify-content: space-between; font-size: 11px; color: var(--text-secondary);">
+                                                <span>Tamanho da tampa</span>
+                                                <span id="nadir-radius-value">0.8m</span>
+                                            </div>
+                                            <input type="range" id="slider-nadir-radius" min="0.4" max="2.0" step="0.1" value="0.8" style="width: 100%; accent-color: var(--color-accent); height: 4px; cursor: pointer;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+ 
                             <!-- Controle de Privacidade -->
                             <div class="setting-item" style="margin-top: 15px;">
                                 <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Acesso e Privacidade</label>
@@ -284,9 +328,8 @@
                     <button id="btn-toggle-sidebar" class="btn-sidebar-toggle-top" title="Ocultar / Expandir barra lateral (Shift + S)" onclick="toggleSidebar()">
                         <i class="fa-solid fa-bars-staggered"></i>
                     </button>
-                    <a href="dashboard.html" class="logo" style="text-decoration: none; display: flex; align-items: center; gap: 8px; margin-right: 8px;" title="360° Studio">
-                        <i class="fa-solid fa-wand-magic-sparkles logo-icon"></i>
-                        <span class="logo-text">360°<span class="highlight">Studio</span></span>
+                    <a href="dashboard.html" class="logo" style="text-decoration: none; display: flex; align-items: center; gap: 8px; margin-right: 8px;" title="360° Studio" id="viewer-logo-link">
+                        <img src="assets/logo.png" alt="360° Studio" style="max-height: 40px; display: block; object-fit: contain;">
                     </a>
                     <div class="tour-info" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
                         <h1 id="tour-display-title">Meu Tour Virtual 360</h1>
@@ -297,6 +340,9 @@
                     <a href="tutoriais.html" target="_blank" class="mode-btn" style="text-decoration: none; display: inline-flex; align-items: center; gap: 5px; border: 1px solid rgba(56, 189, 248, 0.25); color: #38bdf8; background: rgba(56, 189, 248, 0.08); border-radius: 20px; padding: 8px 16px;">
                         <i class="fa-regular fa-circle-question"></i> Ajuda
                     </a>
+                    <button id="btn-enter-vr" class="mode-btn" style="border-color: var(--color-purple); color: #b16ef2; background: rgba(155, 81, 224, 0.08); display: inline-flex; align-items: center; gap: 6px;" title="Ativar Modo Óculos VR / Estereoscópico">
+                        <i class="fa-solid fa-vr-cardboard"></i> Modo VR
+                    </button>
                     <a href="dashboard.html" id="btn-dashboard" class="mode-btn" style="text-decoration: none; display: flex; align-items: center; gap: 5px;">
                         <i class="fa-solid fa-house"></i> Painel
                     </a>
@@ -500,10 +546,45 @@
                     <input type="text" id="hotspot-label" placeholder="Ex: Ir para o Quarto Principal">
                 </div>
                 <div class="form-group">
+                    <label for="hotspot-type-select">Tipo de Hotspot</label>
+                    <select id="hotspot-type-select" style="cursor: pointer; width: 100%; padding: 8px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px; outline: none;">
+                        <option value="portal">Portal (Mudar de Cena)</option>
+                        <option value="info">Informação (Exibir Conteúdo)</option>
+                    </select>
+                </div>
+                <div class="form-group" id="hotspot-target-group">
                     <label for="hotspot-target">Destino do Portal (Cena)</label>
                     <select id="hotspot-target">
                         <!-- Cenas disponíveis serão carregadas aqui -->
                     </select>
+                </div>
+                <div id="hotspot-info-group" style="display: none; flex-direction: column; gap: 12px; margin-bottom: 15px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="hotspot-info-title">Título do Conteúdo</label>
+                        <input type="text" id="hotspot-info-title" placeholder="Ex: Detalhes do Acabamento">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label for="hotspot-info-desc">Descrição Textual</label>
+                        <textarea id="hotspot-info-desc" rows="3" placeholder="Digite informações sobre este ponto..." style="width: 100%; padding: 8px; background: #1a1c23; border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; color: #fff; font-size: 12px; outline: none; resize: vertical;"></textarea>
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                            <label style="margin: 0;">Foto/Imagem Exibida (Opcional)</label>
+                            <span id="badge-hotspot-media-pro" style="font-size: 9px; padding: 2px 5px; background: linear-gradient(135deg, #ffaa00, #ff6a00); color: #000; font-weight: bold; border-radius: 4px; display: none;">PRO</span>
+                        </div>
+                        <div id="hotspot-media-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 10px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
+                            <i class="fa-solid fa-image" style="font-size: 16px; color: var(--color-blue); margin-bottom: 4px; display: block;"></i>
+                            <span style="font-size: 11px; opacity: 0.8;">Carregar Foto</span>
+                            <input type="file" id="hotspot-media-file-input" accept="image/jpeg,image/png,image/webp,image/avif" style="display: none;">
+                        </div>
+                        <div id="hotspot-media-preview-container" style="display: none; align-items: center; gap: 10px; margin-top: 5px; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 6px; padding: 6px; background: rgba(255,255,255,0.03);">
+                            <img id="hotspot-media-preview-img" src="" alt="Hotspot media" style="height: 32px; width: 48px; object-fit: cover; border-radius: 4px;">
+                            <span style="font-size: 11px; color: var(--text-secondary); flex-grow: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Imagem de exibição</span>
+                            <button id="btn-delete-hotspot-media" class="btn btn-secondary btn-sm" title="Remover Foto" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 4px 8px; font-size: 11px;">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-actions">
                     <button class="btn btn-secondary" id="btn-cancel-hotspot">Cancelar</button>
@@ -581,6 +662,29 @@
                     <a href="plans.html" class="btn btn-accent btn-upgrade-cta">
                         <i class="fa-solid fa-crown"></i> Desbloquear Todas as Cenas
                     </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE VISUALIZAÇÃO DE INFORMAÇÕES DE HOTSPOT (VISITANTE) -->
+    <div class="modal-overlay" id="info-hotspot-modal" style="z-index: 2000;">
+        <div class="modal-card glassmorphism info-hotspot-card" style="max-width: 500px; width: 90%;">
+            <div class="modal-header" style="border-bottom: none; padding-bottom: 5px;">
+                <h2 id="info-hotspot-title" style="font-size: 18px; font-weight: 700; color: #fff; margin: 0; display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-circle-info" style="color: var(--color-accent);"></i> <span>Informação</span>
+                </h2>
+                <button class="close-btn" id="btn-close-info-hotspot" style="font-size: 20px; line-height: 1;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding-top: 5px;">
+                <div id="info-hotspot-media-container" style="display: none; margin-bottom: 12px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);">
+                    <img id="info-hotspot-img" src="" alt="Detalhes" style="width: 100%; display: block; object-fit: contain; max-height: 250px; background: rgba(0,0,0,0.2);">
+                </div>
+                <div id="info-hotspot-desc" style="font-size: 13px; color: var(--text-secondary); line-height: 1.5; white-space: pre-wrap; max-height: 180px; overflow-y: auto; padding-right: 5px;">
+                    Detalhes e especificações...
+                </div>
+                <div class="modal-actions" style="margin-top: 15px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: flex-end;">
+                    <button class="btn btn-primary" id="btn-close-info-hotspot-ok" style="font-size: 11px; padding: 6px 16px;">Fechar</button>
                 </div>
             </div>
         </div>

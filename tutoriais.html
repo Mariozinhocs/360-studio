@@ -10,6 +10,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
     <style>
         :root {
             --bg-primary: #0a0b0e;
@@ -244,22 +246,143 @@
             margin-top: 60px;
             background: rgba(10, 11, 14, 0.4);
         }
+
+        /* ======================================================================
+         * Unified Navbar Styles
+         * ====================================================================== */
+        body {
+            padding-top: 90px;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 11, 14, 0.85);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-glass);
+            transition: all 0.3s ease;
+        }
+        .navbar.shrunk {
+            max-width: 90%;
+            margin: 10px auto;
+            left: 5%;
+            right: 5%;
+            border-radius: 40px;
+            padding: 8px 5%;
+            background: rgba(8, 9, 12, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 6px 0;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-purple));
+            transition: width 0.3s ease;
+        }
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #fff;
+        }
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        .navbar a img {
+            height: 85px;
+            max-height: 85px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 10px rgba(255, 230, 0, 0.25));
+        }
+        .navbar.shrunk a img {
+            height: 60px;
+            max-height: 60px;
+        }
+        .navbar a:hover img {
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 15px rgba(255, 230, 0, 0.60)) drop-shadow(0 0 30px rgba(255, 200, 0, 0.30));
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .btn-login {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            color: var(--color-accent);
+        }
+        .btn-nav-cta {
+            background: linear-gradient(135deg, var(--color-accent), var(--color-purple));
+            color: #000;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 10px 22px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-nav-cta:hover {
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+            transform: translateY(-1px);
+        }
+        @media (max-width: 768px) {
+            .nav-links, .nav-actions { display: none; }
+        }
     </style>
 </head>
 <body>
     <div class="decor-glow glow-1"></div>
     <div class="decor-glow glow-2"></div>
 
-    <header>
-        <div class="nav-container">
-            <a href="home.html" class="logo">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 360°<span class="highlight">Studio</span>
-            </a>
-            <a href="dashboard.html" class="back-btn">
-                <i class="fa-solid fa-arrow-left"></i> Voltar ao Painel
-            </a>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="home.html" style="text-decoration: none; display: flex; align-items: center;">
+            <img src="assets/logo.png" alt="360° Studio" style="display: block; object-fit: contain;">
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html#features">Funcionalidades</a></li>
+            <li><a href="home.html#showcase">Demonstração</a></li>
+            <li><a href="home.html#pricing">Planos</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="tutoriais.html" class="active">Tutoriais</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-login" id="nav-btn-login">Entrar</a>
+            <a href="login.html?register=true" class="btn-nav-cta" id="nav-btn-register">Começar Grátis</a>
         </div>
-    </header>
+    </nav>
 
     <main>
         <section class="hero">
@@ -282,6 +405,7 @@
                         <li>Você será redirecionado para o Editor Interativo 3D.</li>
                         <li>Seu projeto virá inicialmente vazio, pronto para receber os uploads de fotos ou vídeos esféricos.</li>
                     </ul>
+                    <img src="assets/create_tour_tutorial.png" alt="Criar Novo Tour" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
                 </div>
             </div>
 
@@ -300,6 +424,7 @@
                         <li><strong>Requisitos:</strong> Imagens em JPG/PNG/WEBP/AVIF de até 15MB e vídeos MP4 de até 60MB.</li>
                         <li>Para fotos de alta fidelidade, imagens panorâmicas de até 8192px (8K) são perfeitamente suportadas.</li>
                     </ul>
+                    <img src="assets/upload_media_tutorial.png" alt="Upload de Mídias" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
                 </div>
             </div>
 
@@ -318,6 +443,7 @@
                         <li>O sistema salvará a orientação horizontal da câmera no banco de dados.</li>
                         <li>Qualquer pessoa acessando o tour (seja por miniaturas ou por portais) entrará na cena por essa direção.</li>
                     </ul>
+                    <img src="assets/yaw_setup_real.png" alt="Ângulo Inicial de Visualização" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
                 </div>
             </div>
 
@@ -335,6 +461,7 @@
                         <li>No modal de configuração, digite o texto do balão (ex: "Ir para Cozinha") e selecione a cena de destino.</li>
                         <li><strong>Mover:</strong> Selecione o portal, clique em "Mover" no menu de portais e clique no novo ponto da tela para reposicioná-lo.</li>
                     </ul>
+                    <img src="assets/portals_setup_tutorial.png" alt="Portais e Hotspots" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
                 </div>
             </div>
 
@@ -353,6 +480,45 @@
                         <li>Selecione uma cena no menu esquerdo e clique na planta baixa para marcar a localização dela.</li>
                         <li>Ajuste a direção padrão no controle deslizante inferior para sincronizar o radar com o fuso visual da foto.</li>
                     </ul>
+                    <img src="assets/floorplan_radar_real.png" alt="Planta Baixa com Radar" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
+                </div>
+            </div>
+
+            <!-- TUTORIAL 6 -->
+            <div class="tutorial-card blue">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-circle-dot"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Tampa de Tripé (Nadir Patch) [PRO]</h2>
+                    <p>Oculte o tripé da câmera física ou adicione a marca do seu cliente no chão tridimensional do tour.</p>
+                    <ul class="steps-list">
+                        <li>Abra a aba <strong>"Ajustes"</strong> (ícone de engrenagem) na barra lateral esquerda.</li>
+                        <li>Marque a caixa de seleção <strong>"Habilitar tampa no chão"</strong>.</li>
+                        <li>Selecione se deseja usar a **Logomarca do Tour** ou carregar uma **Imagem do Nadir** personalizada.</li>
+                        <li>Ajuste o slider **"Tamanho da tampa"** para definir o raio do círculo de cobertura.</li>
+                        <li>O patch se adaptará a todas as fotos e vídeos do passeio dinamicamente.</li>
+                    </ul>
+                    <img src="assets/nadir_setup_real.png" alt="Configuração de Nadir" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
+                </div>
+            </div>
+
+            <!-- TUTORIAL 7 -->
+            <div class="tutorial-card">
+                <div class="tutorial-icon">
+                    <i class="fa-solid fa-circle-info"></i>
+                </div>
+                <div class="tutorial-content">
+                    <h2>Hotspots de Informação (Rich Media)</h2>
+                    <p>Adicione pontos de interesse interativos que exibem texto e imagem detalhada em vez de mudar de cômodo.</p>
+                    <ul class="steps-list">
+                        <li>Inicie o fluxo de criação de hotspot clicando em <strong>"+ Adicionar Hotspot"</strong>.</li>
+                        <li>Clique no local desejado da cena 360° e selecione o Tipo <strong>"Informação"</strong> no modal de configuração.</li>
+                        <li>Digite o título do conteúdo informativo e a descrição textual rica.</li>
+                        <li>No plano PRO/Profissional, você também pode fazer o upload de uma foto complementar para ilustrar a informação.</li>
+                        <li>Os visitantes visualizarão esses detalhes em um modal pop-up com efeito glassmorphism moderno ao clicarem no ícone violeta.</li>
+                    </ul>
+                    <img src="assets/info_hotspot_real.png" alt="Modal de Hotspot Informativo" style="margin-top: 15px; max-width: 100%; border-radius: 8px; border: 1px solid var(--border-glass); box-shadow: 0 4px 20px rgba(0,0,0,0.3); display: block; max-height: 250px; object-fit: contain;">
                 </div>
             </div>
         </section>
@@ -361,5 +527,59 @@
     <footer>
         <p>&copy; 2026 360° Studio. Todos os direitos reservados.</p>
     </footer>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            // Adicionar listener de rolagem para encolhimento do menu
+            window.addEventListener("scroll", () => {
+                const navbar = document.querySelector(".navbar");
+                if (navbar) {
+                    if (window.scrollY > 50) {
+                        navbar.classList.add("shrunk");
+                    } else {
+                        navbar.classList.remove("shrunk");
+                    }
+                }
+            });
+
+            await checkUserSession();
+        });
+
+        async function checkUserSession() {
+            const isPC = !/Mobi|Android|iPhone|iPad|Windows Phone/i.test(navigator.userAgent);
+            if (isPC && !sessionStorage.getItem('session_active')) {
+                try {
+                    const res = await fetch("api/check_auth.php");
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        await fetch("api/logout.php");
+                    }
+                } catch (e) {}
+                return;
+            }
+
+            try {
+                const res = await fetch("api/check_auth.php");
+                const data = await res.json();
+                
+                const btnLogin = document.getElementById("nav-btn-login");
+                const btnRegister = document.getElementById("nav-btn-register");
+
+                if (res.ok && data.success && data.user) {
+                    if (btnLogin) {
+                        btnLogin.textContent = "Acessar Painel";
+                        btnLogin.href = "dashboard.html";
+                        btnLogin.style.color = "var(--color-accent)";
+                        btnLogin.style.fontWeight = "700";
+                    }
+                    if (btnRegister) {
+                        btnRegister.style.display = "none";
+                    }
+                }
+            } catch (err) {
+                console.error("Falha ao checar sessão activa:", err);
+            }
+        }
+    </script>
 </body>
 </html>

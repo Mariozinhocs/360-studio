@@ -226,19 +226,148 @@
             margin-top: 80px;
             background: rgba(10, 11, 14, 0.4);
         }
+
+        /* ======================================================================
+         * Unified Navbar Styles
+         * ====================================================================== */
+        body {
+            padding-top: 90px;
+        }
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 20px 8%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(10, 11, 14, 0.85);
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-glass);
+            transition: all 0.3s ease;
+        }
+        .navbar.shrunk {
+            max-width: 90%;
+            margin: 10px auto;
+            left: 5%;
+            right: 5%;
+            border-radius: 40px;
+            padding: 8px 5%;
+            background: rgba(8, 9, 12, 0.95);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            color: #cbd5e1;
+            text-decoration: none;
+            font-size: 18px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 6px 0;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--color-accent), var(--color-purple));
+            transition: width 0.3s ease;
+        }
+        .nav-links a:hover,
+        .nav-links a.active {
+            color: #fff;
+        }
+        .nav-links a:hover::after,
+        .nav-links a.active::after {
+            width: 100%;
+        }
+        .navbar a img {
+            height: 85px;
+            max-height: 85px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: drop-shadow(0 0 10px rgba(255, 230, 0, 0.25));
+        }
+        .navbar.shrunk a img {
+            height: 60px;
+            max-height: 60px;
+        }
+        .navbar a:hover img {
+            transform: scale(1.06);
+            filter: drop-shadow(0 0 15px rgba(255, 230, 0, 0.60)) drop-shadow(0 0 30px rgba(255, 200, 0, 0.30));
+        }
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .btn-login {
+            color: #fff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 600;
+            padding: 10px 20px;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            color: var(--color-accent);
+        }
+        .btn-nav-cta {
+            background: linear-gradient(135deg, var(--color-accent), var(--color-purple));
+            color: #000;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 800;
+            padding: 10px 22px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 242, 254, 0.2);
+            transition: all 0.3s ease;
+        }
+        .btn-nav-cta:hover {
+            box-shadow: 0 6px 20px rgba(0, 242, 254, 0.4);
+            transform: translateY(-1px);
+        }
+
+        /* Hover Navigation Cards */
+        .nav-prev-card:hover, .nav-next-card:hover {
+            border-color: rgba(0, 242, 254, 0.3) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+            transform: translateY(-2px);
+        }
+
+        @media (max-width: 768px) {
+            .nav-links, .nav-actions { display: none; }
+        }
     </style>
 </head>
 <body>
-    <header>
-        <div class="nav-container">
-            <a href="home.html" class="logo">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> 360°<span class="highlight">Studio</span>
-            </a>
-            <a href="blog.html" class="back-btn">
-                <i class="fa-solid fa-arrow-left"></i> Voltar ao Blog
-            </a>
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="home.html" style="text-decoration: none; display: flex; align-items: center;">
+            <img src="assets/logo.png" alt="360° Studio" style="display: block; object-fit: contain;">
+        </a>
+        <ul class="nav-links">
+            <li><a href="home.html#features">Funcionalidades</a></li>
+            <li><a href="home.html#showcase">Demonstração</a></li>
+            <li><a href="home.html#pricing">Planos</a></li>
+            <li><a href="blog.html" class="active">Blog</a></li>
+            <li><a href="tutoriais.html">Tutoriais</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-login" id="nav-btn-login">Entrar</a>
+            <a href="login.html?register=true" class="btn-nav-cta" id="nav-btn-register">Começar Grátis</a>
         </div>
-    </header>
+    </nav>
 
     <main class="article-container" id="post-container">
         <div class="loading-box" id="loading-box">
@@ -253,6 +382,21 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", async () => {
+            // Adicionar listener de rolagem para encolhimento do menu
+            window.addEventListener("scroll", () => {
+                const navbar = document.querySelector(".navbar");
+                if (navbar) {
+                    if (window.scrollY > 50) {
+                        navbar.classList.add("shrunk");
+                    } else {
+                        navbar.classList.remove("shrunk");
+                    }
+                }
+            });
+
+            // Verificar sessão do usuário
+            await checkUserSession();
+
             const container = document.getElementById("post-container");
             const urlParams = new URLSearchParams(window.location.search);
             const postId = urlParams.get("id");
@@ -267,15 +411,46 @@
                 if (!res.ok) throw new Error("Erro ao carregar os dados.");
                 const posts = await res.json();
 
-                const post = posts.find(p => p.id === postId);
+                const index = posts.findIndex(p => p.id === postId);
+                const post = posts[index];
 
                 if (!post) {
                     renderError("Desculpe, o artigo que você procura não foi encontrado.");
                     return;
                 }
 
+                // Configurar navegação entre posts
+                const prevPost = index > 0 ? posts[index - 1] : null;
+                const nextPost = index < posts.length - 1 ? posts[index + 1] : null;
+
                 // Atualizar título da aba do navegador
                 document.title = `${post.title} - 360° Studio Blog`;
+
+                let navHtml = `<div class="article-navigation" style="display: flex; justify-content: space-between; margin-top: 60px; padding-top: 40px; border-top: 1px solid var(--border-glass); gap: 20px;">`;
+                
+                if (prevPost) {
+                    navHtml += `
+                        <a href="post.html?id=${prevPost.id}" class="nav-prev-card" style="flex: 1; text-decoration: none; display: flex; flex-direction: column; background: var(--bg-card); border: 1px solid var(--border-glass); padding: 20px; border-radius: 12px; transition: all 0.3s ease;">
+                            <span style="font-size: 11px; color: var(--color-accent); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;"><i class="fa-solid fa-arrow-left"></i> Artigo Anterior</span>
+                            <span style="font-size: 14px; font-weight: 600; color: #fff; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${prevPost.title}</span>
+                        </a>
+                    `;
+                } else {
+                    navHtml += `<div style="flex: 1;"></div>`;
+                }
+
+                if (nextPost) {
+                    navHtml += `
+                        <a href="post.html?id=${nextPost.id}" class="nav-next-card" style="flex: 1; text-decoration: none; display: flex; flex-direction: column; align-items: flex-end; background: var(--bg-card); border: 1px solid var(--border-glass); padding: 20px; border-radius: 12px; transition: all 0.3s ease; text-align: right;">
+                            <span style="font-size: 11px; color: var(--color-accent); text-transform: uppercase; font-weight: 700; margin-bottom: 6px;">Próximo Artigo <i class="fa-solid fa-arrow-right"></i></span>
+                            <span style="font-size: 14px; font-weight: 600; color: #fff; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${nextPost.title}</span>
+                        </a>
+                    `;
+                } else {
+                    navHtml += `<div style="flex: 1;"></div>`;
+                }
+                
+                navHtml += `</div>`;
 
                 container.innerHTML = `
                     <article>
@@ -295,6 +470,7 @@
                         <div class="post-body">
                             ${post.content}
                         </div>
+                        ${navHtml}
                     </article>
                 `;
             } catch (err) {
@@ -312,6 +488,42 @@
                 `;
             }
         });
+
+        async function checkUserSession() {
+            const isPC = !/Mobi|Android|iPhone|iPad|Windows Phone/i.test(navigator.userAgent);
+            if (isPC && !sessionStorage.getItem('session_active')) {
+                try {
+                    const res = await fetch("api/check_auth.php");
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        await fetch("api/logout.php");
+                    }
+                } catch (e) {}
+                return;
+            }
+
+            try {
+                const res = await fetch("api/check_auth.php");
+                const data = await res.json();
+                
+                const btnLogin = document.getElementById("nav-btn-login");
+                const btnRegister = document.getElementById("nav-btn-register");
+
+                if (res.ok && data.success && data.user) {
+                    if (btnLogin) {
+                        btnLogin.textContent = "Acessar Painel";
+                        btnLogin.href = "dashboard.html";
+                        btnLogin.style.color = "var(--color-accent)";
+                        btnLogin.style.fontWeight = "700";
+                    }
+                    if (btnRegister) {
+                        btnRegister.style.display = "none";
+                    }
+                }
+            } catch (err) {
+                console.error("Falha ao checar sessão ativa:", err);
+            }
+        }
     </script>
 </body>
 </html>

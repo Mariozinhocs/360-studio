@@ -108,6 +108,26 @@
     *   **Sincronização de Câmera e Seleção:** Clicar em qualquer card de portal seleciona o item, exibe a badge "Ativo" e gira suavemente a câmera 360° para enquadrar o portal na cena.
     *   **Cache-Busters:** Bump para `v=1.4.1` no `style.css` e `app.js` em `index.html`.
 
+15. **Melhorias de Visual, Fluxo de Login e Gestão Administrativa de Planos (CONCLUÍDO):**
+    *   **Navbar Shrunk Flutuante e Efeito de Glow:**
+        *   Removida restrição de altura inline (`height: 60px`) nas imagens de logotipo de todas as páginas públicas (`home.html`, `plans.html`, `contato.html`, `tutoriais.html`, `blog.html`, `post.html`, `termos.html`).
+        *   Definido no CSS o tamanho padrão da logo como `85px` regular e `60px` na navbar encolhida (`.navbar.shrunk`). Adicionado efeito hover scale (`1.06`) com glow amarelo intenso (`drop-shadow`).
+        *   Aumentado o tamanho da fonte do menu para `18px`.
+        *   Ao rolar a página para baixo, a barra de menu (`.navbar.shrunk`) transforma-se em um card flutuante premium, estreito (`max-width: 90%`), centralizado com margem superior, cantos arredondados (`border-radius: 40px`), borda translúcida e sombra de destaque. Adicionados listeners de scroll e estilização em todas as páginas públicas.
+    *   **Funcionalidade Tour OffLine:**
+        *   Adicionado "Tour OffLine" com o selo distintivo "Plano Profissional" nas seções de planos de `home.html` e `plans.html`.
+        *   Na tabela de comparação detalhada em `plans.html`, adicionada a linha "Tour OffLine (Acesso Local)" marcada como indisponível nos planos anteriores e disponível estritamente no Plano Profissional (com a badge PRO em destaque).
+    *   **Página de Contato Otimizada:**
+        *   Removido o card lateral direito de informações em `contato.html`, com layout ajustado em coluna única e largura máxima de `800px` para foco total do usuário.
+        *   Placeholders pessoais foram neutralizados e tornados impessoais (ex: *"Seu nome completo"*, *"seuemail@dominio.com"*, *"Escreva sua mensagem aqui..."*).
+    *   **Fluxo de Login e Cadastro (?register=true):**
+        *   Alterada a legenda do cabeçalho da marca em `login.html` de *"A-Team Tour Platform"* para *"O melhor e mais completo editor de tour 360°"*.
+        *   Adicionado interceptador dinâmico JavaScript em `login.html` para detectar a query parameter `?register=true` no carregamento e abrir a tela de cadastro automaticamente.
+    *   **Matriz Administrativa e Criação de Novos Planos:**
+        *   Adicionado botão "Criar Novo Plano" no cabeçalho da matriz de planos de `admin.html`.
+        *   O modal de edição foi ajustado para permitir a digitação do Identificador (Chave) do plano apenas durante a criação (com `id = 0`), e bloqueá-lo com estilo desabilitado na edição de planos existentes.
+        *   A API `update_plan.php` foi remodelada para aceitar a gravação de novos planos (`INSERT`) após validar a unicidade da chave do plano, rejeitando duplicidades com erro 400.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados

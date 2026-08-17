@@ -12,6 +12,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Estilos específicos -->
     <link rel="stylesheet" href="home.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
 <body>
 
@@ -20,11 +22,10 @@
     <div class="decor-glow glow-2"></div>
     <div class="decor-glow glow-3"></div>
 
-    <!-- NAVBAR -->
     <nav class="navbar">
-        <div class="nav-brand">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> 360° Studio
-        </div>
+        <a href="home.html" style="text-decoration: none; display: flex; align-items: center;">
+            <img src="assets/logo.png" alt="360° Studio" style="display: block; object-fit: contain;">
+        </a>
         <ul class="nav-links">
             <li><a href="#features">Funcionalidades</a></li>
             <li><a href="#showcase">Demonstração</a></li>
@@ -109,6 +110,20 @@
                 <h3>White-label / Logo Própria</h3>
                 <p>Substitua a marca do estúdio pela sua própria logomarca profissional nos passeios virtuais de seus clientes.</p>
             </div>
+
+            <!-- FEATURE 7 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-circle-dot"></i></div>
+                <h3>Tampa de Tripé (Nadir Patch)</h3>
+                <p>Oculte o tripé da câmera física ou adicione uma marca d'água personalizada e profissional no chão do tour virtual.</p>
+            </div>
+
+            <!-- FEATURE 8 -->
+            <div class="feature-card">
+                <div class="feature-icon"><i class="fa-solid fa-circle-info"></i></div>
+                <h3>Hotspots de Informação (Rich Media)</h3>
+                <p>Insira pontos de interesse contendo títulos, descrições ricas de texto e fotos complementares direto nas cenas.</p>
+            </div>
         </div>
     </section>
 
@@ -147,78 +162,115 @@
     </section>
 
     <!-- PRICING SECTION -->
-    <section id="pricing">
+    <section id="pricing" style="position: relative; overflow: hidden; padding: 80px 0;">
         <div class="section-header">
             <h2>Nossos Planos de Assinatura</h2>
             <p>Selecione a licença ideal de acordo com a sua escala e o nível de recursos exigidos.</p>
         </div>
 
-        <div class="plans-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto;">
-            <!-- GRÁTIS -->
-            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
-                <h3 style="font-size: 18px; margin-bottom: 6px;">Grátis</h3>
-                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 0</div>
-                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 5 tours ativos</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 10 cenas por tour</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Setas de navegação</li>
-                    <li style="opacity:0.5; text-decoration:line-through;"><i class="fa-solid fa-xmark" style="color:#ff4a5a;"></i> Sem anúncios</li>
-                </ul>
-                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Experimentar</a>
+        <div class="plans-slider-container">
+            <button class="slider-arrow prev" id="btn-plans-prev" onclick="movePlansSlider(-1)">
+                <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <button class="slider-arrow next" id="btn-plans-next" onclick="movePlansSlider(1)">
+                <i class="fa-solid fa-chevron-right"></i>
+            </button>
+
+            <div class="plans-slider-track">
+                <!-- GRÁTIS -->
+                <div class="plan-card gratis" data-plan="gratis">
+                    <div class="plan-card-header">
+                        <h3>Grátis</h3>
+                        <div class="plan-price">R$ 0</div>
+                    </div>
+                    <ul class="plan-features-list">
+                        <li><i class="fa-solid fa-check"></i> 5 tours ativos</li>
+                        <li><i class="fa-solid fa-check"></i> 10 cenas por tour</li>
+                        <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Sem anúncios</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                    </ul>
+                    <a href="plans.html" class="btn-select-plan">Experimentar</a>
+                </div>
+
+                <!-- INICIANTE -->
+                <div class="plan-card iniciante" data-plan="iniciante">
+                    <div class="plan-card-header">
+                        <h3>Iniciante</h3>
+                        <div class="plan-price">R$ 89,99</div>
+                    </div>
+                    <ul class="plan-features-list">
+                        <li><i class="fa-solid fa-check"></i> 10 tours ativos</li>
+                        <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
+                        <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
+                        <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                    </ul>
+                    <a href="plans.html" class="btn-select-plan">Escolher</a>
+                </div>
+
+                <!-- BÁSICO -->
+                <div class="plan-card basico" data-plan="basico">
+                    <div class="plan-card-header">
+                        <h3>Básico</h3>
+                        <div class="plan-price">R$ 129,99</div>
+                    </div>
+                    <ul class="plan-features-list">
+                        <li><i class="fa-solid fa-check"></i> 50 tours ativos</li>
+                        <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
+                        <li><i class="fa-solid fa-check"></i> Marca d'água própria (1)</li>
+                        <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                    </ul>
+                    <a href="plans.html" class="btn-select-plan">Escolher</a>
+                </div>
+
+                <!-- PESSOAL -->
+                <div class="plan-card pessoal" data-plan="pessoal">
+                    <div class="plan-card-header">
+                        <h3>Pessoal</h3>
+                        <div class="plan-price">R$ 199,99</div>
+                    </div>
+                    <ul class="plan-features-list">
+                        <li><i class="fa-solid fa-check"></i> 100 tours ativos</li>
+                        <li><i class="fa-solid fa-check"></i> 50 cenas por tour</li>
+                        <li><i class="fa-solid fa-check"></i> Som ambiente MP3</li>
+                        <li><i class="fa-solid fa-check"></i> Marca d'água própria (2)</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                        <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                    </ul>
+                    <a href="plans.html" class="btn-select-plan">Escolher</a>
+                </div>
+
+                <!-- PROFISSIONAL -->
+                <div class="plan-card highlighted profissional" data-plan="profissional">
+                    <span class="plan-badge-popular">Melhor Opção</span>
+                    <div class="plan-card-header">
+                        <h3>Profissional</h3>
+                        <div class="plan-price">R$ 349,99</div>
+                    </div>
+                    <ul class="plan-features-list">
+                        <li><i class="fa-solid fa-check"></i> Tours Ilimitados</li>
+                        <li><i class="fa-solid fa-check"></i> Cenas Ilimitadas</li>
+                        <li><i class="fa-solid fa-check"></i> Planta Baixa Interativa</li>
+                        <li><i class="fa-solid fa-check"></i> Tampa de Tripé (Nadir)</li>
+                        <li><i class="fa-solid fa-check"></i> Hotspots de Informação</li>
+                        <li><i class="fa-solid fa-check"></i> Privacidade por Senha</li>
+                        <li style="color: var(--color-accent-blue); font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Tour OffLine <span style="background: rgba(0, 242, 254, 0.15); color: var(--color-accent-blue); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-left: 5px;">Plano Profissional</span></li>
+                    </ul>
+                    <a href="plans.html" class="btn-select-plan">Escolher</a>
+                </div>
             </div>
 
-            <!-- INICIANTE -->
-            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
-                <h3 style="font-size: 18px; margin-bottom: 6px;">Iniciante</h3>
-                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 89,99</div>
-                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 10 tours ativos</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 20 cenas por tour</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Setas de navegação</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Sem anúncios</li>
-                </ul>
-                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
-            </div>
-
-            <!-- BÁSICO -->
-            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
-                <h3 style="font-size: 18px; margin-bottom: 6px;">Básico</h3>
-                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 129,99</div>
-                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 50 tours ativos</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 20 cenas por tour</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Marca d'água própria (1)</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Sem anúncios</li>
-                </ul>
-                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
-            </div>
-
-            <!-- PESSOAL -->
-            <div class="plan-card" style="padding: 24px; border: 1px solid var(--border-glass); border-radius: 12px; display: flex; flex-direction: column; background: var(--bg-card);">
-                <h3 style="font-size: 18px; margin-bottom: 6px;">Pessoal</h3>
-                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 199,99</div>
-                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 100 tours ativos</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> 50 cenas por tour</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Som ambiente MP3</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Marca d'água própria (2)</li>
-                </ul>
-                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
-            </div>
-
-            <!-- PROFISSIONAL -->
-            <div class="plan-card highlighted" style="padding: 24px; border: 2px solid var(--color-accent-purple); border-radius: 12px; display: flex; flex-direction: column; background: rgba(30, 24, 45, 0.7); position: relative;">
-                <span class="plan-badge-popular" style="top: -10px;">Melhor Opção</span>
-                <h3 style="font-size: 18px; margin-bottom: 6px;">Profissional</h3>
-                <div style="font-size: 26px; font-weight: 800; margin-bottom: 12px;">R$ 349,99</div>
-                <ul style="list-style: none; font-size: 11px; margin-bottom: 24px; display: flex; flex-direction: column; gap: 8px;">
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Tours Ilimitados</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Cenas Ilimitadas</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Planta Baixa Interativa</li>
-                    <li><i class="fa-solid fa-check" style="color:var(--color-accent-blue);"></i> Privacidade por Senha</li>
-                </ul>
-                <a href="plans.html" class="btn-select-plan" style="text-align: center; text-decoration: none; padding: 10px; margin-top: auto;">Escolher</a>
-            </div>
+            <!-- Slider Dots -->
+            <div class="plans-slider-dots" id="plans-slider-dots"></div>
         </div>
     </section>
 
@@ -239,7 +291,6 @@
                 <p>Plataforma SaaS robusta e dinâmica de gerenciamento e exibição de passeios virtuais 360° de alta qualidade.</p>
                 <div class="footer-socials">
                     <a href="#" class="social-link"><i class="fa-brands fa-instagram"></i></a>
-                    <a href="#" class="social-link"><i class="fa-brands fa-facebook"></i></a>
                     <a href="#" class="social-link"><i class="fa-brands fa-youtube"></i></a>
                 </div>
             </div>
@@ -256,8 +307,8 @@
                 <h4>Suporte</h4>
                 <ul>
                     <li><a href="tutoriais.html">Ajuda &amp; Tutoriais</a></li>
-                    <li><a href="#">Contato</a></li>
-                    <li><a href="#">Termos de Uso</a></li>
+                    <li><a href="contato.html">Contato</a></li>
+                    <li><a href="termos.html">Termos de Uso</a></li>
                 </ul>
             </div>
             <div class="footer-links-col">

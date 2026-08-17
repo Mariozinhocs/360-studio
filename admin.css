@@ -210,6 +210,11 @@ body.admin-page {
     box-shadow: 0 0 10px rgba(0, 242, 254, 0.15);
 }
 
+select option {
+    background: #10121a;
+    color: #ffffff;
+}
+
 /* Responsive Table */
 .table-responsive {
     width: 100%;

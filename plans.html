@@ -12,20 +12,30 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Estilos específicos -->
     <link rel="stylesheet" href="plans.css">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/favicon.png">
     <!-- Mercado Pago SDK -->
-    <script src="https://sdk.mercadopago.com/v2"></script>
+    <script src="https://sdk.mercadopago.com/js/v2"></script>
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR -->
-    <header class="plans-header-nav">
-        <div class="plans-brand">
-            <i class="fa-solid fa-wand-magic-sparkles"></i> 360° Studio
-        </div>
-        <a href="dashboard.html" class="btn-back-dashboard">
-            <i class="fa-solid fa-arrow-left"></i> Voltar ao Painel
+    <!-- NAVBAR -->
+    <nav class="navbar">
+        <a href="home.html" style="text-decoration: none; display: flex; align-items: center;">
+            <img src="assets/logo.png" alt="360° Studio" style="display: block; object-fit: contain;">
         </a>
-    </header>
+        <ul class="nav-links">
+            <li><a href="home.html#features">Funcionalidades</a></li>
+            <li><a href="home.html#showcase">Demonstração</a></li>
+            <li><a href="home.html#pricing">Planos</a></li>
+            <li><a href="blog.html">Blog</a></li>
+            <li><a href="tutoriais.html">Tutoriais</a></li>
+        </ul>
+        <div class="nav-actions">
+            <a href="login.html" class="btn-login" id="nav-btn-login">Entrar</a>
+            <a href="login.html?register=true" class="btn-nav-cta" id="nav-btn-register">Começar Grátis</a>
+        </div>
+    </nav>
 
     <!-- INTRODUÇÃO -->
     <section class="plans-intro">
@@ -35,7 +45,7 @@
 
     <!-- BILLING TOGGLE -->
     <div class="billing-toggle-container">
-        <span class="billing-label" id="billing-monthly" class="active">Mensal</span>
+        <span class="billing-label active" id="billing-monthly">Mensal</span>
         <label class="switch">
             <input type="checkbox" id="billing-checkbox">
             <span class="slider"></span>
@@ -45,117 +55,118 @@
     </div>
 
     <!-- CARDS DOS PLANOS -->
-    <div class="plans-grid">
-        <!-- PLANO GRÁTIS -->
-        <div class="plan-card" data-plan="gratis">
-            <div class="plan-card-header">
-                <h2>Grátis</h2>
-                <p class="plan-desc">Perfeito para conhecer e criar seus primeiros tours virtuais.</p>
+    <div class="plans-slider-container">
+        <button class="slider-arrow prev" id="btn-plans-prev" onclick="movePlansSlider(-1)">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button class="slider-arrow next" id="btn-plans-next" onclick="movePlansSlider(1)">
+            <i class="fa-solid fa-chevron-right"></i>
+        </button>
+
+        <div class="plans-slider-track">
+            <!-- PLANO GRÁTIS -->
+            <div class="plan-card gratis" data-plan="gratis">
+                <div class="plan-card-header">
+                    <h2>Grátis</h2>
+                </div>
+                <div class="plan-price-block">
+                    <div class="plan-price">R$ 0</div>
+                </div>
+                <ul class="plan-features-list">
+                    <li><i class="fa-solid fa-check"></i> 5 tours ativos</li>
+                    <li><i class="fa-solid fa-check"></i> 10 cenas por tour</li>
+                    <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Sem anúncios</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                </ul>
+                <button class="btn-select-plan" onclick="openCheckout('gratis')">Experimentar</button>
             </div>
-            <div class="plan-price-block">
-                <div class="plan-price">R$ 0</div>
-                <div class="plan-price-period">grátis para sempre</div>
+
+            <!-- PLANO INICIANTE -->
+            <div class="plan-card iniciante" data-plan="iniciante">
+                <div class="plan-card-header">
+                    <h2>Iniciante</h2>
+                </div>
+                <div class="plan-price-block">
+                    <div class="plan-price" data-monthly="89,99" data-yearly="71,99">R$ 89,99</div>
+                </div>
+                <ul class="plan-features-list">
+                    <li><i class="fa-solid fa-check"></i> 10 tours ativos</li>
+                    <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
+                    <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
+                    <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                </ul>
+                <button class="btn-select-plan" onclick="openCheckout('iniciante')">Escolher</button>
             </div>
-            <button class="btn-select-plan" onclick="openCheckout('gratis')">Começar Grátis</button>
-            <ul class="plan-features-list">
-                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
-                <li><i class="fa-solid fa-check"></i> 5 tours ativos</li>
-                <li><i class="fa-solid fa-check"></i> 10 cenas por tour</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Sem anúncios</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Remover marca d'água</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente & galeria</li>
-            </ul>
+
+            <!-- PLANO BÁSICO -->
+            <div class="plan-card basico" data-plan="basico">
+                <div class="plan-card-header">
+                    <h2>Básico</h2>
+                </div>
+                <div class="plan-price-block">
+                    <div class="plan-price" data-monthly="129,99" data-yearly="103,99">R$ 129,99</div>
+                </div>
+                <ul class="plan-features-list">
+                    <li><i class="fa-solid fa-check"></i> 50 tours ativos</li>
+                    <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
+                    <li><i class="fa-solid fa-check"></i> Marca d'água própria (1)</li>
+                    <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                </ul>
+                <button class="btn-select-plan" onclick="openCheckout('basico')">Escolher</button>
+            </div>
+
+            <!-- PLANO PESSOAL -->
+            <div class="plan-card pessoal" data-plan="pessoal">
+                <div class="plan-card-header">
+                    <h2>Pessoal</h2>
+                </div>
+                <div class="plan-price-block">
+                    <div class="plan-price" data-monthly="199,99" data-yearly="159,99">R$ 199,99</div>
+                </div>
+                <ul class="plan-features-list">
+                    <li><i class="fa-solid fa-check"></i> 100 tours ativos</li>
+                    <li><i class="fa-solid fa-check"></i> 50 cenas por tour</li>
+                    <li><i class="fa-solid fa-check"></i> Som ambiente MP3</li>
+                    <li><i class="fa-solid fa-check"></i> Marca d'água própria (2)</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>
+                    <li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>
+                </ul>
+                <button class="btn-select-plan" onclick="openCheckout('pessoal')">Escolher</button>
+            </div>
+
+            <!-- PLANO PROFISSIONAL -->
+            <div class="plan-card highlighted profissional" data-plan="profissional">
+                <div class="plan-card-header">
+                    <span class="best-option-lbl">Melhor Opção</span>
+                    <h2>Profissional</h2>
+                </div>
+                <div class="plan-price-block">
+                    <div class="plan-price" data-monthly="349,99" data-yearly="279,99">R$ 349,99</div>
+                </div>
+                <ul class="plan-features-list">
+                    <li><i class="fa-solid fa-check"></i> Tours Ilimitados</li>
+                    <li><i class="fa-solid fa-check"></i> Cenas Ilimitadas</li>
+                    <li><i class="fa-solid fa-check"></i> Planta Baixa Interativa</li>
+                    <li><i class="fa-solid fa-check"></i> Tampa de Tripé (Nadir)</li>
+                    <li><i class="fa-solid fa-check"></i> Hotspots de Informação</li>
+                    <li><i class="fa-solid fa-check"></i> Privacidade por Senha</li>
+                    <li style="color: var(--color-accent-blue); font-weight: 700;"><i class="fa-solid fa-circle-check"></i> Tour OffLine <span style="background: rgba(0, 242, 254, 0.15); color: var(--color-accent-blue); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-left: 5px;">Plano Profissional</span></li>
+                </ul>
+                <button class="btn-select-plan" onclick="openCheckout('profissional')">Escolher</button>
+            </div>
         </div>
 
-        <!-- PLANO INICIANTE -->
-        <div class="plan-card" data-plan="iniciante">
-            <div class="plan-card-header">
-                <h2>Iniciante</h2>
-                <p class="plan-desc">Ideal para fotógrafos e corretores autônomos iniciantes.</p>
-            </div>
-            <div class="plan-price-block">
-                <div class="plan-price" data-monthly="89,99" data-yearly="71,99">R$ 89,99<span>/mês</span></div>
-                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
-            </div>
-            <button class="btn-select-plan" onclick="openCheckout('iniciante')">Assinar Plano</button>
-            <ul class="plan-features-list">
-                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
-                <li><i class="fa-solid fa-check"></i> 10 tours ativos</li>
-                <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
-                <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Remover marca d'água</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente & galeria</li>
-            </ul>
-        </div>
-
-        <!-- PLANO BÁSICO -->
-        <div class="plan-card" data-plan="basico">
-            <div class="plan-card-header">
-                <h2>Básico</h2>
-                <p class="plan-desc">Excelente custo-benefício para pequenas agências ou estúdios.</p>
-            </div>
-            <div class="plan-price-block">
-                <div class="plan-price" data-monthly="129,99" data-yearly="103,99">R$ 129,99<span>/mês</span></div>
-                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
-            </div>
-            <button class="btn-select-plan" onclick="openCheckout('basico')">Assinar Plano</button>
-            <ul class="plan-features-list">
-                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
-                <li><i class="fa-solid fa-check"></i> 50 tours ativos</li>
-                <li><i class="fa-solid fa-check"></i> 20 cenas por tour</li>
-                <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
-                <li><i class="fa-solid fa-check"></i> Marca d'água customizada (1)</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente & galeria</li>
-            </ul>
-        </div>
-
-        <!-- PLANO PESSOAL -->
-        <div class="plan-card" data-plan="pessoal">
-            <div class="plan-card-header">
-                <h2>Pessoal</h2>
-                <p class="plan-desc">Para quem busca engajamento com som e galerias completas.</p>
-            </div>
-            <div class="plan-price-block">
-                <div class="plan-price" data-monthly="199,99" data-yearly="159,99">R$ 199,99<span>/mês</span></div>
-                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
-            </div>
-            <button class="btn-select-plan" onclick="openCheckout('pessoal')">Assinar Plano</button>
-            <ul class="plan-features-list">
-                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
-                <li><i class="fa-solid fa-check"></i> 100 tours ativos</li>
-                <li><i class="fa-solid fa-check"></i> 50 cenas por tour</li>
-                <li><i class="fa-solid fa-check"></i> Sem anúncios</li>
-                <li><i class="fa-solid fa-check"></i> Marca d'água customizada (2)</li>
-                <li><i class="fa-solid fa-check"></i> Som ambiente (MP3)</li>
-                <li class="disabled"><i class="fa-solid fa-xmark"></i> Planta baixa interativa</li>
-            </ul>
-        </div>
-
-        <!-- PLANO PROFISSIONAL -->
-        <div class="plan-card highlighted" data-plan="profissional">
-            <span class="plan-badge-popular">Mais Vendido</span>
-            <div class="plan-card-header">
-                <h2>Profissional</h2>
-                <p class="plan-desc">Acesso ilimitado e completo para grandes empresas.</p>
-            </div>
-            <div class="plan-price-block">
-                <div class="plan-price" data-monthly="349,99" data-yearly="279,99">R$ 349,99<span>/mês</span></div>
-                <div class="plan-price-period" data-period="monthly">Faturado mensalmente</div>
-            </div>
-            <button class="btn-select-plan" onclick="openCheckout('profissional')">Assinar Plano</button>
-            <ul class="plan-features-list">
-                <li><i class="fa-solid fa-check"></i> Setas de navegação</li>
-                <li><i class="fa-solid fa-check"></i> Tours ilimitados</li>
-                <li><i class="fa-solid fa-check"></i> Cenas ilimitadas</li>
-                <li><i class="fa-solid fa-check"></i> Logomarcas ilimitadas</li>
-                <li><i class="fa-solid fa-check"></i> Planta baixa interativa</li>
-                <li><i class="fa-solid fa-check"></i> Som ambiente + Galeria 2D</li>
-                <li><i class="fa-solid fa-check"></i> Controle de privacidade</li>
-            </ul>
-        </div>
+        <div class="plans-slider-dots" id="plans-slider-dots"></div>
     </div>
 
     <!-- SEÇÃO COMPARATIVA -->
@@ -245,6 +256,30 @@
                         <td><i class="fa-solid fa-circle-xmark"></i></td>
                         <td><i class="fa-solid fa-circle-xmark"></i></td>
                         <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Tampa de Tripé (Nadir)</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Hotspots de Informação</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                        <td><i class="fa-solid fa-circle-check"></i></td>
+                    </tr>
+                    <tr>
+                        <td>Tour OffLine (Acesso Local)</td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td><i class="fa-solid fa-circle-xmark"></i></td>
+                        <td style="color: var(--color-accent-blue); font-weight: bold;"><i class="fa-solid fa-circle-check"></i> <span style="background: rgba(0, 242, 254, 0.15); color: var(--color-accent-blue); padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 800; margin-left: 5px;">Plano Profissional</span></td>
                     </tr>
                 </tbody>
             </table>
