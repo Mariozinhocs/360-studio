@@ -3,8 +3,8 @@ require_once 'config.php';
 
 loginRequired();
 
-// Verificar assinatura
-$stmt = $pdo->prepare("SELECT subscription_status, subscription_expires_at FROM " . TABLE_PREFIX . "users WHERE id = ?");
+// Verificar assinatura e privilégios do usuário
+$stmt = $pdo->prepare("SELECT subscription_status, subscription_expires_at, is_admin FROM " . TABLE_PREFIX . "users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
@@ -37,12 +37,21 @@ if ($file['error'] !== UPLOAD_ERR_OK) {
 
 // Extensões permitidas
 $allowed_extensions = ['jpg', 'jpeg', 'png', 'webp', 'avif', 'mp4'];
+
+// Recursos avançados de conversão (.insp e .dng) liberados para Administradores
+$isAdmin = (int)($user['is_admin'] ?? 0) >= 1;
+if ($isAdmin) {
+    $allowed_extensions[] = 'insp';
+    $allowed_extensions[] = 'dng';
+}
+
 $file_info = pathinfo($file['name']);
 $extension = strtolower($file_info['extension'] ?? '');
 
 if (!in_array($extension, $allowed_extensions)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Formato não permitido. Envie apenas JPG, JPEG, PNG, WEBP, AVIF ou MP4.']);
+    $extra_msg = $isAdmin ? '' : ' (Nota: Upload de .insp/.dng é exclusivo para administradores).';
+    echo json_encode(['success' => false, 'message' => 'Formato não permitido. Envie apenas JPG, JPEG, PNG, WEBP, AVIF ou MP4.' . $extra_msg]);
     exit;
 }
 
@@ -56,6 +65,7 @@ $header = $fp ? fread($fp, 32) : '';
 if ($fp) fclose($fp);
 
 $isValidMime = false;
+$target_extension = $extension; // Extensão final do arquivo no servidor
 
 // 1. JPEG: \xFF\xD8\xFF
 if (in_array($extension, ['jpg', 'jpeg']) && (
@@ -64,6 +74,25 @@ if (in_array($extension, ['jpg', 'jpeg']) && (
 )) {
     $isValidMime = true;
     $mime_type = 'image/jpeg';
+}
+// 1b. Insta360 Photo (.insp) - Tratado e convertido como JPEG
+elseif ($extension === 'insp' && (
+    $mime_type === 'image/jpeg' || 
+    in_array($mime_type, ['application/octet-stream', 'image/x-insp']) ||
+    (strlen($header) >= 3 && substr($header, 0, 3) === "\xFF\xD8\xFF")
+)) {
+    $isValidMime = true;
+    $mime_type = 'image/jpeg';
+    $target_extension = 'jpg'; // Salva como .jpg para compatibilidade total no navegador
+}
+// 1c. Adobe Digital Negative (.dng) - Convertido para JPEG
+elseif ($extension === 'dng' && (
+    in_array($mime_type, ['image/x-adobe-dng', 'image/tiff', 'application/octet-stream', 'image/dng']) ||
+    (strlen($header) >= 4 && (substr($header, 0, 4) === "II*\x00" || substr($header, 0, 4) === "MM\x00*"))
+)) {
+    $isValidMime = true;
+    $mime_type = 'image/x-adobe-dng';
+    $target_extension = 'jpg'; // Salva como .jpg
 }
 // 2. PNG: \x89PNG\r\n\x1a\n
 elseif ($extension === 'png' && (
@@ -173,14 +202,63 @@ if (!file_exists($upload_dir)) {
     mkdir($upload_dir, 0755, true);
 }
 
-// Nome único do arquivo
-$new_filename = 'media_360_' . uniqid() . '_' . bin2hex(random_bytes(4)) . '.' . $extension;
+// Nome único do arquivo (utiliza $target_extension para converter e salvar .insp/.dng como .jpg)
+$new_filename = 'media_360_' . uniqid() . '_' . bin2hex(random_bytes(4)) . '.' . $target_extension;
 $destination = $upload_dir . '/' . $new_filename;
 
-if (move_uploaded_file($file['tmp_name'], $destination)) {
+$uploadSuccess = false;
+
+if ($extension === 'dng') {
+    // 1. Tentar conversão via Imagick (se disponível no PHP da Hospedagem)
+    if (class_exists('Imagick')) {
+        try {
+            $imagick = new Imagick();
+            $imagick->readImage($file['tmp_name']);
+            $imagick->setImageFormat('jpeg');
+            $imagick->setImageCompressionQuality(92);
+            $imagick->writeImage($destination);
+            $imagick->clear();
+            $imagick->destroy();
+            $uploadSuccess = true;
+        } catch (Exception $e) {
+            $uploadSuccess = false;
+        }
+    }
+    
+    // 2. Fallback: Tentar extrair preview/thumbnail JPEG nativo embutido no DNG
+    if (!$uploadSuccess) {
+        $jpegPreview = @exif_thumbnail($file['tmp_name']);
+        if ($jpegPreview !== false) {
+            file_put_contents($destination, $jpegPreview);
+            $uploadSuccess = true;
+        } else {
+            // 3. Fallback: Tentar carregar string no GD
+            $gdImg = @imagecreatefromstring(file_get_contents($file['tmp_name']));
+            if ($gdImg !== false) {
+                imagejpeg($gdImg, $destination, 92);
+                imagedestroy($gdImg);
+                $uploadSuccess = true;
+            }
+        }
+    }
+    
+    if (!$uploadSuccess) {
+        http_response_code(400);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Não foi possível converter o arquivo RAW (.dng) no servidor. Recomendamos exportá-lo como JPG no Insta360 Studio ou Lightroom antes do upload.'
+        ]);
+        exit;
+    }
+} else {
+    // Para .insp (que já é JPEG interno), .jpg, .png, .webp, .avif, .mp4
+    $uploadSuccess = move_uploaded_file($file['tmp_name'], $destination);
+}
+
+if ($uploadSuccess) {
     echo json_encode([
         'success' => true,
-        'message' => 'Upload concluído com sucesso!',
+        'message' => 'Upload ' . ($extension !== $target_extension ? "e conversão de .{$extension} " : '') . 'concluídos com sucesso!',
         'url' => 'uploads/' . $new_filename
     ]);
 } else {

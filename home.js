@@ -47,7 +47,14 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Erro ao verificar sessão do usuário:", e);
     }
 
-    // 4. Carregar configurações dinâmicas da Landing Page em background
+    // 4. Carregar planos dinâmicos da API
+    try {
+        await loadDynamicPlans();
+    } catch (e) {
+        console.error("Erro ao carregar planos dinâmicos:", e);
+    }
+
+    // 5. Carregar configurações dinâmicas da Landing Page em background
     try {
         await loadHomeCMSContent();
         // Re-init slider after CMS loads to adjust sizing if elements changed
@@ -56,6 +63,114 @@ document.addEventListener("DOMContentLoaded", async () => {
         console.error("Erro ao carregar CMS da home:", e);
     }
 });
+
+// Carregar e renderizar planos dinamicamente da API
+async function loadDynamicPlans() {
+    try {
+        const res = await fetch("api/list_plans.php");
+        const data = await res.json();
+        if (res.ok && data.success && Array.isArray(data.plans) && data.plans.length > 0) {
+            renderPlansTrack(data.plans);
+            initPlansSlider();
+        }
+    } catch (err) {
+        console.error("Falha ao buscar planos da API:", err);
+    }
+}
+
+function renderPlansTrack(plans) {
+    const track = document.querySelector(".plans-slider-track");
+    if (!track) return;
+
+    let html = "";
+    plans.forEach(plan => {
+        const key = plan.plan_key || 'gratis';
+        const name = plan.name || 'Plano';
+        const priceMonthly = parseFloat(plan.price_monthly || 0);
+        const formattedPrice = priceMonthly === 0 ? "R$ 0" : `R$ ${priceMonthly.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        const isPopular = key === 'basico' ? '<div class="popular-badge">Mais Popular</div>' : '';
+
+        // Features Checklist
+        const maxToursText = parseInt(plan.max_tours) >= 9999 ? 'Tours ativos ilimitados' : `${plan.max_tours} tours ativos`;
+        const maxScenesText = parseInt(plan.max_scenes) >= 9999 ? 'Cenas ilimitadas por tour' : `${plan.max_scenes} cenas por tour`;
+        
+        let features = [
+            `<li><i class="fa-solid fa-check"></i> ${maxToursText}</li>`,
+            `<li><i class="fa-solid fa-check"></i> ${maxScenesText}</li>`,
+            `<li><i class="fa-solid fa-check"></i> Setas de navegação</li>`
+        ];
+
+        // No Ads
+        if (parseInt(plan.no_ads) === 1) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Sem anúncios</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Sem anúncios</li>`);
+        }
+
+        // Logos / Marca d'água
+        const maxLogos = parseInt(plan.max_logos || 0);
+        if (maxLogos >= 9999) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Marca d'água própria (Ilimitado)</li>`);
+        } else if (maxLogos > 0) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Marca d'água própria (${maxLogos})</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Marca d'água própria</li>`);
+        }
+
+        // Nadir Patch
+        if (parseInt(plan.nadir_patch) === 1) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Tampa de Tripé (Nadir)</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Tampa de Tripé (Nadir)</li>`);
+        }
+
+        // Rich Hotspots / Text Markers
+        if (parseInt(plan.rich_hotspots) === 1 || parseInt(plan.text_markers) === 1) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Hotspots de Informação</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Hotspots de Informação</li>`);
+        }
+
+        // Floor Plans (Planta Baixa)
+        if (parseInt(plan.floor_plans) === 1) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Planta Baixa Interativa com Radar</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Planta Baixa Interativa</li>`);
+        }
+
+        // Ambient Sound
+        if (parseInt(plan.ambient_sound) === 1) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Som ambiente MP3</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Som ambiente MP3</li>`);
+        }
+
+        // Offline Access
+        if (parseInt(plan.offline_access) === 1) {
+            features.push(`<li><i class="fa-solid fa-check"></i> Tour Offline (Acesso Local)</li>`);
+        } else {
+            features.push(`<li class="disabled"><i class="fa-solid fa-xmark"></i> Tour Offline (Acesso Local)</li>`);
+        }
+
+        const btnText = key === 'gratis' ? 'Experimentar' : 'Escolher';
+
+        html += `
+            <div class="plan-card ${key}" data-plan="${key}">
+                ${isPopular}
+                <div class="plan-card-header">
+                    <h3>${name}</h3>
+                    <div class="plan-price">${formattedPrice}</div>
+                </div>
+                <ul class="plan-features-list">
+                    ${features.join('')}
+                </ul>
+                <a href="plans.html" class="btn-select-plan">${btnText}</a>
+            </div>
+        `;
+    });
+
+    track.innerHTML = html;
+}
 
 // Verificar se o usuário já está logado
 async function checkUserSession() {

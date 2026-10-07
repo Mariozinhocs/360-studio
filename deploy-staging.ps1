@@ -29,12 +29,12 @@ Write-Host "Iniciando deploy para staging: $ftpHost$ftpPath" -ForegroundColor Cy
 $ignoredPatterns = @(
     '\\\.git',
     '\\\.gitignore',
-    'ftp_config\.json$',
-    'deploy-staging\.ps1$',
-    'deploy-production\.ps1$',
+    'ftp_config.*\.json$',
+    'deploy-.*\.ps1$',
     'project_memory\.md$',
     'README\.md$',
     '\\\.gemini',
+    '\.env.*$',
     '\.bak$'
 )
 
@@ -76,8 +76,12 @@ if ($OnlyChanged) {
 }
 
 # Coleta todos os arquivos recursivamente, exceto os ignorados
+$baseFolder = (Get-Item .).FullName
 $files = Get-ChildItem -Path . -Recurse -File | Where-Object {
-    $relativePath = $_.FullName.Replace((Get-Item .).FullName, "")
+    $relativePath = $_.FullName
+    if ($relativePath.StartsWith($baseFolder, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $relativePath = $relativePath.Substring($baseFolder.Length)
+    }
     $shouldIgnore = $false
     foreach ($pattern in $ignoredPatterns) {
         if ($relativePath -match $pattern) {
@@ -107,6 +111,7 @@ function Create-RemoteDirectory {
     try {
         $request = [System.Net.FtpWebRequest]::Create($uri)
         $request.Timeout = 15000 # 15 segundos de timeout
+        $request.UsePassive = $true
         $request.Credentials = New-Object System.Net.NetworkCredential($user, $pass)
         $request.Method = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
         $response = $request.GetResponse()
@@ -122,7 +127,11 @@ $createdFolders = @{}
 
 foreach ($file in $files) {
     # Calcula caminho relativo formatado com barras invertidas corrigidas para URL
-    $relativePath = $file.FullName.Replace((Get-Item .).FullName, "").Replace("\", "/")
+    $rel = $file.FullName
+    if ($rel.StartsWith($baseFolder, [System.StringComparison]::OrdinalIgnoreCase)) {
+        $rel = $rel.Substring($baseFolder.Length)
+    }
+    $relativePath = $rel.Replace("\", "/")
     $remoteUri = "$ftpHost$ftpPath$relativePath"
     
     # Garante que a pasta destino exista no servidor remoto
@@ -146,6 +155,7 @@ foreach ($file in $files) {
     try {
         $request = [System.Net.FtpWebRequest]::Create($remoteUri)
         $request.Timeout = 30000 # 30 segundos de timeout
+        $request.UsePassive = $true
         $request.Credentials = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
         $request.Method = [System.Net.WebRequestMethods+Ftp]::UploadFile
         $request.UseBinary = $true

@@ -180,11 +180,14 @@
 
 ---
 
-## 🎯 Próximos Passos (Ações para Continuar de Casa)
+## 🎯 Próximos Passos
 
-1.  **Deploy em Produção (`prod`):**
-    *   Executar o script `.\deploy-prod.ps1` localmente para enviar as atualizações testadas para o ambiente de produção.
-    *   Acessar `https://tour360.hubdigital360.com/db_installer.php` (URL de produção) para atualizar a estrutura de tabelas do banco de produção.
+1.  **Deploy em Produção (`prod`) [CONCLUÍDO]:**
+    *   Executado o script `.\deploy-prod.ps1` com envio de todos os arquivos de backend, frontend e assets para a Hostinger em `https://tour360.hubdigital360.com`.
+    *   Executado `https://tour360.hubdigital360.com/db_installer.php` com sucesso, atualizando as colunas de banco (`floor_plan_json`, `timezone`, `deleted_at`, `is_admin`, etc.).
+
+2.  **Validação de Planos no HML / Produção:**
+    *   Continuar testes nas contas de teste (`iniciante_tester`, `basico_tester`, `profissional_tester`, `admin_tester`).
 
 ---
 
