@@ -34,6 +34,7 @@ $ignoredPatterns = @(
     'project_memory\.md$',
     'README\.md$',
     '\\\.gemini',
+    '\\draft',
     '\.env.*$',
     '\.bak$'
 )
