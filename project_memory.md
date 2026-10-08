@@ -127,6 +127,10 @@
         *   Adicionado botão "Criar Novo Plano" no cabeçalho da matriz de planos de `admin.html`.
         *   O modal de edição foi ajustado para permitir a digitação do Identificador (Chave) do plano apenas durante a criação (com `id = 0`), e bloqueá-lo com estilo desabilitado na edição de planos existentes.
         *   A API `update_plan.php` foi remodelada para aceitar a gravação de novos planos (`INSERT`) após validar a unicidade da chave do plano, rejeitando duplicidades com erro 400.
+16. **Sincronização de Domínios e Redirecionamento da Landing Page (CONCLUÍDO):**
+    *   **Redirecionamento Inteligente da Raiz:** Ajustada a condição de redirecionamento em [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) para que acessos sem o parâmetro `?id=` abram diretamente a Landing Page oficial (`home.html`).
+    *   **Deploy Duplo e Sincronização:** Ambas as URLs de produção/homologação (`https://360studio.hubdigital360.com` e `https://tour360.hubdigital360.com`) foram sincronizadas via `deploy-hml.ps1` e `deploy-prod.ps1`, disponibilizando a Landing Page moderna e o Painel do Usuário atualizado em ambos os domínios.
+    *   **Otimização de Upload nos Deploys:** Adicionada a regra `\draft` no `$ignoredPatterns` do [deploy-staging.ps1](file:///g:/Meu%20Drive/Dev's/360/360/deploy-staging.ps1) para desconsiderar mídias pesadas de teste e acelerar o tempo de upload.
 
 ---
 
