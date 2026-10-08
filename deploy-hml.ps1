@@ -24,9 +24,9 @@ try {
     }
 
     # Create the remote /hml directory on FTP first
-    $ftpHost = "ftp://82.25.72.209"
-    $ftpUser = "u576215103.tour360.hubdigital360.com"
-    $ftpPass = "NDtMTAeX|R@~C9t^"
+    $ftpHost = "ftp://ftp.360studio.hubdigital360.com"
+    $ftpUser = "u576215103.360studio"
+    $ftpPass = "4EU6aY;1Mq"
     try {
         $request = [System.Net.FtpWebRequest]::Create("$ftpHost/hml")
         $request.Credentials = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
