@@ -187,15 +187,41 @@ function renderTours() {
             imgTag = `<img src="${thumbUrl}" class="project-img" onerror="this.remove()">`;
         }
         
+        // Status da privacidade
+        let privacyBadgeHtml = '';
+        let togglePrivacyBtnHtml = '';
+        const currentPrivacy = tour.privacy_settings || 'public';
+
+        if (currentPrivacy === 'disabled' || currentPrivacy === 'private') {
+            privacyBadgeHtml = `<div class="privacy-badge privacy-disabled" title="Link de Visualização Desativado"><i class="fa-solid fa-eye-slash"></i> Desativado</div>`;
+            togglePrivacyBtnHtml = `
+                <button class="btn btn-secondary btn-sm btn-toggle-privacy" data-id="${tour.id}" data-target="public" title="Ativar Link Público" style="border-color: #ff4a5a; color: #ff4a5a; background: rgba(255, 74, 90, 0.08); padding: 0 8px; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-toggle-off"></i> Off
+                </button>`;
+        } else if (currentPrivacy !== 'public') {
+            privacyBadgeHtml = `<div class="privacy-badge privacy-password" title="Protegido por Senha"><i class="fa-solid fa-key"></i> Com Senha</div>`;
+            togglePrivacyBtnHtml = `
+                <button class="btn btn-secondary btn-sm btn-toggle-privacy" data-id="${tour.id}" data-target="disabled" title="Desativar Link Público" style="border-color: #f59e0b; color: #f59e0b; background: rgba(245, 158, 11, 0.08); padding: 0 8px; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-key"></i> Senha
+                </button>`;
+        } else {
+            privacyBadgeHtml = `<div class="privacy-badge privacy-public" title="Link Público Ativo"><i class="fa-solid fa-globe"></i> Ativo</div>`;
+            togglePrivacyBtnHtml = `
+                <button class="btn btn-secondary btn-sm btn-toggle-privacy" data-id="${tour.id}" data-target="disabled" title="Desativar Link Público" style="border-color: #10b981; color: #10b981; background: rgba(16, 185, 129, 0.08); padding: 0 8px; display: inline-flex; align-items: center; justify-content: center;">
+                    <i class="fa-solid fa-toggle-on"></i> On
+                </button>`;
+        }
+        
         // Link de visualização pública
-        const publicUrl = `${window.location.origin}${window.location.pathname.replace("dashboard.html", "index.html")}?id=${tour.id}&v=1.3.8`;
+        const publicUrl = `${window.location.origin}${window.location.pathname.replace("dashboard.html", "index.html")}?id=${tour.id}&mode=view&v=1.3.8`;
 
         card.innerHTML = `
             <a href="index.html?id=${tour.id}&mode=view&v=1.3.8" class="project-preview-link" style="text-decoration: none; color: inherit; display: block;">
                 <div class="project-preview">
                     ${imgTag}
+                    ${privacyBadgeHtml}
                     <div class="project-overlay">
-                        <span class="btn btn-secondary btn-circle btn-view-public" title="Ver Link Público" data-url="${publicUrl}">
+                        <span class="btn btn-secondary btn-circle btn-view-public" title="Copiar Link Público" data-url="${publicUrl}">
                             <i class="fa-solid fa-share-nodes"></i>
                         </span>
                     </div>
@@ -212,10 +238,11 @@ function renderTours() {
                     <a href="index.html?id=${tour.id}&v=1.3.8" class="btn btn-primary btn-sm btn-flex" style="flex: 1; justify-content: center;">
                         <i class="fa-solid fa-edit"></i> Editar
                     </a>
+                    ${togglePrivacyBtnHtml}
                     <a href="api/export_tour.php?id=${tour.id}" class="btn btn-secondary btn-sm btn-flex" style="border-color: #38bdf8; color: #38bdf8; background: rgba(56, 189, 248, 0.08); display: inline-flex; align-items: center; justify-content: center; width: auto; padding: 0 10px;" title="Exportar para Execução Offline">
                         <i class="fa-solid fa-download"></i> Offline
                     </a>
-                    <button class="btn btn-secondary btn-sm btn-delete-project" data-id="${tour.id}" style="padding: 0 10px; display: inline-flex; align-items: center; justify-content: center;">
+                    <button class="btn btn-secondary btn-sm btn-delete-project" data-id="${tour.id}" style="padding: 0 10px; display: inline-flex; align-items: center; justify-content: center;" title="Excluir Tour">
                         <i class="fa-solid fa-trash"></i>
                     </button>
                 </div>
@@ -225,20 +252,46 @@ function renderTours() {
         // Evento de deletar
         card.querySelector(".btn-delete-project").addEventListener("click", (e) => {
             e.preventDefault();
-            e.stopPropagation(); // Evita qualquer propagação ou clique concorrente no card
-            console.log("Botão de deletar clicado para o projeto ID:", tour.id);
+            e.stopPropagation();
             deleteTour(tour.id);
         });
+
+        // Evento de alternar privacidade
+        const btnTogglePrivacy = card.querySelector(".btn-toggle-privacy");
+        if (btnTogglePrivacy) {
+            btnTogglePrivacy.addEventListener("click", async (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const targetPrivacy = e.currentTarget.dataset.target;
+                const tourId = e.currentTarget.dataset.id;
+                
+                try {
+                    const res = await fetch('api/toggle_tour_privacy.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ tourId: tourId, privacySettings: targetPrivacy })
+                    });
+                    const data = await res.json();
+                    if (res.ok && data.success) {
+                        showToast(data.message, "success");
+                        await loadTours();
+                    } else {
+                        showToast(data.message || "Erro ao alterar privacidade.", "error");
+                    }
+                } catch (err) {
+                    showToast("Erro de conexão ao alterar privacidade.", "error");
+                }
+            });
+        }
 
         // Evento de compartilhar / copiar link público
         card.querySelector(".btn-view-public").addEventListener("click", (e) => {
             e.preventDefault();
-            e.stopPropagation(); // Evita navegar para o link da miniatura
+            e.stopPropagation();
             const url = e.currentTarget.dataset.url;
             navigator.clipboard.writeText(url).then(() => {
                 showToast("Link público copiado para a área de transferência!", "success");
             }).catch(() => {
-                // Fallback abrindo a aba
                 window.open(url, "_blank");
             });
         });

@@ -545,6 +545,41 @@
     color: var(--color-accent);
 }
 
+/* Badges de Privacidade nos Cards */
+.privacy-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    padding: 3px 8px;
+    border-radius: 20px;
+    font-size: 10px;
+    font-weight: 700;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.privacy-badge.privacy-public {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.privacy-badge.privacy-disabled {
+    background: rgba(239, 68, 68, 0.25);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.privacy-badge.privacy-password {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.4);
+}
+
 .project-details {
     padding: 16px;
     display: flex;

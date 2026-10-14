@@ -51,8 +51,8 @@ if ($maxLogos === 0) {
     $logoUrl = null;
 }
 
-// Desabilitar privacidade se o plano não permitir
-if (!hasFeature($user, 'privacy_control')) {
+// Desabilitar controle de senha se o plano não permitir (mas permitir desativar link)
+if (!hasFeature($user, 'privacy_control') && $privacySettings !== 'disabled' && $privacySettings !== 'public') {
     $privacySettings = null;
 }
 

@@ -5,7 +5,7 @@ loginRequired();
 
 try {
     // Buscar todos os tours do usuário logado
-    $stmt = $pdo->prepare("SELECT id, title, created_at, updated_at, scenes_json FROM " . TABLE_PREFIX . "tours WHERE user_id = ? ORDER BY updated_at DESC");
+    $stmt = $pdo->prepare("SELECT id, title, privacy_settings, created_at, updated_at, scenes_json FROM " . TABLE_PREFIX . "tours WHERE user_id = ? ORDER BY updated_at DESC");
     $stmt->execute([$_SESSION['user_id']]);
     $tours = $stmt->fetchAll();
 
@@ -27,6 +27,7 @@ try {
         $result[] = [
             'id' => $tour['id'],
             'title' => $tour['title'],
+            'privacy_settings' => $tour['privacy_settings'],
             'scenes_count' => $scenes_count,
             'thumbnail' => $thumb,
             'created_at' => $tour['created_at'],

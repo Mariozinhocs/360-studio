@@ -132,6 +132,26 @@
     *   **Deploy Duplo e Sincronização:** Ambas as URLs de produção/homologação (`https://360studio.hubdigital360.com` e `https://tour360.hubdigital360.com`) foram sincronizadas via `deploy-hml.ps1` e `deploy-prod.ps1`, disponibilizando a Landing Page moderna e o Painel do Usuário atualizado em ambos os domínios.
     *   **Otimização de Upload nos Deploys:** Adicionada a regra `\draft` no `$ignoredPatterns` do [deploy-staging.ps1](file:///g:/Meu%20Drive/Dev's/360/360/deploy-staging.ps1) para desconsiderar mídias pesadas de teste e acelerar o tempo de upload.
 
+17. **Costurador Automático WebGL de Fotos .INSP e Dual-Fisheye no Cliente (CONCLUÍDO):**
+    *   **Módulo WebGL (`insp_stitcher.js`):** Criada classe `Stitcher360` com Fragment Shader WebGL customizado para realizar a projeção de dupla lente fisheye (*Dual Fisheye ➔ Equirectangular 2:1*) com suavização de emenda (*Seam Blending*) por GPU no navegador do usuário em milissegundos (< 100ms).
+    *   **Integração no Fluxo de Upload ([app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js)):** O método `processAndOptimizeFile` detecta automaticamente arquivos nativos `.insp`, `.dng` ou fisheye brutos, executa a costura no cliente, converte o resultado em um Blob JPEG 4K e realiza o upload para o servidor como uma foto `.jpg` 360° perfeita.
+    *   **Cache-Buster e Importação ([index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html)):** Importação de `insp_stitcher.js?v=1.6.1` inserida antes de `app.js?v=1.6.1`.
+
+18. **Publicação Direta no Google Maps e Google Street View (CONCLUÍDO):**
+    *   **Backend OAuth 2.0 e APIs:** Criados os endpoints [api/gsv_auth.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_auth.php), [api/gsv_callback.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_callback.php), [api/gsv_publish.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_publish.php) e [api/gsv_status.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_status.php) com suporte a renovação de tokens via `refresh_token`.
+    *   **Credenciais de Ambiente:** Configurado suporte a `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` via arquivo `.env`.
+    *   **Interface no Editor ([index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) e [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js)):** Modal dedicado para publicação direta no Street View com campos para Google Place ID, coordenadas de GPS (Latitude/Longitude) e barra de progresso em tempo real durante o envio de fotos esféricas.
+
+19. **Gestão Dinâmica de Privacidade de Tours e Alternância Rápida no Dashboard (CONCLUÍDO):**
+    *   **Backend de Privacidade:** Nova API [api/toggle_tour_privacy.php](file:///g:/Meu%20Drive/Dev's/360/360/api/toggle_tour_privacy.php) e adaptação em `get_tour.php`, `list_tours.php` e `save_tour.php` para suporte a múltiplos estados (`public`, `disabled`/`private` e `password`).
+    *   **Toggle e Badges no Dashboard ([dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) e [dashboard.css](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.css)):** Cada card de tour agora possui badge de status visual (*Ativo*, *Desativado*, *Com Senha*) e botão rápido para ligar/desligar a visualização pública com um clique, sem precisar abrir o editor.
+
+20. **Otimizações de Renderização A-Frame, Calibração de Visão Inicial e Social Sharing (CONCLUÍDO):**
+    *   **Definição Rápida de Visão Inicial:** Botão flutuante "Definir Visão Inicial" (`#btn-set-initial-view-floating`) na barra de controles do editor para salvar o ângulo Yaw com um único clique.
+    *   **Alta Fidelidade Visual A-Frame:** Cena 360° com antialiasing, gerenciamento de cores e geometria esférica de 128x64 segmentos (`renderer="antialias: true; precision: high; colorManagement: true"`).
+    *   **Giroscópio para Dispositivos Móveis:** Botão interativo para ativar/desativar controle por giroscópio do celular (`#btn-toggle-gyro`).
+    *   **Meta Tags OpenGraph (OG):** Inclusão de metadados de compartilhamento em [home.html](file:///g:/Meu%20Drive/Dev's/360/360/home.html) para geração automática de cards no WhatsApp, Telegram e redes sociais.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
@@ -142,7 +162,7 @@
     *   [project_memory.md](file:///g:/Meu%20Drive/Dev's/360/360/project_memory.md) (Memória do projeto atualizada com status e roadmap [CONCLUÍDO])
     *   [create_test_profiles.php](file:///g:/Meu%20Drive/Dev's/360/360/create_test_profiles.php) (Script de carga e reset de contas de teste por nível de plano no HML [CONCLUÍDO])
     *   [api/config.php](file:///g:/Meu%20Drive/Dev's/360/360/api/config.php) (Configurações de banco, sessão, helpers e fuso horário UTC forçado [CONCLUÍDO])
-*   **APIs do Painel:**
+*   **APIs do Painel e Integrações:**
     *   [admin_helper.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/admin_helper.php) (Validação de privilégios e purga [CONCLUÍDO])
     *   [list_users.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/list_users.php) (Suporte a filtro 'deleted' [CONCLUÍDO])
     *   [delete_user.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/delete_user.php) (Lógica dupla Soft Delete/Hard Delete [CONCLUÍDO])
@@ -150,8 +170,13 @@
     *   [restore_user.php](file:///g:/Meu%20Drive/Dev's/360/360/api/admin/restore_user.php) (Endpoint para reverter exclusão lógica [CONCLUÍDO])
     *   [upload.php](file:///g:/Meu%20Drive/Dev's/360/360/api/upload.php) (Implementadas validações de limite de tamanho de mídia [CONCLUÍDO])
     *   [update_profile.php](file:///g:/Meu%20Drive/Dev's/360/360/api/update_profile.php) (Endpoint para atualizar informações pessoais, fuso horário e plano do usuário logado [CONCLUÍDO])
-    *   [save_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/save_tour.php) (Suporte a floor_plan_json e exclusão física de planta órfã [CONCLUÍDO])
-    *   [get_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/get_tour.php) (Inclusão de floor_plan_json na resposta da API [CONCLUÍDO])
+    *   [save_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/save_tour.php) (Suporte a floor_plan_json, privacySettings e exclusão física de planta órfã [CONCLUÍDO])
+    *   [get_tour.php](file:///g:/Meu%20Drive/Dev's/360/360/api/get_tour.php) (Inclusão de floor_plan_json e privacySettings na resposta da API [CONCLUÍDO])
+    *   [toggle_tour_privacy.php](file:///g:/Meu%20Drive/Dev's/360/360/api/toggle_tour_privacy.php) (Endpoint de alternância rápida de privacidade: public, disabled ou password [CONCLUÍDO])
+    *   [gsv_auth.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_auth.php) (Fluxo de autorização Google OAuth 2.0 para Google Street View [CONCLUÍDO])
+    *   [gsv_callback.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_callback.php) (Callback e troca de Authorization Code por Access/Refresh Token Google [CONCLUÍDO])
+    *   [gsv_status.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_status.php) (Verificação de status de conexão Google Street View e auto-refresh de token [CONCLUÍDO])
+    *   [gsv_publish.php](file:///g:/Meu%20Drive/Dev's/360/360/api/gsv_publish.php) (Endpoint de upload e publicação de fotos esféricas e metadados no Google Street View API [CONCLUÍDO])
     *   [recover_password.php](file:///g:/Meu%20Drive/Dev's/360/360/api/recover_password.php) (Endpoint para solicitação de recuperação de senha por e-mail [CONCLUÍDO])
     *   [reset_password_with_token.php](file:///g:/Meu%20Drive/Dev's/360/360/api/reset_password_with_token.php) (Endpoint para redefinir senha usando token [CONCLUÍDO])
     *   [config.php](file:///g:/Meu%20Drive/Dev's/360/360/api/config.php) (Adicionada função resolvePlanName para normalização de active/trial e validação de features [CONCLUÍDO])
@@ -161,14 +186,16 @@
 *   **Banco de Dados:**
     *   [schema.sql](file:///g:/Meu%20Drive/Dev's/360/360/api/schema.sql) (Ajuste para TINYINT, deleted_at, timezone, floor_plan_json e colunas de recuperação de senha [CONCLUÍDO])
     *   [db_installer.php](file:///g:/Meu%20Drive/Dev's/360/360/db_installer.php) (Conversão de tipo, deleted_at, timezone, floor_plan_json e colunas de recuperação de forma segura [CONCLUÍDO])
-*   **Interface:**
+*   **Interface e WebGL:**
+    *   [insp_stitcher.js](file:///g:/Meu%20Drive/Dev's/360/360/insp_stitcher.js) (Costurador WebGL client-side de fotos .INSP Insta360 Dual-Fisheye para Equirretangular 2:1 [CONCLUÍDO])
     *   [admin.html](file:///g:/Meu%20Drive/Dev's/360/360/admin.html) (Filtro lixeira, restaurar em lote, cache-buster e dropdowns de assinatura com planos reais [CONCLUÍDO])
     *   [admin.js](file:///g:/Meu%20Drive/Dev's/360/360/admin.js) (Auto-logout, mapeamento de planos e badges corretas na listagem e modal de edição [CONCLUÍDO])
-    *   [dashboard.html](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.html) (Adicionado botão e modal de edição de perfil, e bump de cache-buster v=1.0.8 [CONCLUÍDO])
-    *   [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) (Auto-logout, mapeamento de active/trial para planos reais no limite de tours [CONCLUÍDO])
-    *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Card da Planta na sidebar, modal do editor, widget de radar do visitante e cache-buster v=1.3.8 [CONCLUÍDO])
-    *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização premium, modal de planta, popup de anúncios e cache-buster v=1.3.8 [CONCLUÍDO])
-    *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (Hotspots pulsantes, angulo inicial com restrição PRO no editor, feedback de clique e cache-buster v=1.3.8 [CONCLUÍDO])
+    *   [dashboard.html](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.html) (Adicionado botão e modal de edição de perfil, e bump de cache-buster v=1.3.8 [CONCLUÍDO])
+    *   [dashboard.js](file:///g:/Meu%20Drive/Dev's/360/360/dashboard.js) (Auto-logout, botões de toggle de privacidade de tour e link público com mode=view [CONCLUÍDO])
+    *   [index.html](file:///g:/Meu%20Drive/Dev's/360/360/index.html) (Modal GSV, botão flutuante de visão inicial, antialiasing 128x64 e cache-buster v=1.6.1 [CONCLUÍDO])
+    *   [style.css](file:///g:/Meu%20Drive/Dev's/360/360/style.css) (Estilização de badges de privacidade, modais GSV, controle de giroscópio e cache-buster v=1.6.1 [CONCLUÍDO])
+    *   [app.js](file:///g:/Meu%20Drive/Dev's/360/360/app.js) (Integração GSV publish, auto-stitch de fotos .INSP, botão visão inicial e cache-buster v=1.6.1 [CONCLUÍDO])
+    *   [home.html](file:///g:/Meu%20Drive/Dev's/360/360/home.html) (Meta tags OpenGraph completas para pré-visualização no WhatsApp e redes sociais [CONCLUÍDO])
     *   [login.html](file:///g:/Meu%20Drive/Dev's/360/360/login.html) (Removido auto-redirect, bloqueio de autofill por divs, gravação de session_active no sessionStorage, link Esqueci minha senha e cards de recuperação/redefinição [CONCLUÍDO])
     *   [plans.js](file:///g:/Meu%20Drive/Dev's/360/360/plans.js) (Validação checkAuth de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])
     *   [home.js](file:///g:/Meu%20Drive/Dev's/360/360/home.js) (Validação checkUserSession de session_active inativa no PC para limpar sessão do servidor [CONCLUÍDO])

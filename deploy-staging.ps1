@@ -35,7 +35,8 @@ $ignoredPatterns = @(
     'README\.md$',
     '\\\.gemini',
     '\\draft',
-    '\.env.*$',
+    '\\scratch',
+    '\.env\..*$',
     '\.bak$'
 )
 

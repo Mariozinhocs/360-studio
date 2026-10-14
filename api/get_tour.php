@@ -195,14 +195,14 @@ try {
         $logoUrl = $tour['logo_url'];
     }
 
-    // Obter privacy_settings se o criador tiver o recurso ativo
-    $privacySettings = null;
-    if (!empty($tour['privacy_settings']) && hasFeature($owner, 'privacy_control')) {
-        $privacySettings = $tour['privacy_settings'];
-    }
+    // Obter privacy_settings
+    $privacySettings = !empty($tour['privacy_settings']) ? $tour['privacy_settings'] : null;
 
-    // Validar se o tour está bloqueado por senha
-    $password_required = !empty($privacySettings);
+    // Verificar se o link de visualização externa foi desativado
+    $is_disabled = ($privacySettings === 'disabled' || $privacySettings === 'private') && !$is_owner;
+
+    // Validar se o tour está protegido por senha
+    $password_required = !empty($privacySettings) && $privacySettings !== 'public' && $privacySettings !== 'disabled' && $privacySettings !== 'private' && hasFeature($owner, 'privacy_control');
     $has_correct_password = false;
     if ($password_required) {
         $submitted_password = isset($_GET['password']) ? trim($_GET['password']) : '';
@@ -211,7 +211,7 @@ try {
         }
     }
 
-    $is_locked = $password_required && !$has_correct_password;
+    $is_locked = ($password_required && !$has_correct_password) || $is_disabled;
 
     // Decodifica as cenas salvas (apenas se não estiver bloqueado por senha)
     $scenes = [];
@@ -250,11 +250,14 @@ try {
             'scenes' => $scenes,
             'floorPlan' => $floorPlan,
             'logoUrl' => $logoUrl,
+            'privacySettings' => $privacySettings,
             'nadirSettings' => $nadirSettings
         ],
         'is_owner' => $is_owner,
         'show_ads' => $show_ads,
         'is_locked' => $is_locked,
+        'is_disabled' => $is_disabled,
+        'password_required' => $password_required,
         'features' => $features
     ]);
 

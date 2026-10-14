@@ -44,6 +44,10 @@ loadEnv($env_path);
 // Prefixo de tabelas para isolamento
 define('TABLE_PREFIX', getenv('DB_TABLE_PREFIX') ?: '');
 
+// Credenciais Google Street View (OAuth 2.0)
+define('GOOGLE_CLIENT_ID', getenv('GOOGLE_CLIENT_ID') ?: '');
+define('GOOGLE_CLIENT_SECRET', getenv('GOOGLE_CLIENT_SECRET') ?: '');
+
 // Conexão MySQL via PDO
 $db_host = getenv('DATABASE_HOST') ?: 'localhost';
 $db_user = getenv('DATABASE_USER') ?: 'root';

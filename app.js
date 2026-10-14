@@ -193,8 +193,9 @@ AFRAME.registerComponent('rotation-listener', {
     tick: function () {
         const rotation = this.el.getAttribute('rotation');
         if (rotation) {
-            // rotation.y é o Yaw (rotação horizontal)
+            // rotation.y é o Yaw (rotação horizontal), rotation.x é o Pitch (inclinação vertical)
             state.activeYawAngle = rotation.y;
+            state.activePitchAngle = rotation.x;
             updateActiveRadarAngle(rotation.y);
         }
     }
@@ -204,6 +205,12 @@ AFRAME.registerComponent('rotation-listener', {
 document.addEventListener("DOMContentLoaded", async () => {
     initDOMEvents();
     initFloorplan();
+    initSceneRendererEnhancements();
+    updateMobileControlsVisibility();
+    initTouchZoom();
+    
+    // Restaurar a aba e estado do painel lateral instantaneamente (antes da rede)
+    restoreEditorDrawerState();
     
     // 1. Verificar ID do tour na URL
     const urlParams = new URLSearchParams(window.location.search);
@@ -237,6 +244,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         renderScenesCarousel();
         updateUI();
     }
+
+    // Garantir que a aba ativa permaneça após carregar os dados do tour
+    restoreEditorDrawerState();
 });
 
 // --- OPERAÇÕES DO BANCO DE DADOS (SERVIDOR E LOCAL) ---
@@ -252,11 +262,65 @@ async function loadTourFromServer(tourId, startMode = null) {
             state.features = data.features || {};
             
             if (data.is_locked) {
-                // Tour bloqueado por senha
-                document.getElementById("password-lock-screen").style.display = "flex";
+                const lockScreen = document.getElementById("password-lock-screen");
+                if (lockScreen) {
+                    lockScreen.style.display = "flex";
+                    
+                    if (data.is_disabled) {
+                        // Tour desativado pelo proprietário
+                        const lockIcon = lockScreen.querySelector(".lock-icon");
+                        if (lockIcon) lockIcon.className = "fa-solid fa-eye-slash lock-icon";
+                        
+                        const lockTitle = lockScreen.querySelector("h2");
+                        if (lockTitle) lockTitle.textContent = "Link Desativado";
+                        
+                        const lockDesc = lockScreen.querySelector("p");
+                        if (lockDesc) lockDesc.textContent = "O proprietário deste tour virtual desativou o link de visualização para o público externo.";
+                        
+                        const lockInputGroup = lockScreen.querySelector(".lock-input-group");
+                        if (lockInputGroup) lockInputGroup.style.display = "none";
+                        
+                        const unlockError = document.getElementById("unlock-error-msg");
+                        if (unlockError) unlockError.style.display = "none";
+                        
+                        let homeBtn = document.getElementById("btn-disabled-home");
+                        if (!homeBtn) {
+                            homeBtn = document.createElement("a");
+                            homeBtn.id = "btn-disabled-home";
+                            homeBtn.href = "home.html";
+                            homeBtn.className = "btn btn-primary";
+                            homeBtn.style.marginTop = "15px";
+                            homeBtn.style.textDecoration = "none";
+                            homeBtn.style.display = "inline-flex";
+                            homeBtn.style.alignItems = "center";
+                            homeBtn.style.gap = "8px";
+                            homeBtn.innerHTML = '<i class="fa-solid fa-house"></i> Ir para a Página Inicial';
+                            const lockCard = lockScreen.querySelector(".lock-card");
+                            if (lockCard) lockCard.appendChild(homeBtn);
+                        } else {
+                            homeBtn.style.display = "inline-flex";
+                        }
+                    } else {
+                        // Bloqueado por Senha
+                        const lockIcon = lockScreen.querySelector(".lock-icon");
+                        if (lockIcon) lockIcon.className = "fa-solid fa-lock lock-icon";
+                        
+                        const lockTitle = lockScreen.querySelector("h2");
+                        if (lockTitle) lockTitle.textContent = "Tour Protegido";
+                        
+                        const lockDesc = lockScreen.querySelector("p");
+                        if (lockDesc) lockDesc.textContent = "Este tour virtual é privado. Digite a senha de acesso para visualizá-lo.";
+                        
+                        const lockInputGroup = lockScreen.querySelector(".lock-input-group");
+                        if (lockInputGroup) lockInputGroup.style.display = "flex";
+                        
+                        let homeBtn = document.getElementById("btn-disabled-home");
+                        if (homeBtn) homeBtn.style.display = "none";
+                    }
+                }
                 
                 // Configurar títulos básicos
-                document.getElementById("tour-display-title").textContent = state.tour.title;
+                document.getElementById("tour-display-title").textContent = state.tour ? state.tour.title : "Tour 360°";
                 document.getElementById("scene-display-title").textContent = "Acesso Restrito";
                 
                 // Esconder elementos de edição por segurança
@@ -340,6 +404,7 @@ async function loadTourFromServer(tourId, startMode = null) {
             updateSettingsSidebarUI();
             renderNadirPatch();
             updateUI();
+            restoreEditorDrawerState();
             showToast("Tour carregado com sucesso do servidor!", "success");
         } else {
             showToast(data.message || "Erro ao carregar o tour.", "error");
@@ -424,22 +489,13 @@ function setActiveScene(sceneId) {
 
     state.activeSceneId = sceneId;
     
-    // Configurar rotação inicial da cena (Yaw) e resetar orientação da câmera para 0 0 0
+    // Configurar orientação esférica padrão e aplicar ângulo inicial da câmera
     const skyViewer = document.getElementById("sky-viewer");
     const videoViewer = document.getElementById("video-viewer");
-    const initialYaw = parseFloat(scene.initialYaw || 0);
-    if (skyViewer) skyViewer.setAttribute("rotation", `0 ${initialYaw} 0`);
-    if (videoViewer) videoViewer.setAttribute("rotation", `0 ${initialYaw} 0`);
+    if (skyViewer) skyViewer.setAttribute("rotation", "0 -90 0");
+    if (videoViewer) videoViewer.setAttribute("rotation", "0 -90 0");
 
-    const camera = document.getElementById("camera");
-    if (camera) {
-        camera.setAttribute("rotation", "0 0 0");
-        const lookControls = camera.components['look-controls'];
-        if (lookControls) {
-            lookControls.pitchObject.rotation.x = 0;
-            lookControls.yawObject.rotation.y = 0;
-        }
-    }
+    applySceneInitialView(scene);
     
     // Exibir feedback de carregamento
     const sceneDisplayTitle = document.getElementById("scene-display-title");
@@ -482,6 +538,7 @@ function setActiveScene(sceneId) {
             skyViewer.setAttribute("src", `#${img.id}`);
             skyViewer.setAttribute("visible", "true");
             skyViewer.setAttribute("click-listener", "");
+            optimizeSkyViewerTexture();
         };
         img.src = scene.sourceUrl;
     } else if (scene.type === "video") {
@@ -582,6 +639,205 @@ function setActiveScene(sceneId) {
 
     // Renderizar Tampa de Tripé (Nadir) se ativo
     renderNadirPatch();
+}
+
+// --- OTIMIZAÇÃO DE ALTA DEFINIÇÃO WEBGL / THREE.JS ---
+function initSceneRendererEnhancements() {
+    const sceneEl = document.querySelector("a-scene");
+    if (!sceneEl) return;
+
+    const setupRenderer = () => {
+        if (sceneEl.renderer) {
+            // Garante densidade total de pixels nativa para monitores Retina, 2K, 4K e telas com DPI escalado
+            sceneEl.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            if (THREE.SRGBColorSpace) {
+                sceneEl.renderer.outputColorSpace = THREE.SRGBColorSpace;
+            }
+        }
+    };
+
+    if (sceneEl.hasLoaded) {
+        setupRenderer();
+    } else {
+        sceneEl.addEventListener("loaded", setupRenderer);
+    }
+
+    window.addEventListener("resize", () => {
+        if (sceneEl && sceneEl.renderer) {
+            sceneEl.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        }
+    });
+}
+
+function optimizeSkyViewerTexture() {
+    const skyViewer = document.getElementById("sky-viewer");
+    if (!skyViewer) return;
+
+    const applyOptimization = () => {
+        const sceneEl = document.querySelector("a-scene");
+        const renderer = sceneEl ? sceneEl.renderer : null;
+
+        if (renderer) {
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+            if (THREE.SRGBColorSpace) {
+                renderer.outputColorSpace = THREE.SRGBColorSpace;
+            }
+        }
+
+        const mesh = skyViewer.getObject3D("mesh");
+        if (mesh && mesh.material) {
+            const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+            materials.forEach(mat => {
+                if (mat && mat.map) {
+                    const texture = mat.map;
+                    const maxAniso = renderer ? renderer.capabilities.getMaxAnisotropy() : 16;
+                    
+                    // Filtragem anisotrópica máxima (até 16x) para manter extrema nitidez em todos os ângulos
+                    texture.anisotropy = maxAniso;
+                    
+                    // Amostragem linear direta no domo 360° para evitar borrões causados por mipmaps distantes
+                    texture.minFilter = THREE.LinearFilter;
+                    texture.magFilter = THREE.LinearFilter;
+                    texture.generateMipmaps = false;
+                    texture.needsUpdate = true;
+                }
+            });
+        }
+    };
+
+    applyOptimization();
+    skyViewer.removeEventListener("materialtextureloaded", applyOptimization);
+    skyViewer.addEventListener("materialtextureloaded", applyOptimization, { once: true });
+}
+
+// --- ORIENTAÇÃO INICIAL DA CENA (YAW / PITCH) ---
+function applySceneInitialView(scene) {
+    if (!scene) return;
+    const camera = document.getElementById("camera");
+    if (!camera) return;
+
+    const initialYaw = parseFloat(scene.initialYaw || 0);
+    const initialPitch = parseFloat(scene.initialPitch || 0);
+
+    const lookControls = camera.components['look-controls'];
+    if (lookControls) {
+        if (lookControls.yawObject) {
+            lookControls.yawObject.rotation.y = THREE.MathUtils.degToRad(initialYaw);
+        }
+        if (lookControls.pitchObject) {
+            lookControls.pitchObject.rotation.x = THREE.MathUtils.degToRad(initialPitch);
+        }
+    }
+    camera.setAttribute("rotation", `${initialPitch} ${initialYaw} 0`);
+    state.activeYawAngle = initialYaw;
+    state.activePitchAngle = initialPitch;
+    updateActiveRadarAngle(initialYaw);
+
+    const quickDisplay = document.getElementById("quick-initial-yaw-display");
+    if (quickDisplay) quickDisplay.textContent = `${Math.round(initialYaw)}°`;
+}
+
+// --- CONTROLE DE GIROSCÓPIO & NAVEGAÇÃO MOBILE ---
+function isMobileOrTouch() {
+    return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0) || (window.innerWidth <= 1024);
+}
+
+function updateMobileControlsVisibility() {
+    const isMobile = isMobileOrTouch();
+    const btnToggleGyro = document.getElementById("btn-toggle-gyro");
+    if (btnToggleGyro) {
+        btnToggleGyro.style.display = isMobile ? "flex" : "none";
+    }
+}
+
+function toggleGyroscope() {
+    const camera = document.getElementById("camera");
+    const btn = document.getElementById("btn-toggle-gyro");
+    if (!camera || !btn) return;
+
+    state.gyroEnabled = !state.gyroEnabled;
+
+    const activateGyro = () => {
+        camera.setAttribute('look-controls', 'magicWindowTracking: true; touchEnabled: true');
+        btn.classList.add('active');
+        btn.title = "Giroscópio Ativo (Clique para desativar e usar apenas toque)";
+        showToast('Giroscópio ativado! Mova o celular para olhar em 360°.', 'info');
+    };
+
+    const deactivateGyro = () => {
+        camera.setAttribute('look-controls', 'magicWindowTracking: false; touchEnabled: true');
+        btn.classList.remove('active');
+        btn.title = "Giroscópio Desativado (Clique para ativar movimento do celular)";
+        showToast('Giroscópio desativado. Arraste com o dedo para navegar.', 'info');
+    };
+
+    if (state.gyroEnabled) {
+        // No iOS Safari, requisitar permissão caso necessário
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        activateGyro();
+                    } else {
+                        state.gyroEnabled = false;
+                        deactivateGyro();
+                        showToast('Permissão de movimento negada no dispositivo.', 'error');
+                    }
+                })
+                .catch(err => {
+                    console.warn("Erro ao solicitar permissão de orientação:", err);
+                    state.gyroEnabled = false;
+                    deactivateGyro();
+                });
+        } else {
+            activateGyro();
+        }
+    } else {
+        deactivateGyro();
+    }
+}
+
+// Suporte a Pinch-to-zoom em telas de toque (Mobile)
+function initTouchZoom() {
+    const canvasWrapper = document.getElementById("canvas-wrapper");
+    if (!canvasWrapper) return;
+
+    let initialDist = 0;
+    let initialFov = 80;
+
+    canvasWrapper.addEventListener("touchstart", (e) => {
+        if (e.touches && e.touches.length === 2) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            initialDist = Math.hypot(dx, dy);
+            const camera = document.getElementById("camera");
+            if (camera) {
+                initialFov = parseFloat(camera.getAttribute("fov") || 80);
+            }
+        }
+    }, { passive: true });
+
+    canvasWrapper.addEventListener("touchmove", (e) => {
+        if (e.touches && e.touches.length === 2 && initialDist > 0) {
+            const dx = e.touches[0].clientX - e.touches[1].clientX;
+            const dy = e.touches[0].clientY - e.touches[1].clientY;
+            const currentDist = Math.hypot(dx, dy);
+            const diff = initialDist - currentDist;
+
+            const camera = document.getElementById("camera");
+            if (camera) {
+                let newFov = initialFov + (diff * 0.15);
+                if (newFov < 35) newFov = 35;
+                if (newFov > 105) newFov = 105;
+                camera.setAttribute("fov", newFov);
+                state.userChangedFov = true;
+            }
+        }
+    }, { passive: true });
+
+    canvasWrapper.addEventListener("touchend", () => {
+        initialDist = 0;
+    }, { passive: true });
 }
 
 // --- FUNÇÕES DE CONTROLE DE BLOQUEIO DE CENA (SOFT LIMIT) ---
@@ -1152,9 +1408,9 @@ function initDOMEvents() {
                 }
                 
                 showToast("Fazendo upload da logo...", "info");
-                const uploadResult = await uploadFileToServer(file, file.name);
-                if (uploadResult && uploadResult.url) {
-                    state.tour.logoUrl = uploadResult.url;
+                const url = await uploadFileToServer(file, file.name);
+                if (url) {
+                    state.tour.logoUrl = url;
                     updateSettingsSidebarUI();
                     saveTourToStorage();
                     showToast("Logo carregada com sucesso!", "success");
@@ -1181,12 +1437,18 @@ function initDOMEvents() {
                 if (passwordInputWrapper) passwordInputWrapper.style.display = "block";
                 if (inputPrivacyPassword) {
                     inputPrivacyPassword.focus();
-                    state.tour.privacySettings = inputPrivacyPassword.value;
+                    state.tour.privacySettings = inputPrivacyPassword.value || "123456";
                 }
+            } else if (val === "disabled") {
+                if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+                state.tour.privacySettings = "disabled";
+                saveTourToStorage();
+                showToast("Link de visualização externa desativado!", "info");
             } else {
                 if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
                 state.tour.privacySettings = null;
                 saveTourToStorage();
+                showToast("Link público ativado para o mundo!", "success");
             }
         });
     }
@@ -1195,7 +1457,109 @@ function initDOMEvents() {
         inputPrivacyPassword.addEventListener("change", (e) => {
             state.tour.privacySettings = e.target.value.trim() || null;
             saveTourToStorage();
-            showToast("Privacidade atualizada!", "success");
+            showToast("Senha de acesso atualizada!", "success");
+        });
+    }
+
+    const btnCopyPublicLink = document.getElementById("btn-copy-public-link");
+    const btnTopbarCopyLink = document.getElementById("btn-topbar-copy-link");
+    
+    const copyLinkHandler = () => {
+        const publicUrl = `${window.location.origin}${window.location.pathname}?id=${state.tour.tourId}&mode=view&v=1.3.8`;
+        navigator.clipboard.writeText(publicUrl).then(() => {
+            showToast("Link de visualização copiado para a área de transferência!", "success");
+        }).catch(() => {
+            showToast("Erro ao copiar link.", "error");
+        });
+    };
+
+    if (btnCopyPublicLink) btnCopyPublicLink.addEventListener("click", copyLinkHandler);
+    if (btnTopbarCopyLink) btnTopbarCopyLink.addEventListener("click", copyLinkHandler);
+
+    // --- Google Street View Integration ---
+    const btnGsvConnect = document.getElementById("btn-gsv-connect");
+    const btnGsvPublishOpen = document.getElementById("btn-gsv-publish-open");
+    const gsvPublishModal = document.getElementById("gsv-publish-modal");
+    const btnCloseGsvModal = document.getElementById("btn-close-gsv-modal");
+    const btnCancelGsv = document.getElementById("btn-cancel-gsv");
+    const btnConfirmGsvPublish = document.getElementById("btn-confirm-gsv-publish");
+
+    window.gsvConnectedCallback = () => {
+        checkGSVConnectionStatus();
+        showToast("Conta Google conectada com sucesso para o Street View!", "success");
+    };
+
+    if (btnGsvConnect) {
+        btnGsvConnect.addEventListener("click", () => {
+            const width = 600;
+            const height = 700;
+            const left = (window.screen.width / 2) - (width / 2);
+            const top = (window.screen.height / 2) - (height / 2);
+            window.open("api/gsv_auth.php", "GoogleStreetViewAuth", `width=${width},height=${height},top=${top},left=${left}`);
+        });
+    }
+
+    if (btnGsvPublishOpen) {
+        btnGsvPublishOpen.addEventListener("click", async () => {
+            if (!state.tour || !state.tour.scenes || state.tour.scenes.length === 0) {
+                showToast("Adicione pelo menos 1 cena 360° antes de publicar no Street View.", "warning");
+                return;
+            }
+            if (gsvPublishModal) gsvPublishModal.classList.add("active");
+        });
+    }
+
+    if (btnCloseGsvModal) btnCloseGsvModal.addEventListener("click", () => gsvPublishModal.classList.remove("active"));
+    if (btnCancelGsv) btnCancelGsv.addEventListener("click", () => gsvPublishModal.classList.remove("active"));
+
+    if (btnConfirmGsvPublish) {
+        btnConfirmGsvPublish.addEventListener("click", async () => {
+            const placeId = document.getElementById("gsv-input-place-id").value.trim();
+            const lat = parseFloat(document.getElementById("gsv-input-lat").value) || 0;
+            const lng = parseFloat(document.getElementById("gsv-input-lng").value) || 0;
+
+            const progressContainer = document.getElementById("gsv-progress-container");
+            const progressBar = document.getElementById("gsv-progress-bar");
+            const progressStatus = document.getElementById("gsv-progress-status");
+
+            if (progressContainer) progressContainer.style.display = "block";
+            if (progressBar) progressBar.style.width = "30%";
+            if (progressStatus) progressStatus.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Conectando ao Google Street View API...';
+
+            btnConfirmGsvPublish.disabled = true;
+
+            try {
+                const res = await fetch("api/gsv_publish.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        tourId: state.tour.tourId,
+                        latitude: lat,
+                        longitude: lng,
+                        placeId: placeId
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    if (progressBar) progressBar.style.width = "100%";
+                    if (progressStatus) progressStatus.innerHTML = '<i class="fa-solid fa-circle-check" style="color:#00f2fe;"></i> Tour Publicado no Google Maps!';
+                    showToast(`Sucesso! ${data.count} cena(s) 360° publicadas no Google Street View!`, "success");
+                    setTimeout(() => {
+                        if (gsvPublishModal) gsvPublishModal.classList.remove("active");
+                        if (progressContainer) progressContainer.style.display = "none";
+                        btnConfirmGsvPublish.disabled = false;
+                    }, 2000);
+                } else {
+                    showToast(data.message || "Erro ao publicar no Google Street View.", "error");
+                    if (progressContainer) progressContainer.style.display = "none";
+                    btnConfirmGsvPublish.disabled = false;
+                }
+            } catch (err) {
+                showToast("Erro de conexão ao publicar no GSV.", "error");
+                if (progressContainer) progressContainer.style.display = "none";
+                btnConfirmGsvPublish.disabled = false;
+            }
         });
     }
 
@@ -1480,58 +1844,74 @@ function initDOMEvents() {
     }
 
     const inputInitialYaw = document.getElementById("input-initial-yaw");
+    const quickDisplay = document.getElementById("quick-initial-yaw-display");
+
+    // --- GESTÃO DE ÂNGULO INICIAL DA CENA (YAW / PITCH) ---
+    function saveCurrentViewAsInitial() {
+        if (!state.activeSceneId) return;
+        const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+        if (!scene) return;
+
+        const currentYaw = Math.round(state.activeYawAngle || 0);
+        const currentPitch = Math.round(state.activePitchAngle || 0);
+
+        scene.initialYaw = currentYaw;
+        scene.initialPitch = currentPitch;
+
+        if (inputInitialYaw) inputInitialYaw.value = currentYaw;
+        if (quickDisplay) quickDisplay.textContent = `${currentYaw}°`;
+
+        saveTourToStorage();
+        showToast(`Ângulo inicial da cena salvo com sucesso! (${currentYaw}°)`, "success");
+    }
+
+    function previewInitialView() {
+        if (!state.activeSceneId) return;
+        const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+        if (!scene) return;
+
+        applySceneInitialView(scene);
+        showToast(`Câmera posicionada na visão inicial (${Math.round(scene.initialYaw || 0)}°).`, "info");
+    }
+
+    const btnSetInitialYawFloating = document.getElementById("btn-set-initial-view-floating");
+    if (btnSetInitialYawFloating) {
+        btnSetInitialYawFloating.addEventListener("click", saveCurrentViewAsInitial);
+    }
+
+    const btnQuickSetInitialYaw = document.getElementById("btn-quick-set-initial-yaw");
+    if (btnQuickSetInitialYaw) {
+        btnQuickSetInitialYaw.addEventListener("click", saveCurrentViewAsInitial);
+    }
+
+    const btnQuickPreviewInitialYaw = document.getElementById("btn-quick-preview-initial-yaw");
+    if (btnQuickPreviewInitialYaw) {
+        btnQuickPreviewInitialYaw.addEventListener("click", previewInitialView);
+    }
+
     const btnSetInitialYaw = document.getElementById("btn-set-initial-yaw");
+    if (btnSetInitialYaw) {
+        btnSetInitialYaw.addEventListener("click", saveCurrentViewAsInitial);
+    }
 
     if (inputInitialYaw) {
         inputInitialYaw.addEventListener("input", (e) => {
             if (!state.activeSceneId) return;
-            const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
             const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
-            if (!isPaid) {
-                inputInitialYaw.value = Math.round(scene ? (scene.initialYaw || 0) : 0);
-                openUpgradeModal("<i class='fa-solid fa-crown' style='color:#ffaa00;'></i> Recurso Exclusivo PRO", "A definição da <strong>Posição Inicial da Imagem (Ângulo de Início)</strong> é um recurso premium disponível nos planos pagos. Faça o upgrade agora para personalizar a orientação inicial de suas cenas!");
-                return;
-            }
             if (scene) {
                 const val = parseFloat(e.target.value || 0);
                 scene.initialYaw = val;
-                
-                const skyViewer = document.getElementById("sky-viewer");
-                const videoViewer = document.getElementById("video-viewer");
-                if (skyViewer) skyViewer.setAttribute("rotation", `0 ${val} 0`);
-                if (videoViewer) videoViewer.setAttribute("rotation", `0 ${val} 0`);
-
+                const quickDisplay = document.getElementById("quick-initial-yaw-display");
+                if (quickDisplay) quickDisplay.textContent = `${Math.round(val)}°`;
                 saveTourToStorage();
             }
         });
     }
 
-    if (btnSetInitialYaw) {
-        btnSetInitialYaw.addEventListener("click", () => {
-            if (!state.activeSceneId) return;
-            const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
-            if (!isPaid) {
-                openUpgradeModal("<i class='fa-solid fa-crown' style='color:#ffaa00;'></i> Recurso Exclusivo PRO", "A definição da <strong>Posição Inicial da Imagem (Ângulo de Início)</strong> é um recurso premium disponível nos planos pagos. Faça o upgrade agora para personalizar a orientação inicial de suas cenas!");
-                return;
-            }
-            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
-            if (scene) {
-                const currentYaw = state.activeYawAngle || 0;
-                scene.initialYaw = currentYaw;
-                
-                if (inputInitialYaw) {
-                    inputInitialYaw.value = Math.round(currentYaw);
-                }
-
-                const skyViewer = document.getElementById("sky-viewer");
-                const videoViewer = document.getElementById("video-viewer");
-                if (skyViewer) skyViewer.setAttribute("rotation", `0 ${currentYaw} 0`);
-                if (videoViewer) videoViewer.setAttribute("rotation", `0 ${currentYaw} 0`);
-
-                saveTourToStorage();
-                showToast(`Ângulo inicial definido para ${Math.round(currentYaw)}° com sucesso!`, "success");
-            }
-        });
+    // --- CONTROLE DE GIROSCÓPIO MOBILE ---
+    const btnToggleGyro = document.getElementById("btn-toggle-gyro");
+    if (btnToggleGyro) {
+        btnToggleGyro.addEventListener("click", toggleGyroscope);
     }
 
     if (audioUploadZone && audioFileInput) {
@@ -1705,7 +2085,7 @@ function initDOMEvents() {
 }
 
 // --- SISTEMA MODULAR DE FERRAMENTAS (RAIL + DRAWER) ---
-function openToolTab(tabName) {
+function openToolTab(tabName, forceOpen = false) {
     const drawer = document.getElementById("editor-drawer");
     if (!drawer) return;
 
@@ -1722,8 +2102,8 @@ function openToolTab(tabName) {
         'settings': '<i class="fa-solid fa-sliders"></i> Ajustes do Tour'
     };
 
-    // Se o drawer já está aberto nesta mesma aba, recolhe/colapsa!
-    if (drawer.classList.contains("open") && drawer.dataset.activeTab === tabName) {
+    // Se o drawer já está aberto nesta mesma aba e não for abertura forçada (ex: restore no F5), recolhe!
+    if (!forceOpen && drawer.classList.contains("open") && drawer.dataset.activeTab === tabName) {
         closeToolDrawer();
         return;
     }
@@ -1767,7 +2147,7 @@ function openToolTab(tabName) {
     }, 320);
 }
 
-function closeToolDrawer() {
+function closeToolDrawer(silent = false) {
     const drawer = document.getElementById("editor-drawer");
     if (!drawer) return;
 
@@ -1780,11 +2160,24 @@ function closeToolDrawer() {
 
     localStorage.setItem("editor_drawer_open", "false");
 
-    showToast("Painel recolhido.", "info");
+    if (!silent && typeof showToast === "function") {
+        showToast("Painel recolhido.", "info");
+    }
 
     setTimeout(() => {
         window.dispatchEvent(new Event('resize'));
     }, 320);
+}
+
+function restoreEditorDrawerState() {
+    const savedActiveTab = localStorage.getItem("editor_active_tab") || "scenes";
+    const savedDrawerOpen = localStorage.getItem("editor_drawer_open");
+
+    if (savedDrawerOpen === "false") {
+        closeToolDrawer(true);
+    } else {
+        openToolTab(savedActiveTab, true);
+    }
 }
 
 function toggleSidebar() {
@@ -1795,18 +2188,30 @@ function toggleSidebar() {
         closeToolDrawer();
     } else {
         const lastTab = localStorage.getItem("editor_active_tab") || "scenes";
-        openToolTab(lastTab);
+        openToolTab(lastTab, true);
     }
 }
 
 // Vinculação Global
 window.openToolTab = openToolTab;
 window.closeToolDrawer = closeToolDrawer;
+window.restoreEditorDrawerState = restoreEditorDrawerState;
 window.toggleSidebar = toggleSidebar;
 
 // --- AUXILIAR: PROCESSAMENTO E OTIMIZAÇÃO DE MÍDIA 360 ---
+function getMaxTextureSize() {
+    try {
+        const canvas = document.createElement("canvas");
+        const gl = canvas.getContext("webgl") || canvas.getContext("experimental-webgl");
+        if (gl) {
+            return gl.getParameter(gl.MAX_TEXTURE_SIZE) || 4096;
+        }
+    } catch (e) {}
+    return 4096;
+}
+
 function processAndOptimizeFile(file) {
-    return new Promise((resolve) => {
+    return new Promise(async (resolve) => {
         const type = file.type.startsWith("video/") ? "video" : "image";
         
         if (type === "video") {
@@ -1821,13 +2226,42 @@ function processAndOptimizeFile(file) {
             return;
         }
 
-        // Se for imagem, tentamos carregar e redimensionar se passar do limite WebGL
+        const maxTexture = getMaxTextureSize();
+        // Permitir ultra-definição de até 8K (8192px) de acordo com o limite da GPU do usuário
+        const MAX_WIDTH = Math.min(maxTexture, 8192);
+
+        // 1. Verificar se é um arquivo nativo .INSP / .DNG (Insta360) ou imagem de lente dupla
+        if (window.Stitcher360 && window.Stitcher360.isDualFisheyeFile(file)) {
+            try {
+                if (typeof showToast === "function") {
+                    showToast(`Costurando mídia 360° Insta360 (${file.name}) em alta definição via WebGL...`, "info");
+                }
+                const result = await window.Stitcher360.convertToEquirectangular(file, { width: MAX_WIDTH, quality: 0.96 });
+                const optimizedUrl = URL.createObjectURL(result.blob);
+                const cleanTitle = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                
+                if (typeof showToast === "function") {
+                    showToast(`Foto 360° costurada com sucesso em alta definição!`, "success");
+                }
+
+                resolve({
+                    title: cleanTitle,
+                    type: "image",
+                    sourceUrl: optimizedUrl,
+                    blob: result.blob,
+                    isStitched: true
+                });
+                return;
+            } catch (err) {
+                console.warn("Tentando fallback padrão para imagem:", err);
+            }
+        }
+
+        // 2. Se for imagem padrão, carregamos e só redimensionamos se ultrapassar o limite real da GPU (até 8K)
         const reader = new FileReader();
         reader.onload = function(event) {
             const img = new Image();
-            img.onload = function() {
-                const MAX_WIDTH = 4096; // Limite universal seguro para texturas WebGL
-                
+            img.onload = async function() {
                 if (img.width > MAX_WIDTH) {
                     const canvas = document.createElement("canvas");
                     const ctx = canvas.getContext("2d");
@@ -1836,6 +2270,9 @@ function processAndOptimizeFile(file) {
                     // Mantém a proporção esférica (geralmente 2:1)
                     canvas.height = Math.round((img.height / img.width) * MAX_WIDTH);
                     
+                    // Suavização bilinear de alta fidelidade ao redimensionar
+                    ctx.imageSmoothingEnabled = true;
+                    ctx.imageSmoothingQuality = "high";
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                     
                     canvas.toBlob(function(blob) {
@@ -1846,9 +2283,10 @@ function processAndOptimizeFile(file) {
                             sourceUrl: optimizedUrl,
                             blob: blob
                         });
-                    }, "image/jpeg", 0.92); // Excelente qualidade com compressão de tamanho
+                    }, "image/jpeg", 0.96); // Altíssima fidelidade e nitidez visual
                 } else {
-                    // Se for menor, gera URL do objeto direto sem alteração
+                    // Se for menor ou igual ao limite (ex: fotos nativas 5.7K, 6K ou 8K),
+                    // NÃO recompila nem degrada: preserva 100% dos pixels e nitidez original!
                     const objectUrl = URL.createObjectURL(file);
                     resolve({
                         title: file.name.substring(0, file.name.lastIndexOf('.')) || file.name,
@@ -1858,13 +2296,30 @@ function processAndOptimizeFile(file) {
                     });
                 }
             };
-            img.onerror = function() {
-                // Erro ao decodificar (provavelmente arquivo .INSP nativo sem exportar)
+            img.onerror = async function() {
+                // Fallback para conversão WebGL caso o carregamento nativo falhe
+                if (window.Stitcher360) {
+                    try {
+                        const result = await window.Stitcher360.convertToEquirectangular(file, { width: MAX_WIDTH, quality: 0.96 });
+                        const optimizedUrl = URL.createObjectURL(result.blob);
+                        const cleanTitle = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+                        resolve({
+                            title: cleanTitle,
+                            type: "image",
+                            sourceUrl: optimizedUrl,
+                            blob: result.blob,
+                            isStitched: true
+                        });
+                        return;
+                    } catch (e) {
+                        console.error("Erro no fallback Stitcher360:", e);
+                    }
+                }
                 resolve({
                     title: file.name.substring(0, file.name.lastIndexOf('.')) || file.name,
                     type: "image",
                     sourceUrl: "",
-                    error: "Formato inválido. Exporte como JPG Equiretangular no Insta360 Studio primeiro!"
+                    error: "Formato de imagem inválido ou não suportado pelo navegador."
                 });
             };
             img.src = event.target.result;
@@ -2166,11 +2621,16 @@ function setMode(isEdit) {
 
     cancelAddingHotspot();
 
+    const btnSetInitialYawFloating = document.getElementById("btn-set-initial-view-floating");
+    const quickCard = document.getElementById("quick-scene-view-card");
+
     if (isEdit) {
         btnModeEdit.classList.add("active");
         btnModeView.classList.remove("active");
         cursor.setAttribute("visible", "true"); // Mostra cursor de mira
         btnAddHotspot.style.display = "flex";
+        if (btnSetInitialYawFloating) btnSetInitialYawFloating.style.display = "flex";
+        if (quickCard) quickCard.style.display = "block";
         editorHint.style.display = "flex";
         document.body.classList.remove("preview-mode");
     } else {
@@ -2178,6 +2638,8 @@ function setMode(isEdit) {
         btnModeView.classList.add("active");
         cursor.setAttribute("visible", "false"); // Esconde cursor de mira
         btnAddHotspot.style.display = "none";
+        if (btnSetInitialYawFloating) btnSetInitialYawFloating.style.display = "none";
+        if (quickCard) quickCard.style.display = "none";
         editorHint.style.display = "none";
         document.body.classList.add("preview-mode");
     }
@@ -2215,7 +2677,7 @@ function cancelAddingHotspot() {
     const btn = document.getElementById("btn-add-hotspot");
     if (btn) {
         btn.classList.remove("active");
-        btn.innerHTML = `<i class="fa-solid fa-plus-circle animate-pulse"></i> <span>Adicionar Hotspot</span>`;
+        btn.innerHTML = `<i class="fa-solid fa-plus-circle"></i> <span>Adicionar Hotspot</span>`;
     }
 }
 
@@ -3291,32 +3753,25 @@ function updateSettingsSidebarUI() {
     const passwordInputWrapper = document.getElementById("password-input-wrapper");
     const inputPrivacyPassword = document.getElementById("input-privacy-password");
 
-    const hasPrivacyControl = state.features ? (state.features.privacy_control ?? false) : false;
-
     if (selectPrivacy) {
-        if (!hasPrivacyControl) {
-            selectPrivacy.disabled = true;
-            selectPrivacy.style.opacity = "0.5";
-            selectPrivacy.style.cursor = "not-allowed";
-            selectPrivacy.title = "Disponível a partir do plano Profissional";
-            selectPrivacy.value = "public";
-            if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
-            if (inputPrivacyPassword) inputPrivacyPassword.value = "";
-        } else {
-            selectPrivacy.disabled = false;
-            selectPrivacy.style.opacity = "1";
-            selectPrivacy.style.cursor = "pointer";
-            selectPrivacy.title = "";
-            
-            if (state.tour && state.tour.privacySettings) {
+        selectPrivacy.disabled = false;
+        selectPrivacy.style.opacity = "1";
+        selectPrivacy.style.cursor = "pointer";
+        selectPrivacy.title = "";
+        
+        if (state.tour && state.tour.privacySettings) {
+            if (state.tour.privacySettings === "disabled" || state.tour.privacySettings === "private") {
+                selectPrivacy.value = "disabled";
+                if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+            } else {
                 selectPrivacy.value = "password";
                 if (passwordInputWrapper) passwordInputWrapper.style.display = "block";
                 if (inputPrivacyPassword) inputPrivacyPassword.value = state.tour.privacySettings;
-            } else {
-                selectPrivacy.value = "public";
-                if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
-                if (inputPrivacyPassword) inputPrivacyPassword.value = "";
             }
+        } else {
+            selectPrivacy.value = "public";
+            if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+            if (inputPrivacyPassword) inputPrivacyPassword.value = "";
         }
     }
 
@@ -3377,6 +3832,39 @@ function updateSettingsSidebarUI() {
             }
         }
     }
+
+    // 4. Atualizar status da conexão Google Street View
+    checkGSVConnectionStatus();
+}
+
+async function checkGSVConnectionStatus() {
+    try {
+        const res = await fetch("api/gsv_status.php");
+        const data = await res.json();
+        const badge = document.getElementById("gsv-connection-badge");
+        const btnConnect = document.getElementById("btn-gsv-connect");
+        if (badge) {
+            if (data.isConnected) {
+                badge.textContent = "Conectado";
+                badge.style.background = "rgba(16, 185, 129, 0.2)";
+                badge.style.color = "#34d399";
+                if (btnConnect) {
+                    btnConnect.innerHTML = '<i class="fa-brands fa-google"></i> Conta Conectada';
+                    btnConnect.style.borderColor = "rgba(16, 185, 129, 0.4)";
+                    btnConnect.style.color = "#34d399";
+                }
+            } else {
+                badge.textContent = "Desconectado";
+                badge.style.background = "rgba(255, 255, 255, 0.1)";
+                badge.style.color = "var(--text-secondary)";
+                if (btnConnect) {
+                    btnConnect.innerHTML = '<i class="fa-brands fa-google"></i> Conectar Conta Google';
+                    btnConnect.style.borderColor = "rgba(66, 133, 244, 0.3)";
+                    btnConnect.style.color = "#4285f4";
+                }
+            }
+        }
+    } catch(e) {}
 }
 
 // --- CONFIGURAÇÕES DE CENA ATIVA (SOM & GALERIA) ---
@@ -3396,39 +3884,26 @@ function renderActiveSceneSettingsUI(scene) {
     if (inputTitle) inputTitle.value = scene.title || "";
 
     // 1b. Posição Inicial da Imagem (Yaw)
-    const isPaid = state.features && state.features.name && state.features.name !== "Grátis";
     const inputInitialYaw = document.getElementById("input-initial-yaw");
     const btnSetInitialYaw = document.getElementById("btn-set-initial-yaw");
     const badgeInitialYawPro = document.getElementById("badge-initial-yaw-pro");
+    const quickDisplay = document.getElementById("quick-initial-yaw-display");
 
+    const yawVal = Math.round(scene.initialYaw || 0);
     if (inputInitialYaw) {
-        inputInitialYaw.value = Math.round(scene.initialYaw || 0);
+        inputInitialYaw.value = yawVal;
+        inputInitialYaw.disabled = false;
+        inputInitialYaw.style.opacity = "1";
     }
-
-    if (!isPaid) {
-        if (badgeInitialYawPro) badgeInitialYawPro.style.display = "inline-block";
-        if (inputInitialYaw) {
-            inputInitialYaw.disabled = true;
-            inputInitialYaw.style.opacity = "0.5";
-        }
-        if (btnSetInitialYaw) {
-            btnSetInitialYaw.style.opacity = "0.6";
-            btnSetInitialYaw.style.background = "rgba(255,255,255,0.05)";
-            btnSetInitialYaw.style.color = "rgba(255,255,255,0.4)";
-            btnSetInitialYaw.style.borderColor = "rgba(255,255,255,0.1)";
-        }
-    } else {
-        if (badgeInitialYawPro) badgeInitialYawPro.style.display = "none";
-        if (inputInitialYaw) {
-            inputInitialYaw.disabled = false;
-            inputInitialYaw.style.opacity = "1";
-        }
-        if (btnSetInitialYaw) {
-            btnSetInitialYaw.style.opacity = "1";
-            btnSetInitialYaw.style.background = "rgba(0, 242, 254, 0.08)";
-            btnSetInitialYaw.style.color = "#00f2fe";
-            btnSetInitialYaw.style.borderColor = "rgba(0, 242, 254, 0.3)";
-        }
+    if (quickDisplay) {
+        quickDisplay.textContent = `${yawVal}°`;
+    }
+    if (badgeInitialYawPro) badgeInitialYawPro.style.display = "none";
+    if (btnSetInitialYaw) {
+        btnSetInitialYaw.style.opacity = "1";
+        btnSetInitialYaw.style.background = "rgba(0, 242, 254, 0.08)";
+        btnSetInitialYaw.style.color = "#00f2fe";
+        btnSetInitialYaw.style.borderColor = "rgba(0, 242, 254, 0.3)";
     }
 
     // 2. Som Ambiente (MP3)
