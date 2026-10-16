@@ -73,11 +73,11 @@
         *   **Básico:** Logotipo customizado (1 logo) ativado e anúncios removidos.
         *   **Profissional:** Planta Baixa Interativa com radar direcional desbloqueada (lock overlay removido) e limite ilimitado.
     *   **Contas de Teste no HML:** Criadas 6 contas de teste com a senha padrão `senha360` via script `create_test_profiles.php`. Status de validação:
-        *   `[x]` **`gratis_tester` (Plano Grátis) - VALIDADO:** Limite de 5 tours, soft-lock após a 10ª cena, exibição de anúncios e bloqueios de planta baixa, logo e rotação inicial (PRO).
-        *   `[/]` **`iniciante_tester` (Plano Iniciante) - PRÓXIMO:** Validar limite de 10 tours, limite de 10 cenas, sem anúncios.
-        *   `[ ]` **`basico_tester` (Plano Básico):** Validar logo customizada (1 unidade), sem anúncios, limite de 10 tours.
-        *   `[ ]` **`pessoal_tester` (Plano Pessoal / Individual):** Validar limites intermediários.
-        *   `[ ]` **`profissional_tester` (Plano Profissional):** Validar planta baixa interativa com radar ativado e sem anúncios.
+        *   `[x]` **`gratis_tester` (Plano Grátis) - VALIDADO:** Limite de 5 tours, soft-lock após a 10ª cena, exibição de anúncios e bloqueios de recursos avançados.
+        *   `[x]` **`iniciante_tester` (Plano Iniciante) - VALIDADO:** 10 tours ativos, 20 cenas por tour, badge de posição `1/20` a `20/20`, soft-lock na 21ª cena (`21/20 🔒 Bloqueada`) e hard-lock na 22ª em diante com modal CTA dinâmico para o Plano Pessoal. Sem anúncios e overlays com cadeado 🔒 em recursos bloqueados.
+        *   `[ ]` **`basico_tester` (Plano Básico):** Validar logo customizada (1 unidade), Nadir habilitado, 1 tour Street View/mês, Hotspots de Informação, sem anúncios, limite de 50 tours e 20 cenas.
+        *   `[ ]` **`pessoal_tester` (Plano Pessoal):** Validar 50 cenas por tour, som ambiente MP3, 2 logomarcas, 3 tours GSV/mês, sem anúncios.
+        *   `[ ]` **`profissional_tester` (Plano Profissional):** Validar planta baixa interativa com radar ativado, galeria 2D, privacidade por senha, GSV ilimitado e cenas ilimitadas.
         *   `[ ]` **`admin_tester` (Super Admin):** Validar acesso de governança geral.
 
 11. **Barra de Navegação de Cenas e Otimização de Hotspots 3D (CONCLUÍDO):**
