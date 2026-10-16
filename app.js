@@ -30,6 +30,7 @@ const state = {
     
     // Recursos Ativos do Plano
     features: {},
+    plansMatrix: [],
     
     // Áudio / Som Ambiente
     ambientAudio: null,
@@ -260,6 +261,9 @@ async function loadTourFromServer(tourId, startMode = null) {
             state.isOwner = data.is_owner;
             state.showAds = !!data.show_ads;
             state.features = data.features || {};
+            if (data.plans_matrix && Array.isArray(data.plans_matrix)) {
+                state.plansMatrix = data.plans_matrix;
+            }
             
             if (data.is_locked) {
                 const lockScreen = document.getElementById("password-lock-screen");
@@ -840,6 +844,53 @@ function initTouchZoom() {
     }, { passive: true });
 }
 
+// --- MAPEAMENTO E RESOLUÇÃO DINÂMICA DOS PLANOS COMERCIAIS ---
+function getMinimumPlanForFeature(featureKey, fallbackPlan = "Básico") {
+    const matrix = (state.plansMatrix && state.plansMatrix.length > 0) ? state.plansMatrix : [];
+    for (const plan of matrix) {
+        if (featureKey === "max_logos") {
+            if (parseInt(plan.max_logos) > 0) return plan.name;
+        } else if (featureKey === "gsv_projects_per_month") {
+            if (parseInt(plan.gsv_projects_per_month) > 0) return plan.name;
+        } else {
+            if (plan[featureKey] === true || parseInt(plan[featureKey]) === 1) {
+                return plan.name;
+            }
+        }
+    }
+    // Fallback conforme tabela oficial dos planos comerciais
+    const defaults = {
+        'max_logos': 'Básico',
+        'nadir_patch': 'Básico',
+        'gsv_projects_per_month': 'Básico',
+        'floor_plans': 'Profissional',
+        'ambient_sound': 'Pessoal',
+        'image_gallery': 'Profissional',
+        'privacy_control': 'Profissional',
+        'offline_access': 'Profissional',
+        'rich_hotspots': 'Básico',
+        'text_markers': 'Básico'
+    };
+    return defaults[featureKey] || fallbackPlan;
+}
+
+function getUpgradePlanForScenes(currentAllowed) {
+    const matrix = (state.plansMatrix && state.plansMatrix.length > 0) ? state.plansMatrix : [];
+    for (const plan of matrix) {
+        const pScenes = parseInt(plan.max_scenes);
+        if (pScenes > currentAllowed || pScenes === -1 || pScenes >= 90000) {
+            return {
+                name: plan.name,
+                scenes: (pScenes === -1 || pScenes >= 90000) ? "ilimitadas" : `${pScenes} cenas`
+            };
+        }
+    }
+    // Fallback comercial
+    if (currentAllowed <= 10) return { name: "Iniciante", scenes: "20 cenas" };
+    if (currentAllowed <= 20) return { name: "Pessoal", scenes: "50 cenas" };
+    return { name: "Profissional", scenes: "cenas ilimitadas" };
+}
+
 // --- FUNÇÕES DE CONTROLE DE BLOQUEIO DE CENA (SOFT LIMIT) ---
 function isSceneLocked(index) {
     const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
@@ -867,9 +918,10 @@ function openUpgradeModal(title, desc) {
 function openSceneLockedModal(scene, index) {
     const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
     const planName = (state.features && state.features.name) || "Iniciante";
+    const nextPlan = getUpgradePlanForScenes(maxAllowed);
     const sceneName = scene && scene.title ? scene.title : `Cena ${index + 1}`;
     const title = `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> ${sceneName} (Bloqueada)`;
-    const desc = `Seu plano atual (<span style="font-weight: bold; color: #00f2fe;">${planName}</span>) permite a navegação nas primeiras <span style="font-weight: bold; color: #fff;">${maxAllowed} cenas</span> deste tour.<br><br>Esta foto 360° foi enviada e salva com sucesso (posição <strong>${index + 1}/${maxAllowed}</strong>), mas para torná-la navegável para você e seus visitantes, faça o upgrade da sua assinatura!`;
+    const desc = `Seu plano atual (<span style="font-weight: bold; color: #00f2fe;">${planName}</span>) permite a navegação nas primeiras <span style="font-weight: bold; color: #fff;">${maxAllowed} cenas</span> deste tour.<br><br>Esta foto 360° foi enviada e salva com sucesso (posição <strong>${index + 1}/${maxAllowed}</strong>). Para torná-la navegável e expandir seu tour para até <strong>${nextPlan.scenes}</strong>, faça o upgrade para o <strong>Plano ${nextPlan.name}</strong>!`;
     openUpgradeModal(title, desc);
 }
 
@@ -886,6 +938,10 @@ function applyFeatureLockOverlay(containerEl, featureName, requiredPlanName, cus
     const prev = containerEl.querySelector(".plan-feature-lock-overlay");
     if (prev) prev.remove();
 
+    // Normalização rigorosa do nome do plano
+    const cleanPlan = (requiredPlanName || "Básico").toString().replace(/^Plano\s+/i, "").replace(/\+$/, "").trim();
+    const formattedPlan = `Plano ${cleanPlan}`;
+
     const overlay = document.createElement("div");
     overlay.className = "plan-feature-lock-overlay";
     overlay.title = `Clique para desbloquear ${featureName}`;
@@ -893,13 +949,13 @@ function applyFeatureLockOverlay(containerEl, featureName, requiredPlanName, cus
         <div class="lock-overlay-content">
             <i class="fa-solid fa-lock"></i>
             <span>${featureName}</span>
-            <small>Disponível no Plano ${requiredPlanName}</small>
+            <small>Disponível no ${formattedPlan}</small>
         </div>
     `;
     overlay.onclick = (e) => {
         e.stopPropagation();
         e.preventDefault();
-        const desc = customDesc || `O recurso <strong>${featureName}</strong> está disponível a partir do <strong>Plano ${requiredPlanName}</strong>.<br><br>Faça o upgrade da sua assinatura para desbloquear esta funcionalidade!`;
+        const desc = customDesc || `O recurso <strong>${featureName}</strong> está disponível a partir do <strong>${formattedPlan}</strong>.<br><br>Faça o upgrade da sua assinatura para desbloquear esta funcionalidade!`;
         openUpgradeModal(
             `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Recurso Bloqueado: ${featureName}`,
             desc
@@ -1341,10 +1397,11 @@ function initDOMEvents() {
         if (maxAllowed !== -1 && state.tour && state.tour.scenes && state.tour.scenes.length >= maxAllowed + 1) {
             e.preventDefault();
             const planName = (state.features && state.features.name) || "Iniciante";
+            const nextPlan = getUpgradePlanForScenes(maxAllowed);
             showToast(`Limite excedido! O plano ${planName} permite ${maxAllowed} cenas ativas (+1 de tolerância).`, "warning");
             openUpgradeModal(
                 `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Limite Máximo de Cenas Atingido!`,
-                `Você já atingiu o limite de cenas do plano <strong>${planName}</strong> (${maxAllowed} cenas ativas + 1 cena extra de tolerância já salva).<br><br>Para continuar adicionando novas fotos 360° a este tour, faça o upgrade da sua assinatura!`
+                `Você já atingiu o limite de cenas do plano <strong>${planName}</strong> (${maxAllowed} cenas ativas + 1 cena extra de tolerância já salva).<br><br>Para continuar adicionando novas fotos 360° a este tour, faça o upgrade para o <strong>Plano ${nextPlan.name}</strong> (até ${nextPlan.scenes}) ou <strong>Plano Profissional</strong>!`
             );
             return;
         }
@@ -1545,6 +1602,17 @@ function initDOMEvents() {
         selectPrivacy.addEventListener("change", (e) => {
             const val = e.target.value;
             if (val === "password") {
+                const hasPrivacy = state.features ? (state.features.privacy_control ?? false) : false;
+                if (!hasPrivacy) {
+                    const minPrivacyPlan = getMinimumPlanForFeature("privacy_control", "Profissional");
+                    selectPrivacy.value = state.tour.privacySettings === "disabled" ? "disabled" : "public";
+                    if (passwordInputWrapper) passwordInputWrapper.style.display = "none";
+                    openUpgradeModal(
+                        `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Recurso Bloqueado: Privacidade por Senha`,
+                        `A proteção de tours virtuais com senha de acesso personalizada é exclusiva a partir do <strong>Plano ${minPrivacyPlan}</strong>.<br><br>Faça o upgrade da sua assinatura para ter total controle de privacidade externa!`
+                    );
+                    return;
+                }
                 if (passwordInputWrapper) passwordInputWrapper.style.display = "block";
                 if (inputPrivacyPassword) {
                     inputPrivacyPassword.focus();
@@ -1604,9 +1672,10 @@ function initDOMEvents() {
         btnGsvConnect.addEventListener("click", () => {
             const gsvQuota = state.features ? (state.features.gsv_projects_per_month ?? 0) : 0;
             if (gsvQuota === 0) {
+                const minGsvPlan = getMinimumPlanForFeature("gsv_projects_per_month", "Básico");
                 openUpgradeModal(
                     `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Recurso Bloqueado: Google Street View`,
-                    `A integração com o Google Street View está disponível a partir do <strong>Plano Pessoal</strong> ou <strong>Profissional</strong>.<br><br>Faça o upgrade da sua assinatura para conectar sua conta e publicar no Google Maps!`
+                    `A integração com o Google Street View está disponível a partir do <strong>Plano ${minGsvPlan}</strong>.<br><br>Faça o upgrade da sua assinatura para conectar sua conta e publicar no Google Maps!`
                 );
                 return;
             }
@@ -1622,9 +1691,10 @@ function initDOMEvents() {
         btnGsvPublishOpen.addEventListener("click", async () => {
             const gsvQuota = state.features ? (state.features.gsv_projects_per_month ?? 0) : 0;
             if (gsvQuota === 0) {
+                const minGsvPlan = getMinimumPlanForFeature("gsv_projects_per_month", "Básico");
                 openUpgradeModal(
                     `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Recurso Bloqueado: Google Street View`,
-                    `A publicação direta no Google Maps / Street View requer cotas ativas (disponíveis nos <strong>Planos Pessoal e Profissional</strong>).<br><br>Faça o upgrade da sua assinatura para desbloquear cotas mensais de publicação!`
+                    `A publicação direta no Google Maps / Street View requer cotas ativas (disponíveis a partir do <strong>Plano ${minGsvPlan}</strong>).<br><br>Faça o upgrade da sua assinatura para desbloquear cotas mensais de publicação!`
                 );
                 return;
             }
@@ -1706,7 +1776,11 @@ function initDOMEvents() {
             const hasNadir = state.features ? (state.features.nadir_patch ?? false) : false;
             if (!hasNadir) {
                 checkboxNadirEnabled.checked = false;
-                openUpgradeModal("<i class='fa-solid fa-crown' style='color:#ffaa00;'></i> Recurso Premium PRO", "A <strong>Tampa de Tripé (Nadir)</strong> é um recurso premium disponível a partir do plano Básico. Faça o upgrade agora para remover os tripés e personalizar os rodapés de seus passeios virtuais!");
+                const minNadirPlan = getMinimumPlanForFeature("nadir_patch", "Básico");
+                openUpgradeModal(
+                    `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Recurso Bloqueado: Tampa de Tripé (Nadir)`,
+                    `A <strong>Tampa de Tripé (Nadir)</strong> está disponível a partir do <strong>Plano ${minNadirPlan}</strong>.<br><br>Faça o upgrade agora para cobrir tripés e personalizar os rodapés de seus passeios virtuais!`
+                );
                 return;
             }
             state.tour.nadirSettings.enabled = e.target.checked;
@@ -1778,22 +1852,34 @@ function initDOMEvents() {
                 targetGroup.style.display = "block";
                 infoGroup.style.display = "none";
             } else {
+                const hasInfo = state.features ? (state.features.rich_hotspots || state.features.text_markers) : false;
+                if (!hasInfo) {
+                    typeSelect.value = "portal";
+                    targetGroup.style.display = "block";
+                    infoGroup.style.display = "none";
+                    const minInfoPlan = getMinimumPlanForFeature("rich_hotspots", "Básico");
+                    openUpgradeModal(
+                        `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Recurso Bloqueado: Hotspots de Informação`,
+                        `A inserção de pontos informativos e tags com textos ricos está disponível a partir do <strong>Plano ${minInfoPlan}</strong>.<br><br>Faça upgrade para enriquecer seus passeios virtuais!`
+                    );
+                    return;
+                }
                 targetGroup.style.display = "none";
                 infoGroup.style.display = "flex";
                 
-                // Exibir badge PRO dependendo do plano
+                // Exibir badge PRO dependendo do plano de galeria
                 const hasMedia = state.features ? (state.features.image_gallery ?? false) : false;
                 const badgeHotspotMedia = document.getElementById("badge-hotspot-media-pro");
                 const uploadZone = document.getElementById("hotspot-media-upload-zone");
                 if (badgeHotspotMedia && uploadZone) {
                     if (!hasMedia) {
                         badgeHotspotMedia.style.display = "inline-block";
-                        uploadZone.style.opacity = "0.5";
-                        uploadZone.style.pointerEvents = "none";
+                        uploadZone.style.opacity = "0.7";
+                        uploadZone.title = "Disponível no Plano Profissional";
                     } else {
                         badgeHotspotMedia.style.display = "none";
                         uploadZone.style.opacity = "1";
-                        uploadZone.style.pointerEvents = "auto";
+                        uploadZone.title = "";
                     }
                 }
             }
@@ -2536,10 +2622,11 @@ async function handleFiles(files) {
     if (maxAllowed !== -1 && currentCount >= maxAllowed + 1) {
         const fileInput = document.getElementById("file-input");
         if (fileInput) fileInput.value = "";
+        const nextPlan = getUpgradePlanForScenes(maxAllowed);
         showToast(`Limite excedido! O plano ${planName} permite ${maxAllowed} cenas (+1 de tolerância). Faça upgrade para adicionar mais!`, "warning");
         openUpgradeModal(
             `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Limite Máximo de Cenas Atingido!`,
-            `Você já atingiu o limite de cenas do plano <strong>${planName}</strong> (${maxAllowed} cenas ativas + 1 cena extra de tolerância já salva).<br><br>Para continuar adicionando novas fotos 360° a este tour, faça o upgrade da sua assinatura!`
+            `Você já atingiu o limite de cenas do plano <strong>${planName}</strong> (${maxAllowed} cenas ativas + 1 cena extra de tolerância já salva).<br><br>Para continuar adicionando novas fotos 360° a este tour, faça o upgrade para o <strong>Plano ${nextPlan.name}</strong> (até ${nextPlan.scenes}) ou <strong>Plano Profissional</strong>!`
         );
         return;
     }
@@ -2548,11 +2635,12 @@ async function handleFiles(files) {
     if (maxAllowed !== -1 && (currentCount + filesList.length) > maxAllowed + 1) {
         const slotsLeft = Math.max(0, (maxAllowed + 1) - currentCount);
         filesList = filesList.slice(0, slotsLeft);
+        const nextPlan = getUpgradePlanForScenes(maxAllowed);
         showToast(`Limite atingido! Apenas ${slotsLeft} foto(s) aceita(s) dentro da tolerância do plano ${planName}.`, "warning");
         setTimeout(() => {
             openUpgradeModal(
                 `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> Limite Máximo de Cenas Atingido!`,
-                `Você atingiu o limite de fotos 360° do plano <strong>${planName}</strong> (${maxAllowed} ativas + 1 cena extra de tolerância).<br><br>Faça upgrade para desbloquear novas cenas ilimitadas!`
+                `Você atingiu o limite de fotos 360° do plano <strong>${planName}</strong> (${maxAllowed} ativas + 1 cena extra de tolerância).<br><br>Faça upgrade para o <strong>Plano ${nextPlan.name}</strong> (${nextPlan.scenes}) ou <strong>Plano Profissional</strong> para desbloquear fotos ilimitadas!`
             );
         }, 1500);
     }
@@ -3661,11 +3749,12 @@ function renderFloorplanSidebar() {
     // Validar se o plano possui recurso de Planta Baixa
     const hasFloorPlans = state.features ? (state.features.floor_plans ?? false) : false;
     if (!hasFloorPlans) {
+        const minFpPlan = getMinimumPlanForFeature("floor_plans", "Profissional");
         applyFeatureLockOverlay(
             fpSection,
             "Planta Baixa Interativa",
-            "Profissional",
-            "A criação de plantas baixas interativas com radares direcionais em tempo real é exclusiva do <strong>Plano Profissional</strong>.<br><br>Faça upgrade para transformar seus tours em projetos imersivos completos!"
+            minFpPlan,
+            `A criação de plantas baixas interativas com radares direcionais em tempo real é exclusiva a partir do <strong>Plano ${minFpPlan}</strong>.<br><br>Faça upgrade para transformar seus tours em projetos imersivos completos!`
         );
         return;
     } else {
@@ -3950,13 +4039,14 @@ function updateSettingsSidebarUI() {
     const customClientLogo = document.getElementById("custom-client-logo");
 
     const maxLogos = state.features ? (state.features.max_logos ?? 0) : 0;
+    const minLogoPlan = getMinimumPlanForFeature("max_logos", "Básico");
 
     if (maxLogos === 0) {
         applyFeatureLockOverlay(
             logoSettingsItem,
             "Logomarca Customizada",
-            "Básico+",
-            "Insira o logotipo próprio da sua empresa ou do seu cliente nos tours virtuais a partir do <strong>Plano Básico</strong>!"
+            minLogoPlan,
+            `Insira o logotipo próprio da sua empresa ou do seu cliente nos tours virtuais a partir do <strong>Plano ${minLogoPlan}</strong>!`
         );
         if (logoUploadZone) logoUploadZone.style.display = "block";
         if (logoPreviewContainer) logoPreviewContainer.style.display = "none";
@@ -4028,6 +4118,7 @@ function updateSettingsSidebarUI() {
     const badgeNadirPro = document.getElementById("badge-nadir-pro");
 
     const hasNadir = state.features ? (state.features.nadir_patch ?? false) : false;
+    const minNadirPlan = getMinimumPlanForFeature("nadir_patch", "Básico");
 
     if (nadirSettingsItem) {
         if (!state.isOwner) {
@@ -4038,10 +4129,10 @@ function updateSettingsSidebarUI() {
                 applyFeatureLockOverlay(
                     nadirSettingsItem,
                     "Tampa de Tripé (Nadir)",
-                    "Básico+",
-                    "Esconda o tripé e a base da câmera no chão da foto 360° com uma logomarca personalizada a partir do <strong>Plano Básico</strong>!"
+                    minNadirPlan,
+                    `Esconda o tripé e a base da câmera no chão da foto 360° com uma logomarca personalizada a partir do <strong>Plano ${minNadirPlan}</strong>!`
                 );
-                if (badgeNadirPro) badgeNadirPro.style.display = "inline-block";
+                if (badgeNadirPro) badgeNadirPro.style.display = "none";
                 if (checkboxNadirEnabled) {
                     checkboxNadirEnabled.disabled = true;
                     checkboxNadirEnabled.checked = false;
@@ -4083,13 +4174,14 @@ function updateSettingsSidebarUI() {
     // 4. Atualizar UI e status da conexão Google Street View
     const gsvSettingsItem = document.getElementById("gsv-settings-item");
     const gsvQuota = state.features ? (state.features.gsv_projects_per_month ?? 0) : 0;
+    const minGsvPlan = getMinimumPlanForFeature("gsv_projects_per_month", "Básico");
 
     if (gsvQuota === 0) {
         applyFeatureLockOverlay(
             gsvSettingsItem,
             "Google Street View",
-            "Pessoal / Profissional",
-            "A publicação direta e conexão de fotos 360° com o perfil do Google Maps / Street View requer cotas ativas (disponíveis nos <strong>Planos Pessoal e Profissional</strong>)!"
+            minGsvPlan,
+            `A conexão e publicação direta de fotos 360° com o perfil do Google Maps / Street View requer cotas ativas (disponíveis a partir do <strong>Plano ${minGsvPlan}</strong>)!`
         );
     } else {
         removeFeatureLockOverlay(gsvSettingsItem);
@@ -4167,76 +4259,90 @@ function renderActiveSceneSettingsUI(scene) {
     }
 
     // 2. Som Ambiente (MP3)
+    const soundItem = document.getElementById("sound-settings-item");
     const hasSound = state.features ? (state.features.ambient_sound ?? false) : false;
+    const minSoundPlan = getMinimumPlanForFeature("ambient_sound", "Pessoal");
     const audioUploadZone = document.getElementById("audio-upload-zone");
     const audioPreviewContainer = document.getElementById("audio-preview-container");
     const audioPreviewFilename = document.getElementById("audio-preview-filename");
 
-    if (audioUploadZone && audioPreviewContainer) {
+    if (soundItem) {
         if (!hasSound) {
-            audioUploadZone.style.display = "block";
-            audioUploadZone.style.pointerEvents = "none";
-            audioUploadZone.style.opacity = "0.5";
-            const textEl = audioUploadZone.querySelector("span");
-            if (textEl) textEl.textContent = "Som Ambiente (Plano Pessoal+)";
-            audioPreviewContainer.style.display = "none";
+            applyFeatureLockOverlay(
+                soundItem,
+                "Som Ambiente (MP3)",
+                minSoundPlan,
+                `Adicione trilhas sonoras e narrações imersivas em MP3 nos seus tours a partir do <strong>Plano ${minSoundPlan}</strong>!`
+            );
+            if (audioUploadZone) audioUploadZone.style.display = "block";
+            if (audioPreviewContainer) audioPreviewContainer.style.display = "none";
         } else {
-            audioUploadZone.style.pointerEvents = "auto";
-            audioUploadZone.style.opacity = "1";
-            const textEl = audioUploadZone.querySelector("span");
-            if (textEl) textEl.textContent = "Carregar Áudio (MP3)";
+            removeFeatureLockOverlay(soundItem);
+            if (audioUploadZone && audioPreviewContainer) {
+                audioUploadZone.style.pointerEvents = "auto";
+                audioUploadZone.style.opacity = "1";
+                const textEl = audioUploadZone.querySelector("span");
+                if (textEl) textEl.textContent = "Carregar Áudio (MP3)";
 
-            if (scene.ambientSound) {
-                audioUploadZone.style.display = "none";
-                audioPreviewContainer.style.display = "flex";
-                if (audioPreviewFilename) {
-                    const filename = scene.ambientSound.substring(scene.ambientSound.lastIndexOf('/') + 1);
-                    audioPreviewFilename.textContent = filename;
+                if (scene.ambientSound) {
+                    audioUploadZone.style.display = "none";
+                    audioPreviewContainer.style.display = "flex";
+                    if (audioPreviewFilename) {
+                        const filename = scene.ambientSound.substring(scene.ambientSound.lastIndexOf('/') + 1);
+                        audioPreviewFilename.textContent = filename;
+                    }
+                } else {
+                    audioUploadZone.style.display = "block";
+                    audioPreviewContainer.style.display = "none";
                 }
-            } else {
-                audioUploadZone.style.display = "block";
-                audioPreviewContainer.style.display = "none";
             }
         }
     }
 
     // 3. Galeria de Imagens 2D
+    const galleryItem = document.getElementById("gallery-settings-item");
     const hasGallery = state.features ? (state.features.image_gallery ?? false) : false;
+    const minGalleryPlan = getMinimumPlanForFeature("image_gallery", "Profissional");
     const galleryUploadZone = document.getElementById("gallery-upload-zone");
     const thumbsList = document.getElementById("gallery-thumbs-list");
 
-    if (galleryUploadZone && thumbsList) {
-        thumbsList.innerHTML = "";
-        
+    if (galleryItem) {
         if (!hasGallery) {
-            galleryUploadZone.style.display = "block";
-            galleryUploadZone.style.pointerEvents = "none";
-            galleryUploadZone.style.opacity = "0.5";
-            const textEl = galleryUploadZone.querySelector("span");
-            if (textEl) textEl.textContent = "Galeria de Fotos (Plano Profissional)";
+            applyFeatureLockOverlay(
+                galleryItem,
+                "Galeria de Imagens 2D",
+                minGalleryPlan,
+                `Exiba fotos tradicionais em alta definição complementares a cada ambiente no <strong>Plano ${minGalleryPlan}</strong>!`
+            );
+            if (galleryUploadZone) galleryUploadZone.style.display = "block";
+            if (thumbsList) thumbsList.innerHTML = "";
         } else {
-            galleryUploadZone.style.pointerEvents = "auto";
-            galleryUploadZone.style.opacity = "1";
-            const textEl = galleryUploadZone.querySelector("span");
-            if (textEl) textEl.textContent = "Adicionar Fotos (2D)";
+            removeFeatureLockOverlay(galleryItem);
+            if (galleryUploadZone && thumbsList) {
+                thumbsList.innerHTML = "";
+                galleryUploadZone.style.pointerEvents = "auto";
+                galleryUploadZone.style.opacity = "1";
+                const textEl = galleryUploadZone.querySelector("span");
+                if (textEl) textEl.textContent = "Adicionar Fotos (2D)";
 
-            if (scene.galleryImages && Array.isArray(scene.galleryImages)) {
-                scene.galleryImages.forEach((imgUrl, idx) => {
-                    const item = document.createElement("div");
-                    item.className = "gallery-thumb-item";
-                    item.innerHTML = `
-                        <img src="${imgUrl}" alt="Thumb">
-                        <button class="btn-remove-thumb" title="Remover Foto">&times;</button>
-                    `;
-                    item.querySelector(".btn-remove-thumb").onclick = (e) => {
-                        e.stopPropagation();
-                        scene.galleryImages.splice(idx, 1);
-                        renderActiveSceneSettingsUI(scene);
-                        saveTourToStorage();
-                        showToast("Foto removida da galeria.", "info");
-                    };
-                    thumbsList.appendChild(item);
-                });
+                if (scene.galleryImages && Array.isArray(scene.galleryImages)) {
+                    scene.galleryImages.forEach((imgUrl, idx) => {
+                        const item = document.createElement("div");
+                        item.className = "gallery-thumb-item";
+                        item.innerHTML = `
+                            <img src="${imgUrl}" alt="Thumb">
+                            <button class="btn-remove-thumb" title="Remover Foto">&times;</button>
+                        `;
+                        item.querySelector(".btn-remove-thumb").onclick = (e) => {
+                            e.stopPropagation();
+                            scene.galleryImages.splice(idx, 1);
+                            renderActiveSceneSettingsUI(scene);
+                            saveTourToStorage();
+                            showToast("Foto removida da galeria.", "info");
+                        };
+                        thumbsList.appendChild(item);
+                    });
+                }
             }
         }
     }

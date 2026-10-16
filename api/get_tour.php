@@ -242,6 +242,13 @@ try {
         $features = PLANS_MATRIX[$plan] ?? [];
     }
 
+    $plans_matrix = [];
+    if (defined('PLANS_MATRIX')) {
+        foreach (PLANS_MATRIX as $k => $p) {
+            $plans_matrix[] = array_merge(['plan_key' => $k], $p);
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'tour' => [
@@ -258,7 +265,8 @@ try {
         'is_locked' => $is_locked,
         'is_disabled' => $is_disabled,
         'password_required' => $password_required,
-        'features' => $features
+        'features' => $features,
+        'plans_matrix' => $plans_matrix
     ]);
 
 } catch (Exception $e) {
