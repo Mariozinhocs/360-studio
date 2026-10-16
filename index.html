@@ -34,7 +34,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.6.5">
+    <link rel="stylesheet" href="style.css?v=1.6.6">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -391,7 +391,12 @@
                     </a>
                     <div class="tour-info" style="border-left: 1px solid rgba(255,255,255,0.1); padding-left: 15px;">
                         <h1 id="tour-display-title">Meu Tour Virtual 360</h1>
-                        <p id="scene-display-title">Nenhuma cena selecionada</p>
+                        <div class="scene-display-wrapper" style="display: flex; align-items: center; gap: 8px;">
+                            <p id="scene-display-title" style="margin: 0;">Nenhuma cena selecionada</p>
+                            <button id="btn-edit-active-scene-title" class="btn-rename-header" title="Renomear esta cena" style="display: none;">
+                                <i class="fa-solid fa-pen-to-square"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 10px;">
@@ -618,9 +623,15 @@
                     </select>
                 </div>
                 <div class="form-group" id="hotspot-target-group">
-                    <label for="hotspot-target">Destino do Portal (Cena)</label>
-                    <select id="hotspot-target">
-                        <!-- Cenas disponíveis serão carregadas aqui -->
+                    <label style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                        <span><i class="fa-solid fa-signs-post" style="color: var(--color-accent); margin-right: 6px;"></i> Escolha a Cena de Destino</span>
+                        <span id="hotspot-target-selected-name" style="font-size: 11px; color: var(--color-accent); font-weight: 600;">Selecione</span>
+                    </label>
+                    <div id="hotspot-target-thumbs-grid" class="hotspot-target-thumbs-grid">
+                        <!-- Miniaturas das cenas renderizadas dinamicamente via JS -->
+                    </div>
+                    <select id="hotspot-target" style="display: none;">
+                        <!-- Fallback / Cenas disponíveis para sincronização -->
                     </select>
                 </div>
                 <div id="hotspot-info-group" style="display: none; flex-direction: column; gap: 12px; margin-bottom: 15px;">
@@ -847,7 +858,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="insp_stitcher.js?v=1.6.5"></script>
-    <script src="app.js?v=1.6.5"></script>
+    <script src="insp_stitcher.js?v=1.6.6"></script>
+    <script src="app.js?v=1.6.6"></script>
 </body>
 </html>

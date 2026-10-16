@@ -501,9 +501,21 @@ function setActiveScene(sceneId) {
 
     applySceneInitialView(scene);
     
-    // Exibir feedback de carregamento
+    // Exibir feedback de carregamento com numeração precisa
+    const sceneIndex = state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === sceneId) : -1;
+    const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+    const maxScenesText = maxAllowed > 0 ? maxAllowed : '∞';
+    const sceneNumberPrefix = sceneIndex !== -1 ? `Cena ${sceneIndex + 1}/${maxScenesText}: ` : '';
+
     const sceneDisplayTitle = document.getElementById("scene-display-title");
-    sceneDisplayTitle.textContent = `${scene.title} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
+    if (sceneDisplayTitle) {
+        sceneDisplayTitle.textContent = `${sceneNumberPrefix}${scene.title} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
+    }
+
+    const btnEditHeader = document.getElementById("btn-edit-active-scene-title");
+    if (btnEditHeader) {
+        btnEditHeader.style.display = state.isEditMode ? "inline-flex" : "none";
+    }
 
     // Atualizar no A-Frame
     const assetsManager = document.getElementById("assets-manager");
@@ -1001,13 +1013,12 @@ function renderHotspots(hotspotsList) {
         entity.setAttribute("animation__pulse", `property: scale; from: 1 1 1; to: ${pulseScale}; dir: alternate; loop: true; dur: ${pulseDur}; easing: easeInOutQuad`);
 
         // Cor do anel grosso e elementos visuais:
+        // PRESERVA SEMPRE a cor escolhida pelo usuário!
         let ringColor = "#ffffff";
-        if (isSelected) {
-            ringColor = "#00f2fe"; // Destaque ciano neon quando em edição
+        if (hotspot.customColor) {
+            ringColor = hotspot.customColor;
         } else if (isTargetLocked) {
             ringColor = "#ff4444";
-        } else if (hotspot.customColor) {
-            ringColor = hotspot.customColor;
         } else if (!isPortal) {
             ringColor = "#9b51e0"; // Violeta para hotspot de informação
         }
@@ -1031,6 +1042,16 @@ function renderHotspots(hotspotsList) {
 
         entity.appendChild(ring);
         entity.appendChild(hitArea);
+
+        // Se estiver selecionado, adicionamos um anel externo extra pulsante ciano neon para indicar seleção
+        if (isSelected) {
+            const selectRing = document.createElement("a-ring");
+            selectRing.setAttribute("class", "hotspot-element");
+            selectRing.setAttribute("radius-inner", "0.52");
+            selectRing.setAttribute("radius-outer", "0.58");
+            selectRing.setAttribute("material", "shader: flat; color: #00f2fe; opacity: 0.9; transparent: true; depthTest: false");
+            entity.appendChild(selectRing);
+        }
 
         // Ícone / Formato interno de acordo com o estilo selecionado
         const iconStyle = hotspot.iconStyle || "ring";
@@ -1083,18 +1104,45 @@ function renderHotspots(hotspotsList) {
         textBg.setAttribute("transparent", "true");
         textBg.setAttribute("material", "shader: flat; depthTest: false");
 
-        // Evento de clique para navegação / seleção
+        // Evento de clique para navegação / seleção inteligente
+        let lastPortalClickTime = 0;
         const handlePortalClick = (evt) => {
             if (evt) evt.stopPropagation();
 
+            const now = Date.now();
+            const isDoubleClick = (now - lastPortalClickTime) < 380;
+            lastPortalClickTime = now;
+
+            // Se for modo editor:
             if (state.isEditMode) {
+                // Se o portal já estava selecionado OU se for clique duplo: navega para a cena de destino!
+                if (state.selectedHotspotId === hotspot.id || isDoubleClick) {
+                    if (isPortal) {
+                        if (isTargetLocked) {
+                            const targetScene = state.tour.scenes[targetIndex];
+                            openSceneLockedModal(targetScene, targetIndex);
+                            return;
+                        }
+                        triggerSceneTransition(() => {
+                            setActiveScene(hotspot.targetSceneId);
+                            showToast(`Navegando para: ${getSceneTitle(hotspot.targetSceneId)}`, "info");
+                        });
+                        return;
+                    } else {
+                        openInfoHotspotModal(hotspot);
+                        return;
+                    }
+                }
+
+                // Primeiro clique: seleciona e foca para edição
                 selectHotspot(hotspot.id);
                 lookAtHotspot(hotspot.id);
                 openToolTab('hotspots');
-                showToast(`Portal "${hotspot.label}" selecionado para edição.`, "info");
+                showToast(`Portal "${hotspot.label}" selecionado. Dê outro clique para viajar até ele!`, "info");
                 return;
             }
 
+            // Modo visualizador (visitante)
             if (isPortal) {
                 if (isTargetLocked) {
                     const targetScene = state.tour.scenes[targetIndex];
@@ -1438,6 +1486,20 @@ function initDOMEvents() {
     btnModeEdit.addEventListener("click", () => setMode(true));
     btnModeView.addEventListener("click", () => setMode(false));
 
+    // Botão de Renomear Cena Ativa no Cabeçalho
+    const btnEditHeader = document.getElementById("btn-edit-active-scene-title");
+    if (btnEditHeader) {
+        btnEditHeader.addEventListener("click", () => {
+            if (!state.activeSceneId) return;
+            openToolTab("scenes", true);
+            const activeCard = document.querySelector(`.scene-card[data-id="${state.activeSceneId}"]`);
+            if (activeCard) {
+                startInlineSceneRename(state.activeSceneId, activeCard);
+                activeCard.scrollIntoView({ behavior: "smooth", block: "center" });
+            }
+        });
+    }
+
     // Botão Modo VR
     const btnEnterVr = document.getElementById("btn-enter-vr");
     if (btnEnterVr) {
@@ -1486,6 +1548,45 @@ function initDOMEvents() {
             swatchBtns.forEach(b => {
                 b.classList.toggle("active", b.dataset.color.toLowerCase() === color.toLowerCase());
             });
+        });
+    }
+
+    // Captura ultra-precisa de clique no Canvas para reposicionamento instantâneo de Hotspot via Three.js
+    const canvasWrapper = document.getElementById("canvas-wrapper");
+    if (canvasWrapper) {
+        canvasWrapper.addEventListener("click", (e) => {
+            if (!state.isEditMode || !state.isRepositioningHotspot || !state.selectedHotspotId) return;
+            if (e.target.closest(".viewer-overlay-controls") || e.target.closest(".modal-overlay") || e.target.closest(".scenes-navigation-bar")) return;
+
+            const sceneEl = document.querySelector("a-scene");
+            if (sceneEl && sceneEl.camera) {
+                const rect = canvasWrapper.getBoundingClientRect();
+                const mouse = new THREE.Vector2(
+                    ((e.clientX - rect.left) / rect.width) * 2 - 1,
+                    -((e.clientY - rect.top) / rect.height) * 2 + 1
+                );
+                const raycaster = new THREE.Raycaster();
+                raycaster.setFromCamera(mouse, sceneEl.camera);
+                const dir = raycaster.ray.direction.clone().normalize();
+                const newPos = {
+                    x: parseFloat((dir.x * 5).toFixed(3)),
+                    y: parseFloat((dir.y * 5).toFixed(3)),
+                    z: parseFloat((dir.z * 5).toFixed(3))
+                };
+                
+                const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+                if (currentScene && currentScene.hotspots) {
+                    const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
+                    if (hotspot) {
+                        hotspot.position = newPos;
+                        state.isRepositioningHotspot = false;
+                        saveTourToStorage();
+                        renderHotspots(currentScene.hotspots);
+                        renderHotspotsList();
+                        showToast(`Portal "${hotspot.label}" reposicionado com sucesso no ponto clicado!`, "success");
+                    }
+                }
+            }
         });
     }
 
@@ -2044,16 +2145,10 @@ function initDOMEvents() {
     const galleryFileInput = document.getElementById("gallery-file-input");
 
     if (inputSceneTitle) {
-        inputSceneTitle.addEventListener("input", debounce((e) => {
+        inputSceneTitle.addEventListener("change", (e) => {
             if (!state.activeSceneId) return;
-            const scene = state.tour.scenes.find(s => s.id === state.activeSceneId);
-            if (scene) {
-                scene.title = e.target.value;
-                document.getElementById("scene-display-title").textContent = `${scene.title} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
-                renderScenesList();
-                saveTourToStorage();
-            }
-        }, 500));
+            saveSceneRename(state.activeSceneId, e.target.value);
+        });
     }
 
     const inputInitialYaw = document.getElementById("input-initial-yaw");
@@ -2762,7 +2857,9 @@ function renderScenesList() {
                 <i class="fa-solid ${scene.type === 'video' ? 'fa-video' : 'fa-image'}" style="${scene.type === 'image' && scene.sourceUrl.startsWith('blob') ? 'display: none;' : ''}"></i>
             </div>
             <div class="scene-info">
-                <h4 class="scene-title">${locked ? '🔒 ' : ''}${scene.title}</h4>
+                <div class="scene-title-wrapper" id="scene-title-wrapper-${scene.id}">
+                    <h4 class="scene-title" id="scene-title-heading-${scene.id}" title="Duplo clique para renomear">${locked ? '🔒 ' : ''}${scene.title}</h4>
+                </div>
                 <div class="scene-meta">
                     <span class="scene-order-badge ${locked ? 'locked' : ''}" title="Cena ${index + 1} de ${maxScenesText}">${orderText}</span>
                     <i class="fa-solid ${scene.type === 'video' ? 'fa-film' : 'fa-camera'}"></i>
@@ -2772,6 +2869,7 @@ function renderScenesList() {
             </div>
             ${isStart && !locked ? '<span class="badge-start-scene">Início</span>' : ''}
             <div class="scene-actions">
+                ${!locked ? `<button class="action-icon-btn btn-rename" title="Renomear Cena"><i class="fa-solid fa-pen-to-square"></i></button>` : ''}
                 ${!isStart && !locked ? `<button class="action-icon-btn btn-star" title="Definir como Cena Inicial"><i class="fa-solid fa-star"></i></button>` : ''}
                 <button class="action-icon-btn btn-delete" title="Excluir Cena"><i class="fa-solid fa-trash"></i></button>
             </div>
@@ -2779,7 +2877,7 @@ function renderScenesList() {
 
         // Evento de clique para ativar a cena ou abrir modal de upgrade
         card.addEventListener("click", (e) => {
-            if (e.target.closest(".scene-actions")) return;
+            if (e.target.closest(".scene-actions") || e.target.closest(".scene-rename-wrapper")) return;
             if (locked) {
                 openSceneLockedModal(scene, index);
                 return;
@@ -2788,6 +2886,22 @@ function renderScenesList() {
         });
 
         // Ações do Card
+        const btnRename = card.querySelector(".btn-rename");
+        if (btnRename) {
+            btnRename.addEventListener("click", (e) => {
+                e.stopPropagation();
+                startInlineSceneRename(scene.id, card);
+            });
+        }
+
+        const headingEl = card.querySelector(`#scene-title-heading-${scene.id}`);
+        if (headingEl && !locked) {
+            headingEl.addEventListener("dblclick", (e) => {
+                e.stopPropagation();
+                startInlineSceneRename(scene.id, card);
+            });
+        }
+
         const btnDelete = card.querySelector(".btn-delete");
         if (btnDelete) {
             btnDelete.addEventListener("click", (e) => {
@@ -2809,6 +2923,123 @@ function renderScenesList() {
 
     // Manter carrossel inferior sincronizado
     renderScenesCarousel();
+}
+
+// --- FUNÇÕES DE RENOMEAÇÃO DE CENA (INLINE E CABEÇALHO) ---
+function startInlineSceneRename(sceneId, cardEl) {
+    const scene = state.tour.scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+
+    const wrapper = cardEl ? cardEl.querySelector(`#scene-title-wrapper-${sceneId}`) : document.getElementById(`scene-title-wrapper-${sceneId}`);
+    if (!wrapper) return;
+
+    // Se já estiver editando, não recria
+    if (wrapper.querySelector(".scene-rename-wrapper")) return;
+
+    const currentTitle = scene.title || "";
+    wrapper.innerHTML = `
+        <div class="scene-rename-wrapper">
+            <input type="text" class="scene-rename-input" id="input-rename-${sceneId}" value="${currentTitle.replace(/"/g, '&quot;')}" maxlength="80">
+            <button class="btn-inline-action btn-inline-save" id="btn-save-rename-${sceneId}" title="Salvar (Enter)">
+                <i class="fa-solid fa-check"></i>
+            </button>
+            <button class="btn-inline-action btn-inline-cancel" id="btn-cancel-rename-${sceneId}" title="Cancelar (Esc)">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    `;
+
+    const input = wrapper.querySelector(`#input-rename-${sceneId}`);
+    const btnSave = wrapper.querySelector(`#btn-save-rename-${sceneId}`);
+    const btnCancel = wrapper.querySelector(`#btn-cancel-rename-${sceneId}`);
+
+    if (input) {
+        input.focus();
+        input.select();
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                e.stopPropagation();
+                saveSceneRename(sceneId, input.value);
+            } else if (e.key === "Escape") {
+                e.preventDefault();
+                e.stopPropagation();
+                renderScenesList();
+            }
+        });
+    }
+
+    if (btnSave) {
+        btnSave.addEventListener("click", (e) => {
+            e.stopPropagation();
+            if (input) saveSceneRename(sceneId, input.value);
+        });
+    }
+
+    if (btnCancel) {
+        btnCancel.addEventListener("click", (e) => {
+            e.stopPropagation();
+            renderScenesList();
+        });
+    }
+}
+
+async function saveSceneRename(sceneId, newTitle) {
+    const cleanTitle = (newTitle || "").trim();
+    if (!cleanTitle) {
+        showToast("O nome da cena não pode ficar vazio.", "warning");
+        return;
+    }
+
+    const scene = state.tour.scenes.find(s => s.id === sceneId);
+    if (!scene) return;
+
+    const oldTitle = scene.title;
+    scene.title = cleanTitle;
+
+    // Se a cena ativa for a renomeada, atualiza imediatamente os cabeçalhos
+    if (state.activeSceneId === sceneId) {
+        const sceneIndex = state.tour.scenes.findIndex(s => s.id === sceneId);
+        const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+        const maxScenesText = maxAllowed > 0 ? maxAllowed : '∞';
+        const sceneNumberPrefix = sceneIndex !== -1 ? `Cena ${sceneIndex + 1}/${maxScenesText}: ` : '';
+
+        const sceneDisplayTitle = document.getElementById("scene-display-title");
+        if (sceneDisplayTitle) {
+            sceneDisplayTitle.textContent = `${sceneNumberPrefix}${cleanTitle} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
+        }
+
+        const inputSceneTitle = document.getElementById("input-scene-title");
+        if (inputSceneTitle) inputSceneTitle.value = cleanTitle;
+
+        const activeSceneNameInput = document.getElementById("hotspots-active-scene-name");
+        if (activeSceneNameInput) {
+            activeSceneNameInput.value = `${cleanTitle} (${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'})`;
+        }
+    }
+
+    // Salvar estado atualizado
+    await saveTourToStorage();
+
+    // Re-renderizar lista e carrossel
+    renderScenesList();
+    renderScenesCarousel();
+
+    // Se tiver portais em outras cenas com o rótulo padrão "Ir para [oldTitle]", atualiza também
+    state.tour.scenes.forEach(s => {
+        if (s.hotspots) {
+            s.hotspots.forEach(h => {
+                if (h.type === "portal" && h.targetSceneId === sceneId) {
+                    if (!h.label || h.label === `Ir para ${oldTitle}`) {
+                        h.label = `Ir para ${cleanTitle}`;
+                    }
+                }
+            });
+        }
+    });
+
+    showToast(`Cena renomeada para "${cleanTitle}" com sucesso!`, "success");
 }
 
 function setStartScene(sceneId) {
@@ -2977,17 +3208,24 @@ function openHotspotModal(editingHotspotId = null) {
     if (mediaPreviewContainer) mediaPreviewContainer.style.display = "none";
     if (mediaUploadZone) mediaUploadZone.style.display = "block";
 
-    // Limpa e popula o select com as outras cenas
+    // Limpa e popula o select e a grade de miniaturas com as outras cenas
     select.innerHTML = "";
+    const thumbsGrid = document.getElementById("hotspot-target-thumbs-grid");
+    const selectedNameSpan = document.getElementById("hotspot-target-selected-name");
+    if (thumbsGrid) thumbsGrid.innerHTML = "";
+
+    const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+    const maxScenesText = maxAllowed > 0 ? maxAllowed : '∞';
+
     const otherScenes = [];
     if (state.tour && state.tour.scenes) {
-        state.tour.scenes.forEach(scene => {
+        state.tour.scenes.forEach((scene, sceneIdx) => {
             if (scene.id !== state.activeSceneId) {
                 const option = document.createElement("option");
                 option.value = scene.id;
                 option.textContent = scene.title;
                 select.appendChild(option);
-                otherScenes.push(scene);
+                otherScenes.push({ scene, originalIndex: sceneIdx });
             }
         });
     }
@@ -2999,6 +3237,78 @@ function openHotspotModal(editingHotspotId = null) {
         emptyOption.disabled = true;
         emptyOption.selected = true;
         select.appendChild(emptyOption);
+
+        if (thumbsGrid) {
+            thumbsGrid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-secondary); font-size: 12px; padding: 20px;">Nenhuma outra foto 360° disponível no tour.<br><small style="opacity: 0.7;">Faça upload de mais fotos para criar portais de navegação.</small></div>`;
+        }
+        if (selectedNameSpan) selectedNameSpan.textContent = "Nenhuma";
+    }
+
+    // Função interna para selecionar destino na grade de miniaturas
+    const applyTargetSelection = (targetSceneId, autoUpdateLabel = false) => {
+        select.value = targetSceneId;
+        const targetObj = otherScenes.find(o => o.scene.id === targetSceneId);
+        const targetScene = targetObj ? targetObj.scene : null;
+
+        if (thumbsGrid) {
+            thumbsGrid.querySelectorAll(".hotspot-target-thumb-card").forEach(c => {
+                const isThis = c.dataset.id === targetSceneId;
+                c.classList.toggle("active", isThis);
+                const checkEl = c.querySelector(".hotspot-target-badge-check");
+                if (checkEl) checkEl.style.display = isThis ? "flex" : "none";
+            });
+        }
+
+        if (selectedNameSpan) {
+            selectedNameSpan.textContent = targetScene ? targetScene.title : "Selecione";
+        }
+
+        if (autoUpdateLabel && targetScene) {
+            labelInput.value = "Ir para " + targetScene.title;
+        }
+    };
+
+    // Renderizar os cards de miniatura fotográfica na grade
+    if (thumbsGrid && otherScenes.length > 0) {
+        otherScenes.forEach(({ scene, originalIndex }) => {
+            const isLocked = isSceneLocked(originalIndex);
+            const posBadgeText = `${originalIndex + 1}/${maxScenesText}`;
+
+            const card = document.createElement("div");
+            card.className = `hotspot-target-thumb-card ${isLocked ? 'locked' : ''}`;
+            card.dataset.id = scene.id;
+
+            let imgHtml = "";
+            if (scene.type === "image" && scene.sourceUrl) {
+                imgHtml = `<img src="${scene.sourceUrl}" alt="${scene.title}" onerror="this.style.display='none'">`;
+            } else {
+                imgHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#00f2fe;font-size:20px;"><i class="fa-solid fa-video"></i></div>`;
+            }
+
+            const lockedOverlay = isLocked ? `<div class="hotspot-target-locked-overlay"><i class="fa-solid fa-lock"></i></div>` : '';
+
+            card.innerHTML = `
+                <div class="hotspot-target-thumb-img-wrap">
+                    ${imgHtml}
+                    ${lockedOverlay}
+                    <span class="hotspot-target-badge-pos">${posBadgeText}</span>
+                    <span class="hotspot-target-badge-check" style="display: none;"><i class="fa-solid fa-check"></i></span>
+                </div>
+                <div class="hotspot-target-thumb-meta">
+                    <span class="hotspot-target-thumb-title" title="${scene.title}">${isLocked ? '🔒 ' : ''}${scene.title}</span>
+                </div>
+            `;
+
+            card.addEventListener("click", () => {
+                if (isLocked) {
+                    showToast(`A cena ${posBadgeText} está bloqueada pelo limite do seu plano atual.`, "warning");
+                }
+                const isCreation = !document.getElementById("editing-hotspot-id").value;
+                applyTargetSelection(scene.id, isCreation);
+            });
+
+            thumbsGrid.appendChild(card);
+        });
     }
 
     if (editingHotspotId) {
@@ -3018,7 +3328,7 @@ function openHotspotModal(editingHotspotId = null) {
             if (hType === "portal") {
                 if (targetGroup) targetGroup.style.display = "block";
                 if (infoGroup) infoGroup.style.display = "none";
-                select.value = hotspot.targetSceneId || "";
+                applyTargetSelection(hotspot.targetSceneId || (otherScenes[0] ? otherScenes[0].scene.id : ""), false);
             } else {
                 if (targetGroup) targetGroup.style.display = "none";
                 if (infoGroup) infoGroup.style.display = "flex";
@@ -3069,10 +3379,10 @@ function openHotspotModal(editingHotspotId = null) {
 
         // Sugestão automática de cena e título
         if (otherScenes.length > 0) {
-            select.value = otherScenes[0].id;
-            labelInput.value = "Ir para " + otherScenes[0].title;
+            applyTargetSelection(otherScenes[0].scene.id, true);
         } else {
             labelInput.value = "";
+            if (selectedNameSpan) selectedNameSpan.textContent = "Nenhuma";
         }
 
         // Design padrão
@@ -3084,14 +3394,9 @@ function openHotspotModal(editingHotspotId = null) {
         });
     }
 
-    // Listener para atualizar título automaticamente ao trocar de cena no modo criação
+    // Listener para atualizar título automaticamente caso o select oculto seja alterado
     select.onchange = () => {
-        if (!document.getElementById("editing-hotspot-id").value) {
-            const targetScene = state.tour.scenes.find(s => s.id === select.value);
-            if (targetScene) {
-                labelInput.value = "Ir para " + targetScene.title;
-            }
-        }
+        applyTargetSelection(select.value, !document.getElementById("editing-hotspot-id").value);
     };
 
     modal.classList.add("active");
@@ -3517,6 +3822,11 @@ function renderHotspotsList() {
             ${activeBadge}
             ${state.isEditMode ? `
                 <div class="scene-actions hotspot-card-actions-row">
+                    ${isPortal && hotspot.targetSceneId ? `
+                        <button class="action-icon-btn btn-goto-hotspot" title="Ir para esta Cena (${targetTitle})">
+                            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                        </button>
+                    ` : ''}
                     <button class="action-icon-btn btn-reposition ${isRepositioning ? 'repositioning-active' : ''}" title="Reposicionar / Mover no Espaço 360°" style="${isRepositioning ? 'color: var(--color-accent); background: rgba(0,242,254,0.25);' : ''}">
                         <i class="fa-solid fa-crosshairs ${isRepositioning ? 'fa-spin' : ''}"></i>
                     </button>
@@ -3548,6 +3858,22 @@ function renderHotspotsList() {
 
         // Ações do Card no Modo Edição
         if (state.isEditMode) {
+            const btnGoto = card.querySelector(".btn-goto-hotspot");
+            if (btnGoto) {
+                btnGoto.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const targetIdx = state.tour.scenes ? state.tour.scenes.findIndex(s => s.id === hotspot.targetSceneId) : -1;
+                    if (targetIdx !== -1 && isSceneLocked(targetIdx)) {
+                        openSceneLockedModal(state.tour.scenes[targetIdx], targetIdx);
+                        return;
+                    }
+                    triggerSceneTransition(() => {
+                        setActiveScene(hotspot.targetSceneId);
+                        showToast(`Navegando para: ${targetTitle}`, "info");
+                    });
+                });
+            }
+
             const btnReposition = card.querySelector(".btn-reposition");
             if (btnReposition) {
                 btnReposition.addEventListener("click", (e) => {
