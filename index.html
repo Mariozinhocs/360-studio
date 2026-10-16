@@ -34,7 +34,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.6.3">
+    <link rel="stylesheet" href="style.css?v=1.6.4">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -280,7 +280,7 @@
                     <div class="drawer-pane" id="pane-settings" style="display: none;">
                         <div class="settings-section" id="tour-settings-sidebar-section" style="padding: 16px 20px;">
                             <!-- Upload de Logomarca -->
-                            <div class="setting-item">
+                            <div class="setting-item" id="logo-settings-item">
                                 <label style="font-size: 11px; color: var(--text-secondary); display: block; margin-bottom: 5px;">Logomarca do Cliente</label>
                                 <div id="logo-upload-zone" class="logo-upload-zone" style="border: 1px dashed rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 12px; text-align: center; cursor: pointer; background: rgba(0,0,0,0.15); transition: all 0.3s;">
                                     <i class="fa-solid fa-cloud-arrow-up" style="font-size: 16px; color: var(--color-accent); margin-bottom: 4px; display: block;"></i>
@@ -356,7 +356,7 @@
                             </div>
 
                             <!-- Integração Google Street View -->
-                            <div class="setting-item" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
+                            <div class="setting-item" id="gsv-settings-item" style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 15px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                     <label style="font-size: 11px; color: var(--text-secondary); margin: 0; display: flex; align-items: center; gap: 6px;">
                                         <i class="fa-solid fa-street-view" style="color: #ea4335;"></i> Google Street View
@@ -847,7 +847,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="insp_stitcher.js?v=1.6.3"></script>
-    <script src="app.js?v=1.6.3"></script>
+    <script src="insp_stitcher.js?v=1.6.4"></script>
+    <script src="app.js?v=1.6.4"></script>
 </body>
 </html>
