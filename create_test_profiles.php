@@ -55,9 +55,9 @@ echo "Iniciando criação/atualização de contas de teste no prefixo '" . TABLE
 
 foreach ($testUsers as $u) {
     try {
-        // Verificar se usuário existe
-        $stmt = $pdo->prepare("SELECT id FROM " . TABLE_PREFIX . "users WHERE username = ?");
-        $stmt->execute([$u['username']]);
+        // Verificar se usuário existe por username ou email
+        $stmt = $pdo->prepare("SELECT id FROM " . TABLE_PREFIX . "users WHERE username = ? OR email = ?");
+        $stmt->execute([$u['username'], $u['email']]);
         $user = $stmt->fetch();
 
         if ($user) {

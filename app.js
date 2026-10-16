@@ -914,17 +914,16 @@ function renderHotspots(hotspotsList) {
         const pulseDur = isSelected ? "700" : "1100";
         entity.setAttribute("animation__pulse", `property: scale; from: 1 1 1; to: ${pulseScale}; dir: alternate; loop: true; dur: ${pulseDur}; easing: easeInOutQuad`);
 
-        // Cor do anel grosso:
-        // No padrão/plano Grátis: linha branca grossa vazada (sem preenchimento ou ícone)
+        // Cor do anel grosso e elementos visuais:
         let ringColor = "#ffffff";
         if (isSelected) {
             ringColor = "#00f2fe"; // Destaque ciano neon quando em edição
         } else if (isTargetLocked) {
             ringColor = "#ff4444";
+        } else if (hotspot.customColor) {
+            ringColor = hotspot.customColor;
         } else if (!isPortal) {
             ringColor = "#9b51e0"; // Violeta para hotspot de informação
-        } else if (isPaid && hotspot.customColor) {
-            ringColor = hotspot.customColor;
         }
 
         // Círculo vazado com contorno grosso (linha grossa e sem preenchimento interno)
@@ -943,6 +942,34 @@ function renderHotspots(hotspotsList) {
         // Animação Hover no A-Frame
         ring.setAttribute("animation__mouseenter", "property: scale; to: 1.15 1.15 1.15; dur: 150; startEvents: mouseenter");
         ring.setAttribute("animation__mouseleave", "property: scale; to: 1 1 1; dur: 150; startEvents: mouseleave");
+
+        entity.appendChild(ring);
+        entity.appendChild(hitArea);
+
+        // Ícone / Formato interno de acordo com o estilo selecionado
+        const iconStyle = hotspot.iconStyle || "ring";
+        if (iconStyle === "dot") {
+            const innerDot = document.createElement("a-circle");
+            innerDot.setAttribute("class", "hotspot-element");
+            innerDot.setAttribute("radius", "0.20");
+            innerDot.setAttribute("material", `shader: flat; color: ${ringColor}; opacity: 0.95; transparent: true; depthTest: false`);
+            entity.appendChild(innerDot);
+        } else if (iconStyle === "target") {
+            const innerRing = document.createElement("a-ring");
+            innerRing.setAttribute("class", "hotspot-element");
+            innerRing.setAttribute("radius-inner", "0.10");
+            innerRing.setAttribute("radius-outer", "0.18");
+            innerRing.setAttribute("material", `shader: flat; color: ${ringColor}; opacity: 0.95; transparent: true; depthTest: false`);
+            entity.appendChild(innerRing);
+        } else if (iconStyle === "arrow") {
+            const arrow = document.createElement("a-triangle");
+            arrow.setAttribute("class", "hotspot-element");
+            arrow.setAttribute("vertex-a", "0 0.22 0.01");
+            arrow.setAttribute("vertex-b", "-0.16 -0.14 0.01");
+            arrow.setAttribute("vertex-c", "0.16 -0.14 0.01");
+            arrow.setAttribute("material", `shader: flat; color: ${ringColor}; opacity: 0.95; transparent: true; depthTest: false`);
+            entity.appendChild(arrow);
+        }
 
         const baseTitle = hotspot.label || (isPortal ? getSceneTitle(hotspot.targetSceneId) : hotspot.infoTitle);
         const targetTitle = (isTargetLocked ? "🔒 " : (isSelected ? "🎯 " : "")) + baseTitle + (isTargetLocked ? " (Bloqueada)" : "");
@@ -1317,14 +1344,43 @@ function initDOMEvents() {
         });
     }
 
-    // Botão Adicionar Hotspot
+    // Botão Adicionar Hotspot (Visualizador e Barra Lateral de Portais)
     if (btnAddHotspot) {
         btnAddHotspot.addEventListener("click", () => {
-            if (state.isAddingHotspot) {
-                cancelAddingHotspot();
-            } else {
-                startAddingHotspot();
-            }
+            triggerHotspotCreationModal();
+        });
+    }
+
+    const btnSidebarAddPortal = document.getElementById("btn-sidebar-add-portal");
+    if (btnSidebarAddPortal) {
+        btnSidebarAddPortal.addEventListener("click", () => {
+            triggerHotspotCreationModal();
+        });
+    }
+
+    // Listeners para paleta de cores do Hotspot Modal
+    const swatchBtns = document.querySelectorAll(".color-swatch-btn");
+    const colorInput = document.getElementById("hotspot-custom-color-input");
+    const colorHexSpan = document.getElementById("hotspot-color-hex");
+
+    swatchBtns.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+            e.preventDefault();
+            swatchBtns.forEach(b => b.classList.remove("active"));
+            btn.classList.add("active");
+            const color = btn.dataset.color;
+            if (colorInput) colorInput.value = color;
+            if (colorHexSpan) colorHexSpan.textContent = color.toUpperCase();
+        });
+    });
+
+    if (colorInput) {
+        colorInput.addEventListener("input", (e) => {
+            const color = e.target.value;
+            if (colorHexSpan) colorHexSpan.textContent = color.toUpperCase();
+            swatchBtns.forEach(b => {
+                b.classList.toggle("active", b.dataset.color.toLowerCase() === color.toLowerCase());
+            });
         });
     }
 
@@ -2653,21 +2709,34 @@ function setMode(isEdit) {
 }
 
 // --- FLUXO DE ADICIONAR E EDITAR HOTSPOT (PORTAL) ---
-function startAddingHotspot() {
-    if (state.tour.scenes.length < 1) {
+function triggerHotspotCreationModal() {
+    if (!state.tour || !state.tour.scenes || state.tour.scenes.length === 0) {
         showToast("Você precisa ter pelo menos 1 cena carregada para criar hotspots!", "error");
         return;
     }
 
-    state.isAddingHotspot = true;
-    state.isRepositioningHotspot = false;
-    const btn = document.getElementById("btn-add-hotspot");
-    if (btn) {
-        btn.classList.add("active");
-        btn.innerHTML = `<i class="fa-solid fa-times-circle"></i> <span>Cancelar</span>`;
+    // Calcula posição 3D na frente da câmera (direção que o usuário está olhando)
+    const camera = document.getElementById("camera");
+    let targetDistance = 5;
+    let pos = { x: 0, y: 0, z: -targetDistance };
+    if (camera && camera.object3D) {
+        const dir = new THREE.Vector3(0, 0, -1);
+        dir.applyQuaternion(camera.object3D.quaternion);
+        pos = {
+            x: parseFloat((dir.x * targetDistance).toFixed(3)),
+            y: parseFloat((dir.y * targetDistance).toFixed(3)),
+            z: parseFloat((dir.z * targetDistance).toFixed(3))
+        };
     }
-    
-    showToast("Clique em qualquer lugar na cena 360° para fixar o hotspot.", "info");
+    state.pendingHotspotPos = pos;
+    state.isAddingHotspot = false;
+    state.isRepositioningHotspot = false;
+
+    openHotspotModal(null);
+}
+
+function startAddingHotspot() {
+    triggerHotspotCreationModal();
 }
 
 function cancelAddingHotspot() {
@@ -2698,6 +2767,11 @@ function openHotspotModal(editingHotspotId = null) {
     const mediaPreviewContainer = document.getElementById("hotspot-media-preview-container");
     const mediaPreviewImg = document.getElementById("hotspot-media-preview-img");
 
+    const iconStyleSelect = document.getElementById("hotspot-icon-style");
+    const colorInput = document.getElementById("hotspot-custom-color-input");
+    const colorHexSpan = document.getElementById("hotspot-color-hex");
+    const swatchBtns = document.querySelectorAll(".color-swatch-btn");
+
     if (!modal || !select || !labelInput) return;
 
     // Resetar campos de informações
@@ -2710,14 +2784,27 @@ function openHotspotModal(editingHotspotId = null) {
 
     // Limpa e popula o select com as outras cenas
     select.innerHTML = "";
-    state.tour.scenes.forEach(scene => {
-        if (scene.id !== state.activeSceneId) {
-            const option = document.createElement("option");
-            option.value = scene.id;
-            option.textContent = scene.title;
-            select.appendChild(option);
-        }
-    });
+    const otherScenes = [];
+    if (state.tour && state.tour.scenes) {
+        state.tour.scenes.forEach(scene => {
+            if (scene.id !== state.activeSceneId) {
+                const option = document.createElement("option");
+                option.value = scene.id;
+                option.textContent = scene.title;
+                select.appendChild(option);
+                otherScenes.push(scene);
+            }
+        });
+    }
+
+    if (otherScenes.length === 0) {
+        const emptyOption = document.createElement("option");
+        emptyOption.value = "";
+        emptyOption.textContent = "Nenhuma outra cena cadastrada (adicione mais cenas)";
+        emptyOption.disabled = true;
+        emptyOption.selected = true;
+        select.appendChild(emptyOption);
+    }
 
     if (editingHotspotId) {
         // Modo Edição
@@ -2766,17 +2853,51 @@ function openHotspotModal(editingHotspotId = null) {
                     }
                 }
             }
+
+            // Design / Estilo e Cor
+            const activeColor = hotspot.customColor || "#ffffff";
+            if (iconStyleSelect) iconStyleSelect.value = hotspot.iconStyle || "ring";
+            if (colorInput) colorInput.value = activeColor;
+            if (colorHexSpan) colorHexSpan.textContent = activeColor.toUpperCase();
+            swatchBtns.forEach(btn => {
+                btn.classList.toggle("active", btn.dataset.color.toLowerCase() === activeColor.toLowerCase());
+            });
         }
     } else {
         // Modo Criação
         if (editingInput) editingInput.value = "";
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-location-dot"></i> Configurar Hotspot / Portal`;
         if (saveBtn) saveBtn.textContent = "Criar Hotspot";
-        labelInput.value = "";
         if (typeSelect) typeSelect.value = "portal";
         if (targetGroup) targetGroup.style.display = "block";
         if (infoGroup) infoGroup.style.display = "none";
+
+        // Sugestão automática de cena e título
+        if (otherScenes.length > 0) {
+            select.value = otherScenes[0].id;
+            labelInput.value = "Ir para " + otherScenes[0].title;
+        } else {
+            labelInput.value = "";
+        }
+
+        // Design padrão
+        if (iconStyleSelect) iconStyleSelect.value = "ring";
+        if (colorInput) colorInput.value = "#ffffff";
+        if (colorHexSpan) colorHexSpan.textContent = "#FFFFFF";
+        swatchBtns.forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.color.toLowerCase() === "#ffffff");
+        });
     }
+
+    // Listener para atualizar título automaticamente ao trocar de cena no modo criação
+    select.onchange = () => {
+        if (!document.getElementById("editing-hotspot-id").value) {
+            const targetScene = state.tour.scenes.find(s => s.id === select.value);
+            if (targetScene) {
+                labelInput.value = "Ir para " + targetScene.title;
+            }
+        }
+    };
 
     modal.classList.add("active");
 }
@@ -2798,13 +2919,16 @@ function saveHotspot() {
     const mediaUrl = window.pendingHotspotMediaUrl || null;
     const editingHotspotId = document.getElementById("editing-hotspot-id") ? document.getElementById("editing-hotspot-id").value : "";
 
+    const iconStyle = document.getElementById("hotspot-icon-style") ? document.getElementById("hotspot-icon-style").value : "ring";
+    const customColor = document.getElementById("hotspot-custom-color-input") ? document.getElementById("hotspot-custom-color-input").value : "#ffffff";
+
     if (!label) {
         showToast("Por favor, digite uma descrição do Tooltip.", "warning");
         return;
     }
 
     if (type === "portal" && !targetSceneId) {
-        showToast("Nenhuma cena selecionada para o destino.", "warning");
+        showToast("Nenhuma cena selecionada para o destino. Carregue mais cenas para vincular.", "warning");
         return;
     }
     
@@ -2823,6 +2947,8 @@ function saveHotspot() {
         if (hotspot) {
             hotspot.label = label;
             hotspot.type = type;
+            hotspot.customColor = customColor;
+            hotspot.iconStyle = iconStyle;
             if (type === "portal") {
                 hotspot.targetSceneId = targetSceneId;
                 delete hotspot.infoTitle;
@@ -2838,17 +2964,19 @@ function saveHotspot() {
             renderHotspots(currentScene.hotspots);
             renderHotspotsList();
             closeHotspotModal();
-            showToast("Hotspot atualizado com sucesso!", "success");
+            showToast("Portal atualizado com sucesso!", "success");
             return;
         }
     }
 
     // Criar Novo Hotspot
     const newHotspot = {
-        id: "hotspot-" + Date.now(),
+        id: "hotspot-" + Date.now() + "-" + Math.random().toString(36).substr(2, 4),
         type: type,
         position: state.pendingHotspotPos || { x: 0, y: 0, z: -5 },
-        label: label
+        label: label,
+        customColor: customColor,
+        iconStyle: iconStyle
     };
     
     if (type === "portal") {
@@ -2866,7 +2994,7 @@ function saveHotspot() {
     renderHotspots(currentScene.hotspots);
     renderHotspotsList();
     closeHotspotModal();
-    showToast("Hotspot criado com sucesso!", "success");
+    showToast(`Portal "${label}" criado com sucesso!`, "success");
 }
 
 // --- CUSTOM CONTROLES DE VÍDEO 360° ---

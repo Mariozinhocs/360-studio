@@ -2444,5 +2444,25 @@ div[class*="a-dialog"] {
     box-shadow: 0 0 12px rgba(0, 242, 254, 0.4) !important;
 }
 
+/* Paleta de Cores e Swatches do Hotspot */
+.color-swatch-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+    outline: none;
+}
+.color-swatch-btn:hover {
+    transform: scale(1.18);
+}
+.color-swatch-btn.active {
+    border-color: #00f2fe !important;
+    box-shadow: 0 0 12px rgba(0, 242, 254, 0.7);
+    transform: scale(1.12);
+}
+
 
 

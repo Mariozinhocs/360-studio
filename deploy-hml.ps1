@@ -38,6 +38,17 @@ try {
         # Ignora se já existir
     }
 
+    try {
+        $request = [System.Net.FtpWebRequest]::Create("$ftpHost/hml/uploads")
+        $request.Credentials = New-Object System.Net.NetworkCredential($ftpUser, $ftpPass)
+        $request.Method = [System.Net.WebRequestMethods+Ftp]::MakeDirectory
+        $response = $request.GetResponse()
+        $response.Close()
+        Write-Host "Diretório remoto /hml/uploads criado com sucesso!" -ForegroundColor Green
+    } catch {
+        # Ignora se já existir
+    }
+
     # Execute standard deploy script
     Write-Host "Iniciando deploy de Homologação..." -ForegroundColor Green
     powershell.exe -ExecutionPolicy Bypass -File .\deploy-staging.ps1

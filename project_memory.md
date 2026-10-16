@@ -152,6 +152,21 @@
     *   **Giroscópio para Dispositivos Móveis:** Botão interativo para ativar/desativar controle por giroscópio do celular (`#btn-toggle-gyro`).
     *   **Meta Tags OpenGraph (OG):** Inclusão de metadados de compartilhamento em [home.html](file:///g:/Meu%20Drive/Dev's/360/360/home.html) para geração automática de cards no WhatsApp, Telegram e redes sociais.
 
+21. **Ambiente de Homologação (HML) Oficial e Isolado (CONCLUÍDO):**
+    *   Criada a pasta remota `/hml/` no host FTP oficial `ftp.360studio.hubdigital360.com`.
+    *   Configurado [.env.hml](file:///g:/Meu%20Drive/Dev's/360/360/.env.hml) com `DB_TABLE_PREFIX=hml_` e `APP_URL=https://360studio.hubdigital360.com/hml`.
+    *   Ajustado script [deploy-hml.ps1](file:///g:/Meu%20Drive/Dev's/360/360/deploy-hml.ps1) para garantir criação de subpastas (como `/hml/uploads/`), permitindo deploy seguro e independente da Produção.
+    *   Base de homologação inicializada via `db_installer.php` e contas de teste sincronizadas via `create_test_profiles.php`. Acessível em `https://360studio.hubdigital360.com/hml/login.html`.
+
+22. **Abertura Instantânea de Hotspot e Seção de Design/Personalização Visual (CONCLUÍDO):**
+    *   **Abertura Instantânea do Modal:** Clicar no botão "Adicionar Hotspot" (ou no novo botão "Adicionar Portal" na barra lateral) calcula automaticamente a posição 3D na linha de visão atual da câmera e abre o modal imediatamente, eliminando a dependência do clique direto no canvas 360°.
+    *   **Seleção e Sugestão Inteligente de Cena:** O modal lista todas as outras cenas disponíveis do tour e pré-seleciona a primeira cena disponível, sugerindo o rótulo "Ir para [Nome da Cena]" automaticamente.
+    *   **Personalização Visual e Design:**
+        *   **Paleta de Cores Harmônicas:** 6 cores vibrantes de acesso rápido (#ffffff, #00f2fe, #10b981, #f59e0b, #9b51e0, #ff4a5a) + seletor livre com input color picker.
+        *   **Estilos do Marcador:** Seleção de formatos geométricos (Anel Circular, Ponto Pulsante com Halo, Alvo/Mira Tecnológica e Seta Direcional de Caminho).
+    *   **Renderização Dinâmica A-Frame:** O componente 3D renderiza fielmente o formato e a cor customizada com suporte a animação contínua de pulso e estados de seleção.
+    *   **Cache-Busters:** Bump de cache para `v=1.6.2` em `index.html` para `style.css`, `insp_stitcher.js` e `app.js`.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
