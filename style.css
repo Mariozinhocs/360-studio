@@ -2153,6 +2153,72 @@ a-scene {
     z-index: 2;
 }
 
+/* --- BADGES DE NUMERAÇÃO E ORDEM DE CENAS (ex: 1/20, 2/20, 21/20) --- */
+.scene-order-badge {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    background: rgba(0, 242, 254, 0.12);
+    color: #00f2fe;
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    display: inline-flex;
+    align-items: center;
+    letter-spacing: 0.3px;
+}
+
+.scene-order-badge.locked {
+    background: rgba(255, 68, 68, 0.2);
+    color: #ff6b6b;
+    border-color: rgba(255, 68, 68, 0.45);
+}
+
+.scene-thumb-index {
+    position: absolute;
+    bottom: 2px;
+    left: 2px;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    backdrop-filter: blur(2px);
+    line-height: 1;
+    z-index: 3;
+    pointer-events: none;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.scene-nav-thumb .thumb-pos-badge {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    background: rgba(0, 0, 0, 0.75);
+    color: #00f2fe;
+    font-size: 8px;
+    font-weight: 700;
+    padding: 1px 4px;
+    border-radius: 3px;
+    line-height: 1;
+    z-index: 3;
+    pointer-events: none;
+    border: 1px solid rgba(0, 242, 254, 0.3);
+}
+
+.scene-nav-thumb.locked .thumb-pos-badge {
+    background: rgba(255, 68, 68, 0.85);
+    color: #fff;
+    border-color: rgba(255, 68, 68, 0.6);
+}
+
+#scene-locked-modal.active {
+    display: flex !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+    z-index: 2500 !important;
+}
+
 /* Modal de Bloqueio por Limite do Plano / CTA de Upgrade */
 .locked-cta-card {
     text-align: center;

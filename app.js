@@ -851,21 +851,13 @@ function openUpgradeModal(title, desc) {
     const modal = document.getElementById("scene-locked-modal");
     if (!modal) return;
 
-    const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
-    const planName = (state.features && state.features.name) || "Grátis";
-    
-    const planNameEl = document.getElementById("locked-plan-name");
-    const planLimitEl = document.getElementById("locked-plan-limit");
-    if (planNameEl) planNameEl.textContent = planName;
-    if (planLimitEl) planLimitEl.textContent = `${maxAllowed} cenas`;
-    
     const titleEl = document.getElementById("locked-modal-title");
-    if (titleEl) {
+    if (titleEl && title) {
         titleEl.innerHTML = title;
     }
 
     const descEl = document.getElementById("locked-modal-desc");
-    if (descEl) {
+    if (descEl && desc) {
         descEl.innerHTML = desc;
     }
 
@@ -874,8 +866,10 @@ function openUpgradeModal(title, desc) {
 
 function openSceneLockedModal(scene, index) {
     const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
-    const title = `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> ${scene ? scene.title : 'Cena'} (Bloqueada)`;
-    const desc = `Seu plano atual (<span id="locked-plan-name" style="font-weight: bold; color: #00f2fe;">Grátis</span>) permite a navegação nas primeiras <span id="locked-plan-limit" style="font-weight: bold; color: #fff;">${maxAllowed} cenas</span> deste tour.<br><br>Esta foto 360° foi enviada e salva com sucesso, mas para torná-la navegável para você e seus visitantes, faça o upgrade da sua assinatura!`;
+    const planName = (state.features && state.features.name) || "Iniciante";
+    const sceneName = scene && scene.title ? scene.title : `Cena ${index + 1}`;
+    const title = `<i class="fa-solid fa-lock" style="color:#ff4444;"></i> ${sceneName} (Bloqueada)`;
+    const desc = `Seu plano atual (<span style="font-weight: bold; color: #00f2fe;">${planName}</span>) permite a navegação nas primeiras <span style="font-weight: bold; color: #fff;">${maxAllowed} cenas</span> deste tour.<br><br>Esta foto 360° foi enviada e salva com sucesso (posição <strong>${index + 1}/${maxAllowed}</strong>), mas para torná-la navegável para você e seus visitantes, faça o upgrade da sua assinatura!`;
     openUpgradeModal(title, desc);
 }
 
@@ -1255,11 +1249,16 @@ function renderScenesCarousel() {
             imgHtml = `<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#00f2fe;"><i class="fa-solid fa-video"></i></div>`;
         }
 
+        const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+        const maxScenesText = maxAllowed > 0 ? maxAllowed : '∞';
+        const orderText = `${index + 1}/${maxScenesText}`;
+
         const lockOverlay = locked ? `<div class="thumb-locked-overlay"><i class="fa-solid fa-lock"></i></div>` : '';
 
         thumb.innerHTML = `
             ${imgHtml}
             ${lockOverlay}
+            <span class="thumb-pos-badge ${locked ? 'locked' : ''}">${orderText}</span>
             <div class="thumb-title-tooltip">${locked ? '🔒 ' : ''}${scene.title}</div>
         `;
 
@@ -1422,6 +1421,13 @@ function initDOMEvents() {
     // Modal de Bloqueio por Limite do Plano
     const btnCloseLocked = document.getElementById("btn-close-locked-modal");
     if (btnCloseLocked) btnCloseLocked.addEventListener("click", closeSceneLockedModal);
+
+    const sceneLockedOverlay = document.getElementById("scene-locked-modal");
+    if (sceneLockedOverlay) {
+        sceneLockedOverlay.addEventListener("click", (e) => {
+            if (e.target === sceneLockedOverlay) closeSceneLockedModal();
+        });
+    }
 
     // Exportação
     btnExport.addEventListener("click", exportTourJSON);
@@ -2545,6 +2551,10 @@ function renderScenesList() {
 
     state.tour.scenes.forEach((scene, index) => {
         const locked = isSceneLocked(index);
+        const maxAllowed = state.features && typeof state.features.max_scenes !== 'undefined' ? state.features.max_scenes : 10;
+        const maxScenesText = maxAllowed > 0 ? maxAllowed : '∞';
+        const orderText = `${index + 1}/${maxScenesText}`;
+
         const card = document.createElement("div");
         card.className = `scene-card ${scene.id === state.activeSceneId ? 'active' : ''} ${locked ? 'locked' : ''}`;
         card.dataset.id = scene.id;
@@ -2565,11 +2575,13 @@ function renderScenesList() {
             <div class="scene-thumb">
                 ${thumbContent}
                 ${lockedThumbOverlay}
+                <span class="scene-thumb-index">${index + 1}</span>
                 <i class="fa-solid ${scene.type === 'video' ? 'fa-video' : 'fa-image'}" style="${scene.type === 'image' && scene.sourceUrl.startsWith('blob') ? 'display: none;' : ''}"></i>
             </div>
             <div class="scene-info">
                 <h4 class="scene-title">${locked ? '🔒 ' : ''}${scene.title}</h4>
                 <div class="scene-meta">
+                    <span class="scene-order-badge ${locked ? 'locked' : ''}" title="Cena ${index + 1} de ${maxScenesText}">${orderText}</span>
                     <i class="fa-solid ${scene.type === 'video' ? 'fa-film' : 'fa-camera'}"></i>
                     <span>${scene.type === 'video' ? 'Vídeo 360°' : 'Foto 360°'}</span>
                 </div>
