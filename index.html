@@ -34,7 +34,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.6.6">
+    <link rel="stylesheet" href="style.css?v=1.6.7">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -633,6 +633,16 @@
                     <select id="hotspot-target" style="display: none;">
                         <!-- Fallback / Cenas disponíveis para sincronização -->
                     </select>
+                    <!-- CONTROLE DE PORTAL DE RETORNO AUTOMÁTICO (BIDIRECIONAL) -->
+                    <div id="hotspot-bidirectional-group" style="margin-top: 12px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 8px; padding: 10px 12px; transition: all 0.2s;">
+                        <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; margin: 0; font-size: 12px; font-weight: 500; color: #fff;">
+                            <input type="checkbox" id="hotspot-create-return" checked style="accent-color: var(--color-accent); width: 16px; height: 16px; cursor: pointer;">
+                            <span>Criar portal de retorno em <strong id="hotspot-return-target-name" style="color: var(--color-accent);">[Cena]</strong></span>
+                        </label>
+                        <div style="font-size: 10px; color: var(--text-secondary); margin-left: 25px; margin-top: 3px;">
+                            Gera automaticamente um portal em 180° apontando de volta para a cena atual.
+                        </div>
+                    </div>
                 </div>
                 <div id="hotspot-info-group" style="display: none; flex-direction: column; gap: 12px; margin-bottom: 15px;">
                     <div class="form-group" style="margin-bottom: 0;">
@@ -858,7 +868,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="insp_stitcher.js?v=1.6.6"></script>
-    <script src="app.js?v=1.6.6"></script>
+    <script src="insp_stitcher.js?v=1.6.7"></script>
+    <script src="app.js?v=1.6.7"></script>
 </body>
 </html>

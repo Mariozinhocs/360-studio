@@ -177,6 +177,13 @@
     *   **Navegação ao Destino do Hotspot:** Adicionado botão no card do portal na barra lateral (`.btn-goto-hotspot`) para navegação imediata à cena de destino, além de permitir viagem ao destino no espaço 3D via duplo-clique no portal no modo de edição.
     *   **Cache-Busters e Deploys:** Cache-buster elevado para `v=1.6.6` em `index.html` e deploys executados com sucesso em Homologação (`deploy-hml.ps1`) e Produção (`deploy-prod.ps1`).
 
+24. **Criação Automática de Portais de Retorno (Hotspots Bidirecionais) (CONCLUÍDO):**
+    *   **Controle Visual no Modal:** Inserido checkbox estilizado no modal de configuração de hotspot (`[✓] Criar portal de retorno em [Cena Destino]`), ativado por padrão durante a criação de novos portais e automaticamente sincronizado com a cena de destino selecionada. O controle é ocultado dinamicamente quando o tipo é "Informação" ou durante a edição de portais existentes.
+    *   **Geometria Espacial Inversa (180°):** Ao salvar o portal de ida na posição `(x, y, z)`, o sistema calcula automaticamente a posição do portal de retorno na cena de destino usando o vetor oposto no plano horizontal `(-x, y, -z)`. Isso simula com exatidão a perspectiva de "olhar para trás" para o ambiente de onde o visitante acabou de vir, preservando a distância de 5m da câmera.
+    *   **Rótulo e Design Coerentes:** O portal de retorno é nomeado automaticamente como `"Voltar para [Nome da Cena Atual]"` e herda a mesma cor personalizada (`customColor`) e estilo de marcador (`iconStyle`) escolhidos no modal.
+    *   **Persistência Sincronizada no Banco de Dados:** Ambas as cenas e suas respectivas listas de hotspots são salvas no mesmo ciclo atômico via `api/save_tour.php` e LocalStorage, com feedback via Toast noticiando a criação de ambos os portais.
+    *   **Cache-Busters:** Bump para `v=1.6.7` em `index.html` para `app.js` e `style.css`.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados

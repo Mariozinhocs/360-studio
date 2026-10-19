@@ -3263,6 +3263,11 @@ function openHotspotModal(editingHotspotId = null) {
             selectedNameSpan.textContent = targetScene ? targetScene.title : "Selecione";
         }
 
+        const returnTargetNameSpan = document.getElementById("hotspot-return-target-name");
+        if (returnTargetNameSpan) {
+            returnTargetNameSpan.textContent = targetScene ? `"${targetScene.title}"` : "Cena de Destino";
+        }
+
         if (autoUpdateLabel && targetScene) {
             labelInput.value = "Ir para " + targetScene.title;
         }
@@ -3311,6 +3316,9 @@ function openHotspotModal(editingHotspotId = null) {
         });
     }
 
+    const bidirectionalGroup = document.getElementById("hotspot-bidirectional-group");
+    const returnCheckbox = document.getElementById("hotspot-create-return");
+
     if (editingHotspotId) {
         // Modo Edição
         const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
@@ -3319,6 +3327,7 @@ function openHotspotModal(editingHotspotId = null) {
         if (editingInput) editingInput.value = editingHotspotId;
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Configurar Hotspot / Portal`;
         if (saveBtn) saveBtn.textContent = "Salvar Alterações";
+        if (bidirectionalGroup) bidirectionalGroup.style.display = "none";
         
         if (hotspot) {
             labelInput.value = hotspot.label || "";
@@ -3376,6 +3385,11 @@ function openHotspotModal(editingHotspotId = null) {
         if (typeSelect) typeSelect.value = "portal";
         if (targetGroup) targetGroup.style.display = "block";
         if (infoGroup) infoGroup.style.display = "none";
+        
+        if (bidirectionalGroup) {
+            bidirectionalGroup.style.display = otherScenes.length > 0 ? "block" : "none";
+        }
+        if (returnCheckbox) returnCheckbox.checked = true;
 
         // Sugestão automática de cena e título
         if (otherScenes.length > 0) {
@@ -3489,12 +3503,52 @@ function saveHotspot() {
 
     currentScene.hotspots.push(newHotspot);
     state.selectedHotspotId = newHotspot.id;
+
+    // Criar portal de retorno automático na cena de destino (Bidirecional)
+    let returnCreated = false;
+    let targetSceneTitle = "";
+    const createReturnCheckbox = document.getElementById("hotspot-create-return");
+    const shouldCreateReturn = createReturnCheckbox ? createReturnCheckbox.checked : true;
+
+    if (type === "portal" && targetSceneId && shouldCreateReturn) {
+        const targetScene = state.tour.scenes.find(s => s.id === targetSceneId);
+        if (targetScene && targetScene.id !== currentScene.id) {
+            if (!targetScene.hotspots) targetScene.hotspots = [];
+            targetSceneTitle = targetScene.title || "Cena";
+
+            // Vetor diametralmente oposto no plano horizontal (180°): (-x, y, -z)
+            const forwardPos = newHotspot.position;
+            const returnPos = {
+                x: parseFloat((-forwardPos.x).toFixed(3)),
+                y: parseFloat((forwardPos.y).toFixed(3)),
+                z: parseFloat((-forwardPos.z).toFixed(3))
+            };
+
+            const returnHotspot = {
+                id: "hotspot-" + Date.now() + "-ret-" + Math.random().toString(36).substr(2, 4),
+                type: "portal",
+                targetSceneId: currentScene.id,
+                position: returnPos,
+                label: `Voltar para ${currentScene.title}`,
+                customColor: customColor,
+                iconStyle: iconStyle
+            };
+
+            targetScene.hotspots.push(returnHotspot);
+            returnCreated = true;
+        }
+    }
     
     saveTourToStorage();
     renderHotspots(currentScene.hotspots);
     renderHotspotsList();
     closeHotspotModal();
-    showToast(`Portal "${label}" criado com sucesso!`, "success");
+
+    if (returnCreated) {
+        showToast(`Portal criado! Portal de retorno adicionado em "${targetSceneTitle}".`, "success");
+    } else {
+        showToast(`Portal "${label}" criado com sucesso!`, "success");
+    }
 }
 
 // --- CUSTOM CONTROLES DE VÍDEO 360° ---
