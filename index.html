@@ -34,7 +34,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.6.7">
+    <link rel="stylesheet" href="style.css?v=1.6.8">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -454,6 +454,17 @@
                     <!-- Container para os Hotspots da cena ativa -->
                     <a-entity id="hotspots-container"></a-entity>
                 </a-scene>
+                <!-- HUD Flutuante do Modo Mover / Reposicionamento -->
+                <div id="reposition-mode-hud" class="reposition-mode-hud" style="display: none;">
+                    <div class="reposition-hud-content">
+                        <i class="fa-solid fa-crosshairs fa-spin" style="color: var(--color-accent); font-size: 14px;"></i>
+                        <span id="reposition-hud-text"><strong>Modo Mover:</strong> Clique na foto 360° para fixar o portal</span>
+                        <button type="button" id="btn-cancel-reposition" class="btn-cancel-reposition" title="Cancelar Mover (ESC)">
+                            <i class="fa-solid fa-xmark"></i> <span>Cancelar (ESC)</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Overlay de Instruções Modo Edição -->
                 <div id="editor-hint" class="editor-hint">
                     <i class="fa-solid fa-info-circle"></i>
@@ -868,7 +879,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="insp_stitcher.js?v=1.6.7"></script>
-    <script src="app.js?v=1.6.7"></script>
+    <script src="insp_stitcher.js?v=1.6.8"></script>
+    <script src="app.js?v=1.6.8"></script>
 </body>
 </html>

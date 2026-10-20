@@ -184,6 +184,15 @@
     *   **Persistência Sincronizada no Banco de Dados:** Ambas as cenas e suas respectivas listas de hotspots são salvas no mesmo ciclo atômico via `api/save_tour.php` e LocalStorage, com feedback via Toast noticiando a criação de ambos os portais.
     *   **Cache-Busters:** Bump para `v=1.6.7` em `index.html` para `app.js` e `style.css`.
 
+25. **Correção Definitiva de Reposicionamento de Hotspot, HUD do Modo Mover e Prevenção de Tela Preta (CONCLUÍDO):**
+    *   **Filtro de Arrasto de Câmera (Drag Threshold):** Implementado rastreador `pointerdown` com cálculo `Math.hypot(dx, dy) <= 6px` em `#canvas-wrapper`. Movimentos de rotação/arrasto 360° para procurar o novo local não acionam mais o reposicionamento acidental.
+    *   **Cálculo Esférico 3D Matemático (`intersectSphere`):** Projeção de raio com `THREE.Sphere(radius 100)` e normalização a 5m, eliminando o erro angular no eixo Y causado pela altura da câmera.
+    *   **Bloqueio de Navegação em `handlePortalClick`:** Se `state.isRepositioningHotspot` estiver ativo, qualquer clique sobre portais existentes é tratado como reposicionamento no ponto clicado, bloqueando qualquer transição indesejada de cena.
+    *   **Blindagem do Efeito Fade (`triggerSceneTransition`):** Protegido com `try/finally` para garantir que a esfera escura de fade-out seja sempre removida do `#camera`, evitando travamento em tela preta.
+    *   **Proteção `img.onerror` em `setActiveScene`:** Impede que o domo fique invisível permanentemente caso uma textura falhe em carregar.
+    *   **HUD Flutuante Neon & Atalho ESC:** Barra visual no topo do visualizador (`#reposition-mode-hud`) com efeito glassmorphism e neon, botão de cancelamento explícito `[✕ Cancelar (ESC)]` e atalho de teclado `Escape` para abortar o reposicionamento com restauração limpa do cursor e estado.
+    *   **Cache-Busters:** Bump para `v=1.6.8` em `index.html` para `app.js` e `style.css`.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados

@@ -165,19 +165,8 @@ AFRAME.registerComponent('click-listener', {
 
             // 1. Modo de Reposicionamento de Hotspot Ativo
             if (state.isRepositioningHotspot && state.selectedHotspotId) {
-                const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
-                if (currentScene && currentScene.hotspots) {
-                    const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
-                    if (hotspot) {
-                        hotspot.position = newPos;
-                        state.isRepositioningHotspot = false;
-                        saveTourToStorage();
-                        renderHotspots(currentScene.hotspots);
-                        renderHotspotsList();
-                        showToast(`Portal "${hotspot.label}" reposicionado com sucesso!`, "success");
-                        return;
-                    }
-                }
+                applyHotspotReposition(newPos);
+                return;
             }
 
             // 2. Modo de Adição de Novo Hotspot
@@ -555,6 +544,11 @@ function setActiveScene(sceneId) {
             skyViewer.setAttribute("visible", "true");
             skyViewer.setAttribute("click-listener", "");
             optimizeSkyViewerTexture();
+        };
+        img.onerror = () => {
+            console.error("Falha ao carregar textura da foto 360°:", scene.sourceUrl);
+            showToast(`Aviso: A imagem da cena "${scene.title}" não pôde ser carregada.`, "warning");
+            skyViewer.setAttribute("visible", "true");
         };
         img.src = scene.sourceUrl;
     } else if (scene.type === "video") {
@@ -1115,6 +1109,22 @@ function renderHotspots(hotspotsList) {
 
             // Se for modo editor:
             if (state.isEditMode) {
+                // Se o modo mover/reposicionar estiver ativo, NUNCA navegue entre cenas!
+                if (state.isRepositioningHotspot) {
+                    const point = evt && evt.detail && evt.detail.intersection ? evt.detail.intersection.point : null;
+                    if (point) {
+                        const targetDistance = 5;
+                        const dist = Math.hypot(point.x, point.y, point.z) || 1;
+                        const newPos = {
+                            x: parseFloat(((point.x / dist) * targetDistance).toFixed(3)),
+                            y: parseFloat(((point.y / dist) * targetDistance).toFixed(3)),
+                            z: parseFloat(((point.z / dist) * targetDistance).toFixed(3))
+                        };
+                        applyHotspotReposition(newPos);
+                    }
+                    return;
+                }
+
                 // Se o portal já estava selecionado OU se for clique duplo: navega para a cena de destino!
                 if (state.selectedHotspotId === hotspot.id || isDoubleClick) {
                     if (isPortal) {
@@ -1260,9 +1270,62 @@ function lookAtHotspot(hotspotId) {
 }
 
 // --- FUNÇÃO DE SELEÇÃO E CONTROLE DE HOTSPOTS ---
+function updateRepositionUI(active) {
+    const canvasWrapper = document.getElementById("canvas-wrapper");
+    const repositionHud = document.getElementById("reposition-mode-hud");
+    const hudText = document.getElementById("reposition-hud-text");
+    
+    if (canvasWrapper) {
+        canvasWrapper.classList.toggle("repositioning-mode", !!active);
+    }
+    
+    if (repositionHud) {
+        if (active) {
+            const currentScene = state.tour && state.tour.scenes ? state.tour.scenes.find(s => s.id === state.activeSceneId) : null;
+            const hotspot = currentScene && currentScene.hotspots ? currentScene.hotspots.find(h => h.id === state.selectedHotspotId) : null;
+            const label = hotspot ? (hotspot.label || "Portal") : "Portal";
+            if (hudText) {
+                hudText.innerHTML = `<strong>Modo Mover:</strong> Clique na foto 360° para fixar <em>"${label}"</em>`;
+            }
+            repositionHud.style.display = "block";
+        } else {
+            repositionHud.style.display = "none";
+        }
+    }
+}
+
+function cancelRepositionHotspot() {
+    if (!state.isRepositioningHotspot) return;
+    state.isRepositioningHotspot = false;
+    updateRepositionUI(false);
+    renderHotspotsList();
+    showToast("Modo de reposicionamento cancelado.", "info");
+}
+
+function applyHotspotReposition(newPos) {
+    if (!state.isRepositioningHotspot || !state.selectedHotspotId) return;
+    const currentScene = state.tour && state.tour.scenes ? state.tour.scenes.find(s => s.id === state.activeSceneId) : null;
+    if (!currentScene || !currentScene.hotspots) return;
+
+    const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
+    if (!hotspot) return;
+
+    hotspot.position = newPos;
+    state.isRepositioningHotspot = false;
+    updateRepositionUI(false);
+
+    saveTourToStorage();
+    renderHotspots(currentScene.hotspots);
+    renderHotspotsList();
+    showToast(`Portal "${hotspot.label}" reposicionado com sucesso no ponto clicado!`, "success");
+}
+
 function selectHotspot(hotspotId) {
     state.selectedHotspotId = hotspotId;
-    state.isRepositioningHotspot = false;
+    if (state.isRepositioningHotspot) {
+        state.isRepositioningHotspot = false;
+        updateRepositionUI(false);
+    }
     
     const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
     if (currentScene) {
@@ -1273,10 +1336,11 @@ function selectHotspot(hotspotId) {
 
 function toggleRepositionHotspot(hotspotId) {
     if (state.selectedHotspotId !== hotspotId) {
-        selectHotspot(hotspotId);
+        state.selectedHotspotId = hotspotId;
     }
     
     state.isRepositioningHotspot = !state.isRepositioningHotspot;
+    updateRepositionUI(state.isRepositioningHotspot);
     
     renderHotspotsList();
     
@@ -1293,11 +1357,15 @@ function getSceneTitle(id) {
     return scene ? scene.title : "Cena Desconhecida";
 }
 
-// --- EFEITO DE TRANSIÇÃO SUAVE (FADE) ---
+// --- EFEITO DE TRANSIÇÃO SUAVE (FADE COM PROTEÇÃO BLINDADA) ---
 function triggerSceneTransition(callback) {
-    // Adiciona uma esfera escura ao redor da câmera para simular fade-out/in
     const camera = document.getElementById("camera");
+    if (!camera) {
+        if (typeof callback === "function") callback();
+        return;
+    }
     
+    // Adiciona uma esfera escura ao redor da câmera para simular fade-out/in
     const fade = document.createElement("a-entity");
     fade.setAttribute("geometry", "primitive: sphere; radius: 0.5");
     fade.setAttribute("material", "color: #0a0b0e; shader: flat; side: double; opacity: 0; transparent: true");
@@ -1305,20 +1373,26 @@ function triggerSceneTransition(callback) {
     
     // Animação de fade out (escurecer)
     fade.setAttribute("animation__fadeout", "property: material.opacity; from: 0; to: 1; dur: 250; easing: easeInQuad");
-    
     camera.appendChild(fade);
 
     setTimeout(() => {
-        // Executa a mudança de cena
-        callback();
-        
-        // Animação de fade in (clarear)
-        fade.removeAttribute("animation__fadeout");
-        fade.setAttribute("animation__fadein", "property: material.opacity; from: 1; to: 0; dur: 350; easing: easeOutQuad");
-        
-        setTimeout(() => {
-            fade.remove();
-        }, 360);
+        try {
+            if (typeof callback === "function") {
+                callback();
+            }
+        } catch (err) {
+            console.error("Erro durante execução da transição de cena:", err);
+        } finally {
+            // Animação de fade in (clarear) - SEMPRE executada mesmo se callback falhar
+            fade.removeAttribute("animation__fadeout");
+            fade.setAttribute("animation__fadein", "property: material.opacity; from: 1; to: 0; dur: 350; easing: easeOutQuad");
+            
+            setTimeout(() => {
+                if (fade.parentNode) {
+                    fade.parentNode.removeChild(fade);
+                }
+            }, 360);
+        }
     }, 260);
 }
 
@@ -1551,15 +1625,28 @@ function initDOMEvents() {
         });
     }
 
-    // Captura ultra-precisa de clique no Canvas para reposicionamento instantâneo de Hotspot via Three.js
+    // Captura ultra-precisa e filtrada de clique no Canvas para reposicionamento de Hotspot
     const canvasWrapper = document.getElementById("canvas-wrapper");
+    let canvasPointerDownPos = { x: 0, y: 0, time: 0 };
+
     if (canvasWrapper) {
+        canvasWrapper.addEventListener("pointerdown", (e) => {
+            canvasPointerDownPos = { x: e.clientX, y: e.clientY, time: Date.now() };
+        });
+
         canvasWrapper.addEventListener("click", (e) => {
             if (!state.isEditMode || !state.isRepositioningHotspot || !state.selectedHotspotId) return;
-            if (e.target.closest(".viewer-overlay-controls") || e.target.closest(".modal-overlay") || e.target.closest(".scenes-navigation-bar")) return;
+            if (e.target.closest(".viewer-overlay-controls") || e.target.closest(".modal-overlay") || e.target.closest(".scenes-navigation-bar") || e.target.closest("#reposition-mode-hud")) return;
+
+            // Filtro essencial contra arrasto de câmera: se deslocou mais de 6 pixels, o usuário estava apenas girando a visão!
+            const dragDist = Math.hypot(e.clientX - canvasPointerDownPos.x, e.clientY - canvasPointerDownPos.y);
+            if (dragDist > 6) {
+                return;
+            }
 
             const sceneEl = document.querySelector("a-scene");
             if (sceneEl && sceneEl.camera) {
+                sceneEl.camera.updateMatrixWorld(true);
                 const rect = canvasWrapper.getBoundingClientRect();
                 const mouse = new THREE.Vector2(
                     ((e.clientX - rect.left) / rect.width) * 2 - 1,
@@ -1567,26 +1654,40 @@ function initDOMEvents() {
                 );
                 const raycaster = new THREE.Raycaster();
                 raycaster.setFromCamera(mouse, sceneEl.camera);
-                const dir = raycaster.ray.direction.clone().normalize();
-                const newPos = {
-                    x: parseFloat((dir.x * 5).toFixed(3)),
-                    y: parseFloat((dir.y * 5).toFixed(3)),
-                    z: parseFloat((dir.z * 5).toFixed(3))
-                };
-                
-                const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
-                if (currentScene && currentScene.hotspots) {
-                    const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
-                    if (hotspot) {
-                        hotspot.position = newPos;
-                        state.isRepositioningHotspot = false;
-                        saveTourToStorage();
-                        renderHotspots(currentScene.hotspots);
-                        renderHotspotsList();
-                        showToast(`Portal "${hotspot.label}" reposicionado com sucesso no ponto clicado!`, "success");
-                    }
+
+                // Interseção matemática exata com o domo 360° (esfera de raio 100)
+                const skySphere = new THREE.Sphere(new THREE.Vector3(0, 0, 0), 100);
+                const hitPoint = new THREE.Vector3();
+                const targetDistance = 5;
+                let newPos = null;
+
+                if (raycaster.ray.intersectSphere(skySphere, hitPoint)) {
+                    const dist = Math.hypot(hitPoint.x, hitPoint.y, hitPoint.z) || 1;
+                    newPos = {
+                        x: parseFloat(((hitPoint.x / dist) * targetDistance).toFixed(3)),
+                        y: parseFloat(((hitPoint.y / dist) * targetDistance).toFixed(3)),
+                        z: parseFloat(((hitPoint.z / dist) * targetDistance).toFixed(3))
+                    };
+                } else {
+                    const dir = raycaster.ray.direction.clone().normalize();
+                    newPos = {
+                        x: parseFloat((dir.x * targetDistance).toFixed(3)),
+                        y: parseFloat((dir.y * targetDistance).toFixed(3)),
+                        z: parseFloat((dir.z * targetDistance).toFixed(3))
+                    };
                 }
+
+                applyHotspotReposition(newPos);
             }
+        });
+    }
+
+    // Botão de Cancelar no HUD Flutuante de Reposicionamento
+    const btnCancelReposition = document.getElementById("btn-cancel-reposition");
+    if (btnCancelReposition) {
+        btnCancelReposition.addEventListener("click", (e) => {
+            e.stopPropagation();
+            cancelRepositionHotspot();
         });
     }
 
@@ -1610,8 +1711,12 @@ function initDOMEvents() {
         });
     }
 
-    // Teclas de atalho para navegar entre cenas (Setas Direita e Esquerda)
+    // Teclas de atalho para navegar entre cenas e cancelar reposicionamento
     window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && state.isRepositioningHotspot) {
+            cancelRepositionHotspot();
+            return;
+        }
         if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
         if (e.key === "ArrowLeft") {
             goToPrevScene();
@@ -3157,6 +3262,7 @@ function triggerHotspotCreationModal() {
     state.pendingHotspotPos = pos;
     state.isAddingHotspot = false;
     state.isRepositioningHotspot = false;
+    updateRepositionUI(false);
 
     openHotspotModal(null);
 }
@@ -3168,6 +3274,7 @@ function startAddingHotspot() {
 function cancelAddingHotspot() {
     state.isAddingHotspot = false;
     state.isRepositioningHotspot = false;
+    updateRepositionUI(false);
     state.pendingHotspotPos = null;
     const btn = document.getElementById("btn-add-hotspot");
     if (btn) {
@@ -3968,6 +4075,7 @@ function deleteHotspot(hotspotId) {
             if (state.selectedHotspotId === hotspotId) {
                 state.selectedHotspotId = null;
                 state.isRepositioningHotspot = false;
+                updateRepositionUI(false);
             }
 
             // Salvar no storage/banco
