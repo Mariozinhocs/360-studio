@@ -261,6 +261,13 @@
 2.  **Validação de Planos no HML / Produção:**
     *   Continuar testes nas contas de teste (`iniciante_tester`, `basico_tester`, `profissional_tester`, `admin_tester`).
 
+3.  **Hotspots & Portais Bidirecionais com Ajuste Fino Contínuo (v1.6.9) [CONCLUÍDO]:**
+    *   **Ajuste Fino Interativo:** Permitido reposicionar portais interativamente com múltiplos cliques contínuos na esfera 360°, sem fechar o modo até confirmação explícita (`[✓ Confirmar]` ou tecla `Enter`).
+    *   **Cancelamento Seguro:** Tecla `ESC` ou botão `[✕ Cancelar]` restaura imediatamente a posição tridimensional original do portal.
+    *   **Ativação Automática Pós-Criação:** Ao criar um novo portal, o modo de ajuste fino é ativado imediatamente para que o usuário posicione o ponto exatamente onde deseja antes de consolidar.
+    *   **Botão de Ajuste no Modal:** Adicionado botão *"Ajustar Posição 360°"* dentro do modal de edição de hotspots.
+    *   **Portal de Retorno Automático (Bidirecional 180°):** Card com toggle switch estilo iOS permitindo criar automaticamente o portal de retorno correspondente na cena de destino tanto na criação quanto na edição.
+
 ---
 
 ## 🚀 Roadmap / Ideias de Monetização (Planos Superiores)

@@ -34,7 +34,7 @@
     <!-- A-Frame Look-At Component -->
     <script src="https://unpkg.com/aframe-look-at-component@0.8.0/dist/aframe-look-at-component.min.js"></script>
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="style.css?v=1.6.8">
+    <link rel="stylesheet" href="style.css?v=1.6.9">
     <!-- Favicon -->
     <link rel="icon" type="image/png" href="assets/favicon.png">
 </head>
@@ -454,14 +454,19 @@
                     <!-- Container para os Hotspots da cena ativa -->
                     <a-entity id="hotspots-container"></a-entity>
                 </a-scene>
-                <!-- HUD Flutuante do Modo Mover / Reposicionamento -->
+                <!-- HUD Flutuante do Modo Mover / Reposicionamento com Ajuste Fino -->
                 <div id="reposition-mode-hud" class="reposition-mode-hud" style="display: none;">
                     <div class="reposition-hud-content">
-                        <i class="fa-solid fa-crosshairs fa-spin" style="color: var(--color-accent); font-size: 14px;"></i>
-                        <span id="reposition-hud-text"><strong>Modo Mover:</strong> Clique na foto 360° para fixar o portal</span>
-                        <button type="button" id="btn-cancel-reposition" class="btn-cancel-reposition" title="Cancelar Mover (ESC)">
-                            <i class="fa-solid fa-xmark"></i> <span>Cancelar (ESC)</span>
-                        </button>
+                        <i class="fa-solid fa-arrows-up-down-left-right" style="color: var(--color-accent); font-size: 14px;"></i>
+                        <span id="reposition-hud-text"><strong>Ajuste Fino:</strong> Clique na foto 360° para reposicionar o portal</span>
+                        <div class="reposition-hud-actions">
+                            <button type="button" id="btn-confirm-reposition" class="btn-confirm-reposition" title="Confirmar Posição (Enter)">
+                                <i class="fa-solid fa-check"></i> <span>Confirmar (Enter)</span>
+                            </button>
+                            <button type="button" id="btn-cancel-reposition" class="btn-cancel-reposition" title="Cancelar Mover (ESC)">
+                                <i class="fa-solid fa-xmark"></i> <span>Cancelar (ESC)</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -645,13 +650,21 @@
                         <!-- Fallback / Cenas disponíveis para sincronização -->
                     </select>
                     <!-- CONTROLE DE PORTAL DE RETORNO AUTOMÁTICO (BIDIRECIONAL) -->
-                    <div id="hotspot-bidirectional-group" style="margin-top: 12px; background: rgba(0, 242, 254, 0.05); border: 1px solid rgba(0, 242, 254, 0.2); border-radius: 8px; padding: 10px 12px; transition: all 0.2s;">
-                        <label style="display: flex; align-items: center; gap: 9px; cursor: pointer; margin: 0; font-size: 12px; font-weight: 500; color: #fff;">
-                            <input type="checkbox" id="hotspot-create-return" checked style="accent-color: var(--color-accent); width: 16px; height: 16px; cursor: pointer;">
-                            <span>Criar portal de retorno em <strong id="hotspot-return-target-name" style="color: var(--color-accent);">[Cena]</strong></span>
-                        </label>
-                        <div style="font-size: 10px; color: var(--text-secondary); margin-left: 25px; margin-top: 3px;">
-                            Gera automaticamente um portal em 180° apontando de volta para a cena atual.
+                    <div id="hotspot-bidirectional-group" class="hotspot-bidirectional-card" style="margin-top: 14px;">
+                        <div class="bidirectional-toggle-row">
+                            <div class="bidirectional-info">
+                                <div class="bidirectional-title">
+                                    <i class="fa-solid fa-arrows-split-up-and-left" style="color: var(--color-accent);"></i>
+                                    <span>Criar portal de retorno automático?</span>
+                                </div>
+                                <div class="bidirectional-desc">
+                                    Cria automaticamente um portal na cena <strong id="hotspot-return-target-name" style="color: var(--color-accent);">[Destino]</strong> apontando de volta para esta cena (180°).
+                                </div>
+                            </div>
+                            <label class="ios-toggle-switch">
+                                <input type="checkbox" id="hotspot-create-return" checked>
+                                <span class="ios-toggle-slider"></span>
+                            </label>
                         </div>
                     </div>
                 </div>
@@ -721,6 +734,9 @@
                 </div>
 
                 <div class="modal-actions">
+                    <button type="button" class="btn btn-outline" id="btn-modal-reposition-hotspot" style="display: none; align-items: center; gap: 6px; margin-right: auto; font-size: 12px; border: 1px solid rgba(0, 242, 254, 0.4); color: var(--color-accent); background: rgba(0, 242, 254, 0.08);">
+                        <i class="fa-solid fa-arrows-up-down-left-right"></i> <span>Ajustar Posição 360°</span>
+                    </button>
                     <button class="btn btn-secondary" id="btn-cancel-hotspot">Cancelar</button>
                     <button class="btn btn-primary" id="btn-save-hotspot">Salvar Portal</button>
                 </div>
@@ -879,7 +895,7 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- Custom Script -->
-    <script src="insp_stitcher.js?v=1.6.8"></script>
-    <script src="app.js?v=1.6.8"></script>
+    <script src="insp_stitcher.js?v=1.6.9"></script>
+    <script src="app.js?v=1.6.9"></script>
 </body>
 </html>

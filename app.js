@@ -1269,7 +1269,7 @@ function lookAtHotspot(hotspotId) {
     smoothRotateCamera(targetYaw, targetPitch, 450);
 }
 
-// --- FUNÇÃO DE SELEÇÃO E CONTROLE DE HOTSPOTS ---
+// --- FUNÇÃO DE SELEÇÃO E CONTROLE DE HOTSPOTS COM AJUSTE FINO ---
 function updateRepositionUI(active) {
     const canvasWrapper = document.getElementById("canvas-wrapper");
     const repositionHud = document.getElementById("reposition-mode-hud");
@@ -1285,7 +1285,7 @@ function updateRepositionUI(active) {
             const hotspot = currentScene && currentScene.hotspots ? currentScene.hotspots.find(h => h.id === state.selectedHotspotId) : null;
             const label = hotspot ? (hotspot.label || "Portal") : "Portal";
             if (hudText) {
-                hudText.innerHTML = `<strong>Modo Mover:</strong> Clique na foto 360° para fixar <em>"${label}"</em>`;
+                hudText.innerHTML = `<strong>Ajuste Fino:</strong> Clique na foto 360° para posicionar <em>"${label}"</em>`;
             }
             repositionHud.style.display = "block";
         } else {
@@ -1296,10 +1296,37 @@ function updateRepositionUI(active) {
 
 function cancelRepositionHotspot() {
     if (!state.isRepositioningHotspot) return;
+    
+    // Restaurar a posição original caso o usuário tenha clicado antes de cancelar
+    const currentScene = state.tour && state.tour.scenes ? state.tour.scenes.find(s => s.id === state.activeSceneId) : null;
+    if (currentScene && currentScene.hotspots && state.selectedHotspotId && state.repositionOriginalPos) {
+        const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
+        if (hotspot) {
+            hotspot.position = { ...state.repositionOriginalPos };
+            renderHotspots(currentScene.hotspots);
+        }
+    }
+
     state.isRepositioningHotspot = false;
+    state.repositionOriginalPos = null;
     updateRepositionUI(false);
     renderHotspotsList();
-    showToast("Modo de reposicionamento cancelado.", "info");
+    showToast("Modo de reposicionamento cancelado. Posição original restaurada.", "info");
+}
+
+function confirmRepositionHotspot() {
+    if (!state.isRepositioningHotspot || !state.selectedHotspotId) return;
+    const currentScene = state.tour && state.tour.scenes ? state.tour.scenes.find(s => s.id === state.activeSceneId) : null;
+    const hotspot = currentScene && currentScene.hotspots ? currentScene.hotspots.find(h => h.id === state.selectedHotspotId) : null;
+    const label = hotspot ? (hotspot.label || "Portal") : "Portal";
+
+    state.isRepositioningHotspot = false;
+    state.repositionOriginalPos = null;
+    updateRepositionUI(false);
+
+    saveTourToStorage();
+    renderHotspotsList();
+    showToast(`Posição do portal "${label}" confirmada e salva com sucesso!`, "success");
 }
 
 function applyHotspotReposition(newPos) {
@@ -1310,20 +1337,24 @@ function applyHotspotReposition(newPos) {
     const hotspot = currentScene.hotspots.find(h => h.id === state.selectedHotspotId);
     if (!hotspot) return;
 
+    // Atualiza a posição em tempo real para permitir ajuste fino interativo contínuo
     hotspot.position = newPos;
-    state.isRepositioningHotspot = false;
-    updateRepositionUI(false);
 
-    saveTourToStorage();
+    // Re-renderiza o hotspot imediatamente no espaço 3D para feedback visual instantâneo
     renderHotspots(currentScene.hotspots);
-    renderHotspotsList();
-    showToast(`Portal "${hotspot.label}" reposicionado com sucesso no ponto clicado!`, "success");
+    
+    // Atualiza o texto do HUD indicando que o ajuste foi aplicado e pode ser refinado ou confirmado
+    const hudText = document.getElementById("reposition-hud-text");
+    if (hudText) {
+        hudText.innerHTML = `<strong>Ajuste Fino:</strong> Posição atualizada! Clique novamente para refinar ou clique em <em>Confirmar (Enter)</em>.`;
+    }
 }
 
 function selectHotspot(hotspotId) {
     state.selectedHotspotId = hotspotId;
     if (state.isRepositioningHotspot) {
         state.isRepositioningHotspot = false;
+        state.repositionOriginalPos = null;
         updateRepositionUI(false);
     }
     
@@ -1340,15 +1371,19 @@ function toggleRepositionHotspot(hotspotId) {
     }
     
     state.isRepositioningHotspot = !state.isRepositioningHotspot;
-    updateRepositionUI(state.isRepositioningHotspot);
-    
-    renderHotspotsList();
     
     if (state.isRepositioningHotspot) {
+        const currentScene = state.tour.scenes.find(s => s.id === state.activeSceneId);
+        const hotspot = currentScene && currentScene.hotspots ? currentScene.hotspots.find(h => h.id === hotspotId) : null;
+        if (hotspot && hotspot.position) {
+            state.repositionOriginalPos = { ...hotspot.position };
+        }
+        updateRepositionUI(true);
+        renderHotspotsList();
         lookAtHotspot(hotspotId);
-        showToast("Modo Mover Ativo: Clique no novo ponto na foto 360° para reposicionar o portal.", "info");
+        showToast("Modo Ajuste Fino Ativo: Clique na foto para mover o portal. Quando estiver satisfeito, clique em Confirmar.", "info");
     } else {
-        showToast("Modo de reposicionamento cancelado.", "info");
+        cancelRepositionHotspot();
     }
 }
 
@@ -1682,6 +1717,15 @@ function initDOMEvents() {
         });
     }
 
+    // Botão de Confirmar no HUD Flutuante de Reposicionamento (Ajuste Fino)
+    const btnConfirmReposition = document.getElementById("btn-confirm-reposition");
+    if (btnConfirmReposition) {
+        btnConfirmReposition.addEventListener("click", (e) => {
+            e.stopPropagation();
+            confirmRepositionHotspot();
+        });
+    }
+
     // Botão de Cancelar no HUD Flutuante de Reposicionamento
     const btnCancelReposition = document.getElementById("btn-cancel-reposition");
     if (btnCancelReposition) {
@@ -1711,11 +1755,17 @@ function initDOMEvents() {
         });
     }
 
-    // Teclas de atalho para navegar entre cenas e cancelar reposicionamento
+    // Teclas de atalho para navegar entre cenas, confirmar e cancelar reposicionamento
     window.addEventListener("keydown", (e) => {
-        if (e.key === "Escape" && state.isRepositioningHotspot) {
-            cancelRepositionHotspot();
-            return;
+        if (state.isRepositioningHotspot) {
+            if (e.key === "Enter") {
+                confirmRepositionHotspot();
+                return;
+            }
+            if (e.key === "Escape") {
+                cancelRepositionHotspot();
+                return;
+            }
         }
         if (["INPUT", "TEXTAREA", "SELECT"].includes(document.activeElement?.tagName)) return;
         if (e.key === "ArrowLeft") {
@@ -1729,6 +1779,18 @@ function initDOMEvents() {
     document.getElementById("btn-close-modal").addEventListener("click", closeHotspotModal);
     document.getElementById("btn-cancel-hotspot").addEventListener("click", closeHotspotModal);
     document.getElementById("btn-save-hotspot").addEventListener("click", saveHotspot);
+    
+    const btnModalReposition = document.getElementById("btn-modal-reposition-hotspot");
+    if (btnModalReposition) {
+        btnModalReposition.addEventListener("click", () => {
+            const editingInput = document.getElementById("editing-hotspot-id");
+            const hotspotId = editingInput ? editingInput.value : null;
+            if (hotspotId) {
+                saveHotspot();
+                toggleRepositionHotspot(hotspotId);
+            }
+        });
+    }
     
     // Modal de Bloqueio por Limite do Plano
     const btnCloseLocked = document.getElementById("btn-close-locked-modal");
@@ -3371,8 +3433,25 @@ function openHotspotModal(editingHotspotId = null) {
         }
 
         const returnTargetNameSpan = document.getElementById("hotspot-return-target-name");
-        if (returnTargetNameSpan) {
-            returnTargetNameSpan.textContent = targetScene ? `"${targetScene.title}"` : "Cena de Destino";
+        const bidirectionalGroup = document.getElementById("hotspot-bidirectional-group");
+        const returnCheckbox = document.getElementById("hotspot-create-return");
+
+        if (targetScene && returnTargetNameSpan) {
+            const isEditing = !!document.getElementById("editing-hotspot-id").value;
+            const alreadyHasReturn = targetScene.hotspots && targetScene.hotspots.some(h => h.type === "portal" && h.targetSceneId === state.activeSceneId);
+            if (alreadyHasReturn) {
+                returnTargetNameSpan.textContent = `"${targetScene.title}" (Já existe!)`;
+                if (returnCheckbox) {
+                    returnCheckbox.checked = true;
+                    returnCheckbox.disabled = true;
+                }
+            } else {
+                returnTargetNameSpan.textContent = `"${targetScene.title}"`;
+                if (returnCheckbox) {
+                    returnCheckbox.disabled = false;
+                    returnCheckbox.checked = !isEditing;
+                }
+            }
         }
 
         if (autoUpdateLabel && targetScene) {
@@ -3425,6 +3504,7 @@ function openHotspotModal(editingHotspotId = null) {
 
     const bidirectionalGroup = document.getElementById("hotspot-bidirectional-group");
     const returnCheckbox = document.getElementById("hotspot-create-return");
+    const btnModalReposition = document.getElementById("btn-modal-reposition-hotspot");
 
     if (editingHotspotId) {
         // Modo Edição
@@ -3434,7 +3514,7 @@ function openHotspotModal(editingHotspotId = null) {
         if (editingInput) editingInput.value = editingHotspotId;
         if (titleEl) titleEl.innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Configurar Hotspot / Portal`;
         if (saveBtn) saveBtn.textContent = "Salvar Alterações";
-        if (bidirectionalGroup) bidirectionalGroup.style.display = "none";
+        if (btnModalReposition) btnModalReposition.style.display = "inline-flex";
         
         if (hotspot) {
             labelInput.value = hotspot.label || "";
@@ -3444,10 +3524,12 @@ function openHotspotModal(editingHotspotId = null) {
             if (hType === "portal") {
                 if (targetGroup) targetGroup.style.display = "block";
                 if (infoGroup) infoGroup.style.display = "none";
+                if (bidirectionalGroup) bidirectionalGroup.style.display = otherScenes.length > 0 ? "block" : "none";
                 applyTargetSelection(hotspot.targetSceneId || (otherScenes[0] ? otherScenes[0].scene.id : ""), false);
             } else {
                 if (targetGroup) targetGroup.style.display = "none";
                 if (infoGroup) infoGroup.style.display = "flex";
+                if (bidirectionalGroup) bidirectionalGroup.style.display = "none";
                 if (infoTitle) infoTitle.value = hotspot.infoTitle || "";
                 if (infoDesc) infoDesc.value = hotspot.infoDesc || "";
                 
@@ -3492,11 +3574,15 @@ function openHotspotModal(editingHotspotId = null) {
         if (typeSelect) typeSelect.value = "portal";
         if (targetGroup) targetGroup.style.display = "block";
         if (infoGroup) infoGroup.style.display = "none";
+        if (btnModalReposition) btnModalReposition.style.display = "none";
         
         if (bidirectionalGroup) {
             bidirectionalGroup.style.display = otherScenes.length > 0 ? "block" : "none";
         }
-        if (returnCheckbox) returnCheckbox.checked = true;
+        if (returnCheckbox) {
+            returnCheckbox.disabled = false;
+            returnCheckbox.checked = true;
+        }
 
         // Sugestão automática de cena e título
         if (otherScenes.length > 0) {
@@ -3528,6 +3614,8 @@ function closeHotspotModal() {
     if (modal) modal.classList.remove("active");
     const editingInput = document.getElementById("editing-hotspot-id");
     if (editingInput) editingInput.value = "";
+    const btnModalReposition = document.getElementById("btn-modal-reposition-hotspot");
+    if (btnModalReposition) btnModalReposition.style.display = "none";
     cancelAddingHotspot();
 }
 
@@ -3570,11 +3658,44 @@ function saveHotspot() {
             hotspot.type = type;
             hotspot.customColor = customColor;
             hotspot.iconStyle = iconStyle;
+            let returnCreated = false;
+            let targetSceneTitle = "";
+
             if (type === "portal") {
                 hotspot.targetSceneId = targetSceneId;
                 delete hotspot.infoTitle;
                 delete hotspot.infoDesc;
                 delete hotspot.infoMediaUrl;
+
+                // Verificar se o usuário optou por criar o portal de retorno na cena destino
+                const createReturnCheckbox = document.getElementById("hotspot-create-return");
+                if (createReturnCheckbox && createReturnCheckbox.checked && !createReturnCheckbox.disabled && targetSceneId) {
+                    const targetScene = state.tour.scenes.find(s => s.id === targetSceneId);
+                    if (targetScene && targetScene.id !== currentScene.id) {
+                        if (!targetScene.hotspots) targetScene.hotspots = [];
+                        const exists = targetScene.hotspots.some(h => h.type === "portal" && h.targetSceneId === currentScene.id);
+                        if (!exists) {
+                            const forwardPos = hotspot.position || { x: 0, y: 0, z: -5 };
+                            const returnPos = {
+                                x: parseFloat((-forwardPos.x).toFixed(3)),
+                                y: parseFloat((forwardPos.y).toFixed(3)),
+                                z: parseFloat((-forwardPos.z).toFixed(3))
+                            };
+                            const returnHotspot = {
+                                id: "hotspot-" + Date.now() + "-ret-" + Math.random().toString(36).substr(2, 4),
+                                type: "portal",
+                                targetSceneId: currentScene.id,
+                                position: returnPos,
+                                label: `Voltar para ${currentScene.title}`,
+                                customColor: customColor,
+                                iconStyle: iconStyle
+                            };
+                            targetScene.hotspots.push(returnHotspot);
+                            returnCreated = true;
+                            targetSceneTitle = targetScene.title || "Cena";
+                        }
+                    }
+                }
             } else {
                 hotspot.infoTitle = infoTitle;
                 hotspot.infoDesc = infoDesc;
@@ -3585,7 +3706,11 @@ function saveHotspot() {
             renderHotspots(currentScene.hotspots);
             renderHotspotsList();
             closeHotspotModal();
-            showToast("Portal atualizado com sucesso!", "success");
+            if (returnCreated) {
+                showToast(`Portal atualizado! Portal de retorno adicionado em "${targetSceneTitle}".`, "success");
+            } else {
+                showToast("Portal atualizado com sucesso!", "success");
+            }
             return;
         }
     }
@@ -3651,10 +3776,13 @@ function saveHotspot() {
     renderHotspotsList();
     closeHotspotModal();
 
+    // Ativar imediatamente o modo de ajuste fino interativo para posicionar o portal com precisão
+    toggleRepositionHotspot(newHotspot.id);
+
     if (returnCreated) {
-        showToast(`Portal criado! Portal de retorno adicionado em "${targetSceneTitle}".`, "success");
+        showToast(`Portal criado! Portal de retorno adicionado em "${targetSceneTitle}". Use o mouse para o ajuste fino.`, "success");
     } else {
-        showToast(`Portal "${label}" criado com sucesso!`, "success");
+        showToast(`Portal "${label}" criado! Clique na foto 360° para ajustar a posição.`, "info");
     }
 }
 
