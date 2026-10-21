@@ -193,6 +193,14 @@
     *   **HUD Flutuante Neon & Atalho ESC:** Barra visual no topo do visualizador (`#reposition-mode-hud`) com efeito glassmorphism e neon, botão de cancelamento explícito `[✕ Cancelar (ESC)]` e atalho de teclado `Escape` para abortar o reposicionamento com restauração limpa do cursor e estado.
     *   **Cache-Busters:** Bump para `v=1.6.8` em `index.html` para `app.js` e `style.css`.
 
+26. **Hotspots & Portais Bidirecionais com Ajuste Fino Contínuo (v1.6.9 - CONCLUÍDO):**
+    *   **Ajuste Fino Interativo:** Reposicionamento dinâmico de portais com múltiplos cliques contínuos na esfera 360°, mantendo o retículo ativo até confirmação explícita (`[✓ Confirmar]` ou tecla `Enter`).
+    *   **Cancelamento Seguro e Restauração:** Pressionar `ESC` ou clicar no botão `[✕ Cancelar]` restaura imediatamente a posição tridimensional original do portal.
+    *   **Ativação Automática Pós-Criação:** Ao adicionar um novo portal, o modo de ajuste fino é ativado imediatamente para alinhamento preciso na visão 360° antes da gravação definitiva.
+    *   **Botão de Ajuste Direto no Modal:** Inserido o botão *"Ajustar Posição 360°"* dentro do modal de edição de hotspots para permitir reajuste de mira a qualquer momento.
+    *   **Portal de Retorno Automático (Bidirecional 180°):** Card com toggle switch estilo iOS integrado ao modal, calculando a perspectiva inversa de 180° `(-x, y, -z)` e gerando o portal de retorno na cena de destino.
+    *   **Cache-Busters:** Bump para `v=1.6.9` em `index.html` para `app.js` e `style.css`.
+
 ---
 
 ## 📂 Estrutura de Arquivos Criados/Modificados
